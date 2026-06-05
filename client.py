@@ -81,9 +81,9 @@ class QuizClient:
 
         self.buzz_btn = tk.Button(
             buzz_frame,
-            text="🚀 抢 答 🚀\n→ 按 空格键 或 回车键 ←",
+            text="🔒 未连接服务器\n请先填写信息并连接",
             font=("微软雅黑", 14, "bold"),
-            bg="#FF5722", fg="white",
+            bg="#9E9E9E", fg="white",
             height=3,
             state=tk.DISABLED,
             command=self._buzz
