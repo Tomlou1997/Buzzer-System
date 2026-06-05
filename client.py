@@ -30,6 +30,9 @@ class QuizClient:
         self.player_name = ""
         self.buzzed = False  # 本轮是否已抢答
         self.answering = False  # 是否在答案选择模式
+        self._client_timer_id = None
+        self._client_timer_label = None
+        self._client_timer_remaining = 0
 
         # 答案选择状态
         self.selected_options = {}  # {"A": tk.BooleanVar, ...}
@@ -223,9 +226,46 @@ class QuizClient:
     def _hide_answer_mode(self):
         """隐藏答案选择，恢复抢答模式"""
         self.answering = False
+        self._stop_client_timer()
         self.answer_frame.pack_forget()
         self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
+
+    def _start_client_timer(self, seconds):
+        """客户端倒计时"""
+        self._stop_client_timer()
+        self._client_timer_remaining = seconds
+        self._client_timer_label = tk.Label(
+            self.answer_frame, text=f"⏱ 剩余 {seconds} 秒",
+            font=("微软雅黑", 14, "bold"), fg="#FF5722"
+        )
+        self._client_timer_label.pack(anchor=tk.W, padx=5, pady=(0, 5))
+
+        def tick():
+            self._client_timer_remaining -= 1
+            if self._client_timer_label and self._client_timer_label.winfo_exists():
+                if self._client_timer_remaining <= 0:
+                    self._client_timer_label.config(text="⏰ 时间到！", fg="#f44336")
+                else:
+                    self._client_timer_label.config(text=f"⏱ 剩余 {self._client_timer_remaining} 秒")
+                    self._client_timer_id = self.root.after(1000, tick)
+
+        self._client_timer_id = self.root.after(1000, tick)
+
+    def _stop_client_timer(self):
+        """取消客户端倒计时"""
+        if hasattr(self, '_client_timer_id') and self._client_timer_id:
+            try:
+                self.root.after_cancel(self._client_timer_id)
+            except:
+                pass
+            self._client_timer_id = None
+        if hasattr(self, '_client_timer_label') and self._client_timer_label:
+            try:
+                self._client_timer_label.destroy()
+            except:
+                pass
+            self._client_timer_label = None
 
     def _connect(self):
         """连接服务器"""
@@ -366,17 +406,20 @@ class QuizClient:
             winner = msg.get("winner", False)
             if winner:
                 # 抢到了！切换到答案选择模式
+                timeout = msg.get("timeout", 15)
+                self._start_client_timer(timeout)
                 self.buzz_btn.config(
                     state=tk.DISABLED,
                     bg="#4CAF50",
-                    text="🎉🎉 抢答成功！请选择答案"
+                    text=f"🎉🎉 抢答成功！⏱ {timeout}s"
                 )
-                self._log("🎉🎉🎉 太棒了！你抢答成功了！请选择答案 A-F（可多选） 🎉🎉🎉")
+                self._log(f"🎉🎉🎉 太棒了！你抢答成功了！请选择答案 A-F（可多选） ⏱ {timeout}秒 🎉🎉🎉")
                 self._flash_btn()
                 self._show_answer_mode()
             else:
                 # 没抢到
                 self._hide_answer_mode()
+                self._stop_client_timer()
                 self.buzz_btn.config(
                     state=tk.DISABLED,
                     bg="#f44336",
@@ -390,8 +433,18 @@ class QuizClient:
             self.score_label.config(text=str(score))
             self._log(f"💰 当前分数: {score}")
 
+        elif msg_type == "timeout":
+            # 答题超时
+            self._stop_client_timer()
+            self._hide_answer_mode()
+            self.buzz_btn.config(
+                state=tk.DISABLED,
+                bg="#f44336",
+                text="⏰ 答题超时！"
+            )
+            self._log(f"⏰ {msg.get('msg', '')}")
+
         elif msg_type == "ban_status":
-            banned = msg.get("banned", False)
             if banned:
                 self._log("🚫 你已被管理员禁赛")
                 self.buzz_btn.config(state=tk.DISABLED, bg="#333333", text="🚫 已禁赛")

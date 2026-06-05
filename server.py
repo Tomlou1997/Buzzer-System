@@ -48,6 +48,9 @@ class QuizServer:
         # 分数配置
         self.correct_points = 2   # 答对加分
         self.wrong_points = 1     # 答错扣分
+        self.answer_timeout = 15  # 答题超时秒数
+        self._timer_id = None     # 倒计时定时器ID
+        self._timer_remaining = 0 # 剩余秒数
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -632,9 +635,48 @@ class QuizServer:
 
     def _reset_judge_buttons(self):
         """恢复按钮到默认状态"""
+        self.stop_timer()
         self.start_buzz_btn.config(text="开始抢答 🚀", bg="#FF5722", fg="white", width=10, command=self._start_buzz)
         self.stop_round_btn.config(text="结束抢答 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
         self.first_buzzer = None
+
+    def _start_timer(self, name):
+        """启动答题倒计时"""
+        self.stop_timer()  # 取消之前的计时器
+        self._timer_remaining = self.answer_timeout
+
+        def tick():
+            self._timer_remaining -= 1
+            if self._timer_remaining <= 0:
+                # 超时！自动判答错
+                self._log(f"⏰ [{name}] 答题超时（{self.answer_timeout}秒）")
+                self.buzz_banner.config(text=f"⏰ [{name}] 答题超时！-{self.wrong_points}分", bg="#f44336")
+                self._broadcast({"type": "system", "msg": f"⏰ [{name}] 答题超时！"})
+                # 扣分
+                correct = ""
+                if 0 <= self.current_question_index < len(self.questions):
+                    correct = self.questions[self.current_question_index]["answer"]
+                with self.lock:
+                    if name in self.clients:
+                        self.clients[name]["score"] -= self.wrong_points
+                        self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"⏰ 答题超时！-{self.wrong_points}分"})
+                        self._send_to_player_nolock(name, {"type": "timeout", "msg": f"⏰ 答题超时！"})
+                self._add_record("超时", "❌ 超时 ❌", correct)
+                self._update_player_list()
+                self._reset_judge_buttons()
+                return
+            # 更新横幅倒计时
+            self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+            self._timer_id = self.root.after(1000, tick)
+
+        self._timer_id = self.root.after(1000, tick)
+
+    def stop_timer(self):
+        """取消倒计时"""
+        if self._timer_id:
+            self.root.after_cancel(self._timer_id)
+            self._timer_id = None
+            self._timer_remaining = 0
 
     def _show_settings(self):
         """显示设置窗口"""
@@ -667,6 +709,19 @@ class QuizServer:
         wrong_spin.pack(side=tk.RIGHT)
         tk.Label(row2, text="分", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
 
+        # 超时设置
+        timeout_frame = tk.LabelFrame(win, text="答题计时", font=("微软雅黑", 10))
+        timeout_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        timeout_row = tk.Frame(timeout_frame)
+        timeout_row.pack(fill=tk.X, padx=10, pady=5)
+        tk.Label(timeout_row, text="答题倒计时:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        timeout_var = tk.IntVar(value=self.answer_timeout)
+        timeout_spin = tk.Spinbox(timeout_row, from_=5, to=120, textvariable=timeout_var,
+                                   font=("微软雅黑", 10), width=6)
+        timeout_spin.pack(side=tk.RIGHT)
+        tk.Label(timeout_row, text="秒", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+
         # 自动判题
         judge_frame = tk.LabelFrame(win, text="判题模式", font=("微软雅黑", 10))
         judge_frame.pack(fill=tk.X, padx=15, pady=5)
@@ -678,7 +733,7 @@ class QuizServer:
                        font=("微软雅黑", 10), variable=auto_var).pack(side=tk.LEFT)
 
         # 说明
-        tk.Label(win, text="💡 答错扣分支持负数，且得分可低于0分",
+        tk.Label(win, text="💡 超时未提交答案视为答错，扣答错分数",
                  font=("微软雅黑", 9), fg="#666").pack(pady=(0, 5))
 
         # 按钮
@@ -688,8 +743,9 @@ class QuizServer:
         def save():
             self.correct_points = correct_var.get()
             self.wrong_points = wrong_var.get()
+            self.answer_timeout = timeout_var.get()
             self.auto_judge_var.set(auto_var.get())
-            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
             win.destroy()
 
         tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
@@ -853,9 +909,9 @@ class QuizServer:
                     debug_log(f"_process_client_msg: [{name}] 抢答成功！first_buzzer 设为 {name}")
                     self.first_buzzer = name
                     self._log(f"🔔 [{name}] 抢答成功！")
-                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 🎉🎉🎉", bg="#4CAF50")
+                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self.answer_timeout}s 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
-                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案："})
+                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout})
                     for other in list(self.clients.keys()):
                         if other != name:
                             self._send_to_player_nolock(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
@@ -868,12 +924,15 @@ class QuizServer:
                     self.answer_visible = True
                     self.show_answer_btn.config(text="隐藏答案 🙈")
                     self._log(f"📋 参考答案: {q['answer']}")
+                    # 启动倒计时
+                    self._start_timer(name)
                 else:
                     self._send_to_player_nolock(name, {"type": "error", "msg": "已有选手抢答成功"})
         elif msg_type == "answer":
             # 选手提交了答案
             player_answer = msg.get("answer", "")
             self._last_answer = player_answer
+            self.stop_timer()  # 取消倒计时
             debug_log(f"_process_client_msg: [{name}] 提交答案: {player_answer}")
 
             # 如果开启了自动判题，直接比对
