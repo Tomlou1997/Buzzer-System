@@ -1,0 +1,48 @@
+[15:10:18.111] _handle_client 新连接: ('10.8.51.7', 17679)
+[15:10:18.112] _handle_client 选手名称: hhh
+[15:10:18.115] _broadcast 开始: type=system, clients_count=1
+[15:10:18.115] _broadcast 已发送给 [hhh]
+[15:10:18.116] _broadcast 结束: type=system
+[15:10:24.145] >>> _start_buzz 被调用
+[15:10:24.145] _start_buzz 准备抢锁, clients=['hhh']
+[15:10:24.145] _start_buzz 拿到锁
+[15:10:24.146] _start_buzz 开始第 1 轮
+[15:10:24.157] _start_buzz 准备广播 round_start
+[15:10:24.157] _broadcast 开始: type=round_start, clients_count=1
+[15:10:24.158] _broadcast 已发送给 [hhh]
+[15:10:24.158] _broadcast 结束: type=round_start
+[15:10:24.159] _start_buzz round_start 广播完毕
+[15:10:24.159] _broadcast 开始: type=question, clients_count=1
+[15:10:24.159] _broadcast 已发送给 [hhh]
+[15:10:24.160] _broadcast 结束: type=question
+[15:10:24.160] _start_buzz question 广播完毕
+[15:10:24.160] <<< _start_buzz 释放锁，正常退出
+[15:10:30.707] _process_client_msg: [hhh] type=buzz
+[15:10:30.708] _process_client_msg: [hhh] 尝试抢答，准备抢锁
+[15:10:30.708] _process_client_msg: [hhh] 拿到锁
+[15:10:30.709] _process_client_msg: [hhh] 抢答成功！first_buzzer 设为 hhh
+[15:10:54.675] >>> _start_buzz 被调用
+[15:10:54.676] _start_buzz 准备抢锁, clients=['hhh']
+[15:14:45.959] _handle_client 新连接: ('10.8.51.7', 57414)
+[15:14:45.959] _handle_client 选手名称: lll
+[15:14:45.964] _broadcast 开始: type=system, clients_count=1
+[15:14:45.964] _broadcast 已发送给 [lll]
+[15:14:45.965] _broadcast 结束: type=system
+[15:15:09.389] >>> _start_buzz 被调用
+[15:15:09.390] _start_buzz 准备抢锁, clients=['lll']
+[15:15:09.390] _start_buzz 拿到锁
+[15:15:09.390] _start_buzz 开始第 1 轮
+[15:15:09.402] _start_buzz 准备广播 round_start
+[15:15:09.403] _broadcast 开始: type=round_start, clients_count=1
+[15:15:09.403] _broadcast 已发送给 [lll]
+[15:15:09.404] _broadcast 结束: type=round_start
+[15:15:09.404] _start_buzz round_start 广播完毕
+[15:15:09.404] _broadcast 开始: type=question, clients_count=1
+[15:15:09.405] _broadcast 已发送给 [lll]
+[15:15:09.405] _broadcast 结束: type=question
+[15:15:09.405] _start_buzz question 广播完毕
+[15:15:09.405] <<< _start_buzz 释放锁，正常退出
+[15:15:12.390] _process_client_msg: [lll] type=buzz
+[15:15:12.390] _process_client_msg: [lll] 尝试抢答，准备抢锁
+[15:15:12.391] _process_client_msg: [lll] 拿到锁
+[15:15:12.391] _process_client_msg: [lll] 抢答成功！first_buzzer 设为 lll

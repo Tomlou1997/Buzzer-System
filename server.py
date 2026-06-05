@@ -15,6 +15,15 @@ import time
 from datetime import datetime
 
 
+DEBUG = True  # 设置为 False 可关闭 debug 日志
+
+def debug_log(msg):
+    if DEBUG:
+        ts = datetime.now().strftime("%H:%M:%S.%f")[:12]
+        with open(os.path.join(os.path.dirname(__file__) or ".", "server_debug.log"), "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] {msg}\n")
+
+
 class QuizServer:
     def __init__(self, root):
         self.root = root
@@ -491,19 +500,25 @@ class QuizServer:
 
     def _start_buzz(self):
         """开始抢答：把当前题目发送给所有选手"""
+        debug_log(">>> _start_buzz 被调用")
         if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
             self._log("⚠️ 请先在题库中选择一道题")
+            debug_log("<<< _start_buzz 退出: 无有效题目")
             return
 
         if not self.clients:
             self._log("⚠️ 没有选手连接，无法开始抢答")
+            debug_log("<<< _start_buzz 退出: 无客户端连接")
             return
 
+        debug_log(f"_start_buzz 准备抢锁, clients={list(self.clients.keys())}")
         with self.lock:
+            debug_log("_start_buzz 拿到锁")
             q = self.questions[self.current_question_index]
             self.round_num += 1
             self.round_active = True
             self.first_buzzer = None
+            debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
 
@@ -512,8 +527,12 @@ class QuizServer:
 
             self._log(f"🟢 === 第 {self.round_num} 轮: 第 {self.current_question_index+1} 题（{q['points']} 分）===")
             self.buzz_banner.config(text=f"🟢 第 {self.round_num} 轮抢答进行中...", bg="#4CAF50")
+            debug_log("_start_buzz 准备广播 round_start")
             self._broadcast({"type": "round_start", "round": self.round_num, "msg": f"🟢 第 {self.round_num} 轮抢答开始！按 空格键 或 回车键 抢答！"})
+            debug_log("_start_buzz round_start 广播完毕")
             self._broadcast({"type": "question", "msg": f"📝 第 {self.current_question_index+1} 题（{q['points']} 分）: {q['question']}"})
+            debug_log("_start_buzz question 广播完毕")
+        debug_log("<<< _start_buzz 释放锁，正常退出")
 
     def _stop_round(self):
         with self.lock:
@@ -523,6 +542,40 @@ class QuizServer:
         self.buzz_banner.config(text="⏳ 抢答已结束，准备下一题", bg="#FF9800")
         self._log("🔴 本轮抢答已手动结束")
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
+
+    def _award_score(self, name):
+        """抢答成功后答对给分"""
+        pts = 10
+        if 0 <= self.current_question_index < len(self.questions):
+            pts = self.questions[self.current_question_index]["points"]
+        with self.lock:
+            if name in self.clients:
+                self.clients[name]["score"] += pts
+                self._log(f"✅ [{name}] 答对 +{pts} 分 → {self.clients[name]['score']}")
+                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
+        self._update_player_list()
+        self._reset_judge_buttons()
+        self.buzz_banner.config(text=f"✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
+
+    def _penalty_score(self, name):
+        """抢答成功后答错扣分"""
+        pts = 5
+        if 0 <= self.current_question_index < len(self.questions):
+            pts = max(1, self.questions[self.current_question_index]["points"] // 2)
+        with self.lock:
+            if name in self.clients:
+                self.clients[name]["score"] = max(0, self.clients[name]["score"] - pts)
+                self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
+                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
+        self._update_player_list()
+        self._reset_judge_buttons()
+        self.buzz_banner.config(text=f"❌ [{name}] 答错 -{pts} 分", bg="#f44336")
+
+    def _reset_judge_buttons(self):
+        """恢复按钮到默认状态"""
+        self.start_buzz_btn.config(text="开始抢答 🚀", bg="#FF5722", fg="white", width=10, command=self._start_buzz)
+        self.stop_round_btn.config(text="结束本轮 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
+        self.first_buzzer = None
 
     def _send_message_to_all(self):
         msg = self.msg_entry.get().strip()
@@ -593,19 +646,23 @@ class QuizServer:
                 threading.Thread(target=self._handle_client, args=(c, addr), daemon=True).start()
             except socket.timeout:
                 continue
-            except:
+            except Exception as e:
                 if self.running:
                     self._log("接受连接出错")
+                    debug_log(f"_accept_clients 异常: {e}")
 
     def _handle_client(self, c, addr):
+        debug_log(f"_handle_client 新连接: {addr}")
         try:
             data = c.recv(1024).decode("utf-8")
             msg = json.loads(data)
             name = msg.get("name", f"选手{addr[1]}")
+            debug_log(f"_handle_client 选手名称: {name}")
             with self.lock:
                 if name in self.clients:
                     c.send(json.dumps({"type": "error", "msg": "该名称已被使用"}).encode())
                     c.close()
+                    debug_log(f"_handle_client 名称重复: {name}，已拒绝")
                     return
                 self.clients[name] = {"socket": c, "address": addr, "score": 0, "banned": False, "connected": True}
             self._update_player_list()
@@ -622,6 +679,7 @@ class QuizServer:
                 try:
                     data = c.recv(1024)
                     if not data:
+                        debug_log(f"_handle_client [{name}] 收到空数据，断开")
                         break
                     msg = json.loads(data.decode("utf-8"))
                     # 客户端发来的心跳，不做处理，只说明连接还活着
@@ -636,48 +694,83 @@ class QuizServer:
                             c.send(json.dumps({"type": "ping"}).encode())
                             last_heartbeat = now
                         except:
+                            debug_log(f"_handle_client [{name}] 发送心跳失败")
                             break
                     continue
-                except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError):
+                except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError) as e:
+                    debug_log(f"_handle_client [{name}] 网络异常: {e}")
                     break
-                except:
+                except Exception as e:
+                    debug_log(f"_handle_client [{name}] 未知异常: {e}")
                     break
-        except:
+        except Exception as e:
+            debug_log(f"_handle_client [{name}] 初始化异常: {e}")
             pass
         finally:
+            debug_log(f"_handle_client [{name}] 即将移除")
             self._remove_client(name)
 
     def _process_client_msg(self, name, msg):
-        if msg.get("type") == "buzz":
+        msg_type = msg.get("type")
+        debug_log(f"_process_client_msg: [{name}] type={msg_type}")
+        if msg_type == "buzz":
+            debug_log(f"_process_client_msg: [{name}] 尝试抢答，准备抢锁")
             with self.lock:
+                debug_log(f"_process_client_msg: [{name}] 拿到锁")
                 if name not in self.clients:
+                    debug_log(f"_process_client_msg: [{name}] 不在 clients 中，退出")
                     return
                 p = self.clients[name]
                 if p["banned"]:
+                    debug_log(f"_process_client_msg: [{name}] 已被禁赛")
                     self._send_to_player(name, {"type": "error", "msg": "你已被禁赛"})
                     return
                 if not self.round_active:
+                    debug_log(f"_process_client_msg: [{name}] 本轮未激活")
                     self._send_to_player(name, {"type": "error", "msg": "本轮尚未开始"})
                     return
                 if self.first_buzzer is None:
+                    debug_log(f"_process_client_msg: [{name}] 抢答成功！first_buzzer 设为 {name}")
                     self.first_buzzer = name
                     self._log(f"🔔 [{name}] 抢答成功！")
-                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！ 🎉🎉🎉", bg="#FF5722")
-                    # 抢答者收到成功，其他人收到失败
-                    self._send_to_player(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！"})
+                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！请在下方输入答案 🎉🎉🎉", bg="#4CAF50")
+                    # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
+                    self._send_to_player(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案："})
                     for other in list(self.clients.keys()):
                         if other != name:
                             self._send_to_player(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
                     self.round_active = False
-                    self.start_buzz_btn.config(state=tk.NORMAL)
+                    self.start_buzz_btn.config(state=tk.DISABLED)
                     self.stop_round_btn.config(state=tk.DISABLED)
+                    # 显示参考答案供主持人对比
+                    q = self.questions[self.current_question_index]
+                    self.answer_label.config(text=q["answer"], fg="#1565C0")
+                    self.answer_visible = True
+                    self.show_answer_btn.config(text="隐藏答案 🙈")
+                    self._log(f"📋 参考答案: {q['answer']}")
                 else:
                     self._send_to_player(name, {"type": "error", "msg": "已有选手抢答成功"})
+        elif msg_type == "answer":
+            # 选手提交了答案
+            player_answer = msg.get("answer", "")
+            debug_log(f"_process_client_msg: [{name}] 提交答案: {player_answer}")
+            self.buzz_banner.config(text=f"💬 [{name}] 的答案: {player_answer}", bg="#2196F3")
+            self._log(f"💬 [{name}] 提交答案: {player_answer}")
+            self._broadcast({"type": "system", "msg": f"💬 [{name}] 已提交答案，等待主持人判定..."})
+            # 恢复按钮让主持人可以判定
+            self.start_buzz_btn.config(state=tk.NORMAL, text="✅ 答对给分")
+            self.start_buzz_btn.config(bg="#4CAF50", command=lambda: self._award_score(name))
+            self.stop_round_btn.config(state=tk.NORMAL, text="❌ 答错扣分")
+            self.stop_round_btn.config(bg="#f44336", command=lambda: self._penalty_score(name))
+            self._send_to_player(name, {"type": "answer_received", "msg": "答案已提交，等待主持人判定"})
 
     def _remove_client(self, name):
+        debug_log(f"_remove_client: [{name}] 准备抢锁")
         with self.lock:
+            debug_log(f"_remove_client: [{name}] 拿到锁")
             if name in self.clients:
                 del self.clients[name]
+                debug_log(f"_remove_client: [{name}] 已从 clients 移除")
         self._update_player_list()
         self._log(f"❌ 选手 [{name}] 已断开")
         self._broadcast({"type": "system", "msg": f"选手 [{name}] 离开了比赛"})
@@ -691,15 +784,21 @@ class QuizServer:
                     pass
 
     def _broadcast(self, msg):
+        msg_type = msg.get("type", "unknown")
+        debug_log(f"_broadcast 开始: type={msg_type}, clients_count={len(self.clients)}")
         disc = []
         for n, i in self.clients.items():
             try:
                 i["socket"].send(json.dumps(msg).encode())
-            except:
+                debug_log(f"_broadcast 已发送给 [{n}]")
+            except Exception as e:
+                debug_log(f"_broadcast 发送给 [{n}] 失败: {e}")
                 disc.append(n)
         for n in disc:
             if n in self.clients:
                 del self.clients[n]
+                debug_log(f"_broadcast 已移除断线客户端 [{n}]")
+        debug_log(f"_broadcast 结束: type={msg_type}")
 
     def _update_player_list(self):
         def upd():
