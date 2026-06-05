@@ -153,6 +153,12 @@ class QuizServer:
         )
         self.reset_score_btn.pack(side=tk.LEFT, padx=2)
 
+        self.rank_btn = tk.Button(
+            ctrl_frame, text="📊 积分榜", font=("微软雅黑", 9),
+            bg="#9C27B0", fg="white", width=10, command=self._show_rankings
+        )
+        self.rank_btn.pack(side=tk.LEFT, padx=2)
+
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
@@ -696,6 +702,80 @@ class QuizServer:
         # 为新锁定排名的选手广播提示
         for n, s, r in newly_ranked:
             self._broadcast({"type": "system", "msg": f"🏆 [{n}] 获得第{r}名！当前得分: {s}"})
+
+    def _show_rankings(self):
+        """弹出全屏积分排名窗口"""
+        if not self.clients:
+            messagebox.showinfo("提示", "暂无选手数据")
+            return
+
+        win = tk.Toplevel(self.root)
+        win.title("📊 积分排名榜")
+        win.attributes("-fullscreen", True)
+        win.attributes("-topmost", True)
+        win.configure(bg="#1a1a2e")
+
+        # 关闭按钮
+        close_btn = tk.Button(win, text="✕ 关闭", font=("微软雅黑", 14),
+                              bg="#f44336", fg="white", bd=0,
+                              command=lambda: self._close_rankings(win))
+        close_btn.place(x=20, y=20, width=100, height=40)
+
+        # 标题
+        title_lbl = tk.Label(win, text="🏆 积分排名榜 🏆",
+                             font=("微软雅黑", 36, "bold"),
+                             bg="#1a1a2e", fg="#FFD700")
+        title_lbl.pack(pady=(40, 20))
+
+        # 排名列表
+        with self.lock:
+            sorted_pl = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+
+        rank_icons = {0: "🥇", 1: "🥈", 2: "🥉"}
+        rank_scores = [0, 0, 0]  # 仅用于视觉
+
+        for i, (name, data) in enumerate(sorted_pl):
+            icon = rank_icons.get(i, f"  {i+1}")
+            # 检查是否已锁定排名
+            locked = ""
+            for rn, rs, rr in self.ranked_players:
+                if rn == name:
+                    locked = f" [第{rr}名 ✅]"
+                    break
+
+            row_frame = tk.Frame(win, bg="#16213e", highlightbackground="#FFD700",
+                                 highlightthickness=1 if i < 3 else 0)
+            row_frame.pack(fill=tk.X, padx=80, pady=5)
+
+            # 选手名
+            tk.Label(row_frame, text=f"{icon}  {name}",
+                     font=("微软雅黑", 28, "bold"),
+                     bg="#16213e", fg="white").pack(side=tk.LEFT, padx=30, pady=12)
+
+            # 分数
+            score_color = "#4CAF50" if data["score"] >= 0 else "#f44336"
+            tk.Label(row_frame, text=f"{data['score']} 分{locked}",
+                     font=("微软雅黑", 28, "bold"),
+                     bg="#16213e", fg=score_color).pack(side=tk.RIGHT, padx=30, pady=12)
+
+        # 底部
+        if self.game_over:
+            tk.Label(win, text="🏁 比赛已结束",
+                     font=("微软雅黑", 20),
+                     bg="#1a1a2e", fg="#9E9E9E").pack(pady=20)
+        else:
+            tk.Label(win, text="⏳ 比赛进行中...",
+                     font=("微软雅黑", 20),
+                     bg="#1a1a2e", fg="#4CAF50").pack(pady=20)
+
+        # 备份窗口引用以便关闭
+        self._rank_window = win
+
+    def _close_rankings(self, win=None):
+        w = win or getattr(self, '_rank_window', None)
+        if w:
+            w.destroy()
+            self._rank_window = None
 
     def _award_score(self, name):
         """抢答成功后答对给分"""

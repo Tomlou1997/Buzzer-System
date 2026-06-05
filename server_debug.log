@@ -771,3 +771,26 @@
 [17:11:54.568] _broadcast 开始: type=system, clients_count=1
 [17:11:54.569] _broadcast 已发送给 [IT]
 [17:11:54.569] _broadcast 结束: type=system
+[17:28:28.015] >>> _start_buzz 被调用
+[17:28:28.016] _start_buzz 准备抢锁, clients=['IT']
+[17:28:28.016] _start_buzz 拿到锁
+[17:28:28.016] _start_buzz 开始第 2 轮
+[17:28:28.017] _start_buzz 准备广播 round_start
+[17:28:28.017] _broadcast 开始: type=round_start, clients_count=1
+[17:28:28.018] _broadcast 已发送给 [IT]
+[17:28:28.018] _broadcast 结束: type=round_start
+[17:28:28.018] _start_buzz round_start 广播完毕
+[17:28:28.019] _broadcast 开始: type=question, clients_count=1
+[17:28:28.019] _broadcast 已发送给 [IT]
+[17:28:28.019] _broadcast 结束: type=question
+[17:28:28.019] _start_buzz question 广播完毕
+[17:28:28.020] <<< _start_buzz 释放锁，正常退出
+[17:28:34.220] _handle_client [IT] 收到空数据，断开
+[17:28:34.221] _handle_client [IT] 即将移除
+[17:28:34.221] _remove_client: [IT] 准备抢锁
+[17:28:34.222] _remove_client: [IT] 拿到锁
+[17:28:34.222] _remove_client: [IT] 已从 clients 移除
+[17:28:34.227] _broadcast 开始: type=system, clients_count=0
+[17:28:34.227] _broadcast 结束: type=system
+[17:29:19.349] _broadcast 开始: type=shutdown, clients_count=0
+[17:29:19.349] _broadcast 结束: type=shutdown
