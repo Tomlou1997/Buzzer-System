@@ -696,3 +696,37 @@
 [17:07:12.154] _broadcast 开始: type=system, clients_count=1
 [17:07:12.154] _broadcast 已发送给 [10.8.51.7]
 [17:07:12.154] _broadcast 结束: type=system
+[17:07:44.801] _handle_client [10.8.51.7] 收到空数据，断开
+[17:07:44.802] _handle_client [10.8.51.7] 即将移除
+[17:07:44.802] _remove_client: [10.8.51.7] 准备抢锁
+[17:07:44.803] _remove_client: [10.8.51.7] 拿到锁
+[17:07:44.803] _remove_client: [10.8.51.7] 已从 clients 移除
+[17:07:44.808] _broadcast 开始: type=system, clients_count=0
+[17:07:44.809] _broadcast 结束: type=system
+[17:07:44.839] _handle_client [10.8.51.7] 网络异常: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+[17:07:44.839] _handle_client [10.8.51.7] 即将移除
+[17:07:44.839] _remove_client: [10.8.51.7] 准备抢锁
+[17:07:44.840] _remove_client: [10.8.51.7] 拿到锁
+[17:07:44.841] _broadcast 开始: type=system, clients_count=0
+[17:07:44.841] _broadcast 结束: type=system
+[17:07:47.386] _broadcast 开始: type=shutdown, clients_count=0
+[17:07:47.387] _broadcast 结束: type=shutdown
+[17:08:15.761] _handle_client 新连接: ('10.8.51.7', 33936)
+[17:08:15.762] _handle_client 选手名称: IT
+[17:08:15.777] _broadcast 开始: type=system, clients_count=1
+[17:08:15.778] _broadcast 已发送给 [IT]
+[17:08:15.778] _broadcast 结束: type=system
+[17:08:49.688] _handle_client 新连接: ('10.8.51.7', 3928)
+[17:08:49.689] _handle_client 选手名称: IT
+[17:08:49.689] _handle_client 名称重复: IT，已拒绝
+[17:08:49.690] _handle_client [IT] 即将移除
+[17:08:49.690] _remove_client: [IT] 准备抢锁
+[17:08:49.690] _remove_client: [IT] 拿到锁
+[17:08:49.690] _remove_client: [IT] 已从 clients 移除
+[17:08:49.692] _broadcast 开始: type=system, clients_count=0
+[17:08:49.692] _broadcast 结束: type=system
+[17:09:41.130] _handle_client 新连接: ('10.8.51.7', 31612)
+[17:09:41.131] _handle_client 选手名称: IT
+[17:09:41.134] _broadcast 开始: type=system, clients_count=1
+[17:09:41.134] _broadcast 已发送给 [IT]
+[17:09:41.135] _broadcast 结束: type=system

@@ -325,7 +325,7 @@ class QuizClient:
         """连接成功后的界面更新"""
         self._hide_answer_mode()
         self.status_label.config(text="🟢 已连接", fg="green")
-        self.connect_btn.config(state=tk.NORMAL, text="已连接 ✅")
+        self.connect_btn.config(state=tk.DISABLED, text="已连接 ✅")
         self.ip_entry.config(state=tk.DISABLED)
         self.name_entry.config(state=tk.DISABLED)
         self._log(f"✅ 已连接到服务器 [{self.ip_var.get()}]")
