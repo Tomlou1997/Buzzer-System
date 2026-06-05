@@ -42,6 +42,7 @@ class QuizServer:
         self.questions = []
         self.current_question_index = -1
         self.question_file_path = ""
+        self._last_answer = ""  # 选手最后一次提交的答案
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -163,20 +164,22 @@ class QuizServer:
         self.show_answer_btn.pack(side=tk.RIGHT)
         self.answer_visible = False
 
-        list_frame = tk.Frame(question_frame)
-        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        tk.Label(list_frame, text="题目列表:", font=("微软雅黑", 9)).pack(anchor=tk.W)
-        list_scroll = tk.Frame(list_frame)
-        list_scroll.pack(fill=tk.BOTH, expand=True)
-        self.question_listbox = tk.Listbox(
-            list_scroll, font=("微软雅黑", 9), height=6,
-            selectmode=tk.SINGLE, activestyle="none"
-        )
-        self.question_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.question_listbox.bind("<<ListboxSelect>>", self._on_question_select)
-        q_vsb = tk.Scrollbar(list_scroll, orient="vertical", command=self.question_listbox.yview)
-        self.question_listbox.configure(yscrollcommand=q_vsb.set)
-        q_vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        # === 抢答记录（替换原来的题目列表） ===
+        record_frame = tk.LabelFrame(question_frame, text="📋 抢答记录", font=("微软雅黑", 10))
+        record_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        rec_columns = ("answer", "result", "correct")
+        self.record_tree = ttk.Treeview(record_frame, columns=rec_columns, show="headings", height=8)
+        self.record_tree.heading("answer", text="选手答案")
+        self.record_tree.heading("result", text="结果")
+        self.record_tree.heading("correct", text="正确答案")
+        self.record_tree.column("answer", width=120, anchor="center")
+        self.record_tree.column("result", width=80, anchor="center")
+        self.record_tree.column("correct", width=120, anchor="center")
+        rec_vsb = ttk.Scrollbar(record_frame, orient="vertical", command=self.record_tree.yview)
+        self.record_tree.configure(yscrollcommand=rec_vsb.set)
+        self.record_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
+        rec_vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
         # === 中部右：选手 ===
         player_frame = tk.LabelFrame(mid_frame, text="👥 选手管理", font=("微软雅黑", 10))
@@ -275,7 +278,7 @@ class QuizServer:
             )
             self._log(f"📚 成功导入题库: {os.path.basename(file_path)} — 共 {len(questions)} 题")
             if questions:
-                self.question_listbox.selection_set(0)
+                self._show_question(0)
         except Exception as e:
             messagebox.showerror("导入失败", f"读取文件出错:\n{e}")
 
@@ -426,10 +429,7 @@ class QuizServer:
         return questions
 
     def _update_question_list(self):
-        self.question_listbox.delete(0, tk.END)
-        for i, q in enumerate(self.questions):
-            text = q["question"][:30] + ("..." if len(q["question"]) > 30 else "")
-            self.question_listbox.insert(tk.END, f"{i+1}. {text}")
+        self.record_tree.delete(*self.record_tree.get_children())
 
     def _update_progress(self):
         total = len(self.questions)
@@ -473,27 +473,21 @@ class QuizServer:
             self.answer_label.config(text='(点击"显示答案"查看)')
             self.show_answer_btn.config(text="显示答案 👁")
 
-    def _on_question_select(self, event):
-        selection = self.question_listbox.curselection()
-        if selection:
-            self._show_question(selection[0])
-            self.start_buzz_btn.config(state=tk.NORMAL)
-            self._log(f"📋 已选中第 {selection[0]+1} 题，点击「开始抢答 🚀」发送给选手")
+    def _add_record(self, player_answer, result, correct_answer):
+        """添加一条抢答记录"""
+        self.record_tree.insert("", 0, values=(player_answer, result, correct_answer))
 
     def _next_question(self):
-        """切换到下一题（仅本地预览）"""
+        """切换到下一题"""
         if not self.questions:
             self._log("⚠️ 请先导入题库")
             return
 
-        # 移到下一题
         next_idx = self.current_question_index + 1
         if next_idx >= len(self.questions):
             self._log("📋 已到最后一题")
             return
 
-        self.question_listbox.selection_clear(0, tk.END)
-        self.question_listbox.selection_set(next_idx)
         self._show_question(next_idx)
         self.start_buzz_btn.config(state=tk.NORMAL)
         self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
@@ -522,9 +516,6 @@ class QuizServer:
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
 
-            if self.question_listbox.size() > 0:
-                self.question_listbox.itemconfig(self.current_question_index, bg="#E8F5E9")
-
             self._log(f"🟢 === 第 {self.round_num} 轮: 第 {self.current_question_index+1} 题（{q['points']} 分）===")
             self.buzz_banner.config(text=f"🟢 第 {self.round_num} 轮抢答进行中...", bg="#4CAF50")
             debug_log("_start_buzz 准备广播 round_start")
@@ -546,13 +537,16 @@ class QuizServer:
     def _award_score(self, name):
         """抢答成功后答对给分"""
         pts = 10
+        correct = ""
         if 0 <= self.current_question_index < len(self.questions):
             pts = self.questions[self.current_question_index]["points"]
+            correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
                 self.clients[name]["score"] += pts
                 self._log(f"✅ [{name}] 答对 +{pts} 分 → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
+        self._add_record(self._last_answer, "✅ 正确 ✅", correct)
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
@@ -560,13 +554,16 @@ class QuizServer:
     def _penalty_score(self, name):
         """抢答成功后答错扣分"""
         pts = 5
+        correct = ""
         if 0 <= self.current_question_index < len(self.questions):
             pts = max(1, self.questions[self.current_question_index]["points"] // 2)
+            correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
                 self.clients[name]["score"] = max(0, self.clients[name]["score"] - pts)
                 self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
+        self._add_record(self._last_answer, "❌ 错误 ❌", correct)
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"❌ [{name}] 答错 -{pts} 分", bg="#f44336")
@@ -753,6 +750,7 @@ class QuizServer:
         elif msg_type == "answer":
             # 选手提交了答案
             player_answer = msg.get("answer", "")
+            self._last_answer = player_answer
             debug_log(f"_process_client_msg: [{name}] 提交答案: {player_answer}")
             self.buzz_banner.config(text=f"💬 [{name}] 的答案: {player_answer}", bg="#2196F3")
             self._log(f"💬 [{name}] 提交答案: {player_answer}")

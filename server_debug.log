@@ -175,3 +175,110 @@
 [15:37:15.711] _process_client_msg: [IT] 尝试抢答，准备抢锁
 [15:37:15.711] _process_client_msg: [IT] 拿到锁
 [15:37:15.711] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[15:39:46.971] _broadcast 开始: type=shutdown, clients_count=1
+[15:39:46.972] _broadcast 已发送给 [IT]
+[15:39:46.972] _broadcast 结束: type=shutdown
+[15:39:46.973] _handle_client [IT] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[15:39:46.973] _handle_client [IT] 即将移除
+[15:39:46.973] _remove_client: [IT] 准备抢锁
+[15:39:46.974] _remove_client: [IT] 拿到锁
+[15:39:46.974] _remove_client: [IT] 已从 clients 移除
+[15:40:14.095] >>> _start_buzz 被调用
+[15:40:14.110] <<< _start_buzz 退出: 无客户端连接
+[15:40:15.667] _handle_client 新连接: ('10.8.51.7', 34252)
+[15:40:15.668] _handle_client 选手名称: IIT
+[15:40:15.682] _broadcast 开始: type=system, clients_count=1
+[15:40:15.683] _broadcast 已发送给 [IIT]
+[15:40:15.684] _broadcast 结束: type=system
+[15:40:17.329] >>> _start_buzz 被调用
+[15:40:17.329] _start_buzz 准备抢锁, clients=['IIT']
+[15:40:17.330] _start_buzz 拿到锁
+[15:40:17.330] _start_buzz 开始第 1 轮
+[15:40:17.342] _start_buzz 准备广播 round_start
+[15:40:17.342] _broadcast 开始: type=round_start, clients_count=1
+[15:40:17.343] _broadcast 已发送给 [IIT]
+[15:40:17.343] _broadcast 结束: type=round_start
+[15:40:17.343] _start_buzz round_start 广播完毕
+[15:40:17.343] _broadcast 开始: type=question, clients_count=1
+[15:40:17.344] _broadcast 已发送给 [IIT]
+[15:40:17.344] _broadcast 结束: type=question
+[15:40:17.344] _start_buzz question 广播完毕
+[15:40:17.345] <<< _start_buzz 释放锁，正常退出
+[15:40:18.760] _process_client_msg: [IIT] type=buzz
+[15:40:18.760] _process_client_msg: [IIT] 尝试抢答，准备抢锁
+[15:40:18.760] _process_client_msg: [IIT] 拿到锁
+[15:40:18.761] _process_client_msg: [IIT] 抢答成功！first_buzzer 设为 IIT
+[15:40:24.376] _process_client_msg: [IIT] type=answer
+[15:40:24.377] _process_client_msg: [IIT] 提交答案: DE
+[15:40:24.393] _broadcast 开始: type=system, clients_count=1
+[15:40:24.394] _broadcast 已发送给 [IIT]
+[15:40:24.394] _broadcast 结束: type=system
+[15:40:41.624] >>> _start_buzz 被调用
+[15:40:41.625] _start_buzz 准备抢锁, clients=['IIT']
+[15:40:41.625] _start_buzz 拿到锁
+[15:40:41.625] _start_buzz 开始第 2 轮
+[15:40:41.626] _start_buzz 准备广播 round_start
+[15:40:41.627] _broadcast 开始: type=round_start, clients_count=1
+[15:40:41.627] _broadcast 已发送给 [IIT]
+[15:40:41.627] _broadcast 结束: type=round_start
+[15:40:41.627] _start_buzz round_start 广播完毕
+[15:40:41.628] _broadcast 开始: type=question, clients_count=1
+[15:40:41.628] _broadcast 已发送给 [IIT]
+[15:40:41.628] _broadcast 结束: type=question
+[15:40:41.629] _start_buzz question 广播完毕
+[15:40:41.629] <<< _start_buzz 释放锁，正常退出
+[15:40:44.306] _process_client_msg: [IIT] type=buzz
+[15:40:44.307] _process_client_msg: [IIT] 尝试抢答，准备抢锁
+[15:40:44.307] _process_client_msg: [IIT] 拿到锁
+[15:40:44.307] _process_client_msg: [IIT] 抢答成功！first_buzzer 设为 IIT
+[15:40:51.912] _process_client_msg: [IIT] type=answer
+[15:40:51.912] _process_client_msg: [IIT] 提交答案: BC
+[15:40:51.916] _broadcast 开始: type=system, clients_count=1
+[15:40:51.917] _broadcast 已发送给 [IIT]
+[15:40:51.917] _broadcast 结束: type=system
+[15:41:11.760] >>> _start_buzz 被调用
+[15:41:11.760] _start_buzz 准备抢锁, clients=['IIT']
+[15:41:11.761] _start_buzz 拿到锁
+[15:41:11.761] _start_buzz 开始第 3 轮
+[15:41:11.762] _start_buzz 准备广播 round_start
+[15:41:11.762] _broadcast 开始: type=round_start, clients_count=1
+[15:41:11.763] _broadcast 已发送给 [IIT]
+[15:41:11.763] _broadcast 结束: type=round_start
+[15:41:11.763] _start_buzz round_start 广播完毕
+[15:41:11.763] _broadcast 开始: type=question, clients_count=1
+[15:41:11.764] _broadcast 已发送给 [IIT]
+[15:41:11.764] _broadcast 结束: type=question
+[15:41:11.764] _start_buzz question 广播完毕
+[15:41:11.764] <<< _start_buzz 释放锁，正常退出
+[15:41:15.553] _process_client_msg: [IIT] type=buzz
+[15:41:15.553] _process_client_msg: [IIT] 尝试抢答，准备抢锁
+[15:41:15.554] _process_client_msg: [IIT] 拿到锁
+[15:41:15.554] _process_client_msg: [IIT] 抢答成功！first_buzzer 设为 IIT
+[15:41:22.370] _process_client_msg: [IIT] type=answer
+[15:41:22.371] _process_client_msg: [IIT] 提交答案: BCE
+[15:41:22.373] _broadcast 开始: type=system, clients_count=1
+[15:41:22.374] _broadcast 已发送给 [IIT]
+[15:41:22.374] _broadcast 结束: type=system
+[15:41:28.258] >>> _start_buzz 被调用
+[15:41:28.258] _start_buzz 准备抢锁, clients=['IIT']
+[15:41:28.259] _start_buzz 拿到锁
+[15:41:28.259] _start_buzz 开始第 4 轮
+[15:41:28.260] _start_buzz 准备广播 round_start
+[15:41:28.260] _broadcast 开始: type=round_start, clients_count=1
+[15:41:28.260] _broadcast 已发送给 [IIT]
+[15:41:28.261] _broadcast 结束: type=round_start
+[15:41:28.261] _start_buzz round_start 广播完毕
+[15:41:28.261] _broadcast 开始: type=question, clients_count=1
+[15:41:28.261] _broadcast 已发送给 [IIT]
+[15:41:28.262] _broadcast 结束: type=question
+[15:41:28.262] _start_buzz question 广播完毕
+[15:41:28.262] <<< _start_buzz 释放锁，正常退出
+[15:41:30.312] _process_client_msg: [IIT] type=buzz
+[15:41:30.313] _process_client_msg: [IIT] 尝试抢答，准备抢锁
+[15:41:30.313] _process_client_msg: [IIT] 拿到锁
+[15:41:30.314] _process_client_msg: [IIT] 抢答成功！first_buzzer 设为 IIT
+[15:41:35.904] _process_client_msg: [IIT] type=answer
+[15:41:35.905] _process_client_msg: [IIT] 提交答案: AE
+[15:41:35.908] _broadcast 开始: type=system, clients_count=1
+[15:41:35.908] _broadcast 已发送给 [IIT]
+[15:41:35.909] _broadcast 结束: type=system
