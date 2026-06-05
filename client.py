@@ -540,7 +540,7 @@ class QuizClient:
     def _on_close(self):
         """关闭窗口"""
         if self.connected:
-            if messagebox.askokcancel("退出", "确定要断开连接并退出吗？"):
+            if messagebox.askokcancel("退出", "⚠️ 你要退出视为放弃比赛资格，确认要退出吗？"):
                 self.connected = False
                 if self.socket:
                     try:
