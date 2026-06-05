@@ -43,7 +43,7 @@ class QuizServer:
         self.current_question_index = -1
         self.question_file_path = ""
         self._last_answer = ""  # 选手最后一次提交的答案
-        self.auto_judge_var = tk.BooleanVar(value=False)  # 自动判题开关
+        self.auto_judge_var = tk.BooleanVar(value=True)  # 自动判题开关，默认开启
 
         # 分数配置
         self.correct_points = 2   # 答对加分

@@ -669,3 +669,11 @@
 [17:01:57.383] _broadcast 开始: type=system, clients_count=1
 [17:01:57.384] _broadcast 已发送给 [IT]
 [17:01:57.384] _broadcast 结束: type=system
+[17:05:27.681] _broadcast 开始: type=shutdown, clients_count=1
+[17:05:27.682] _broadcast 已发送给 [IT]
+[17:05:27.682] _broadcast 结束: type=shutdown
+[17:05:27.683] _handle_client [IT] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[17:05:27.683] _handle_client [IT] 即将移除
+[17:05:27.683] _remove_client: [IT] 准备抢锁
+[17:05:27.684] _remove_client: [IT] 拿到锁
+[17:05:27.684] _remove_client: [IT] 已从 clients 移除
