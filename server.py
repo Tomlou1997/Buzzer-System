@@ -635,7 +635,7 @@ class QuizServer:
         self._add_record(self._last_answer, "✅ 正确 ✅", correct)
         self._update_player_list()
         self._reset_judge_buttons()
-        self.buzz_banner.config(text=f"✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
+        self.buzz_banner.config(text=f"💬 [{name}] 答案: {self._last_answer} | 正确答案: {correct}  ✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
 
     def _penalty_score(self, name):
         """抢答成功后答错扣分"""
@@ -651,7 +651,7 @@ class QuizServer:
         self._add_record(self._last_answer, "❌ 错误 ❌", correct)
         self._update_player_list()
         self._reset_judge_buttons()
-        self.buzz_banner.config(text=f"❌ [{name}] 答错 -{pts} 分", bg="#f44336")
+        self.buzz_banner.config(text=f"💬 [{name}] 答案: {self._last_answer} | 正确答案: {correct}  ❌ [{name}] 答错 -{pts} 分", bg="#f44336")
 
     def _reset_judge_buttons(self):
         """恢复按钮到默认状态"""
