@@ -853,7 +853,7 @@ class QuizServer:
                     debug_log(f"_process_client_msg: [{name}] 抢答成功！first_buzzer 设为 {name}")
                     self.first_buzzer = name
                     self._log(f"🔔 [{name}] 抢答成功！")
-                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！请在下方输入答案 🎉🎉🎉", bg="#4CAF50")
+                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
                     self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案："})
                     for other in list(self.clients.keys()):
