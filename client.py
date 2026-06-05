@@ -1,5 +1,5 @@
 """
-抢答软件 - 客户端
+抢答软件 - 客户端 v2.0
 选手在此连接服务器、抢答、查看信息
 """
 
@@ -12,12 +12,14 @@ import time
 
 
 class QuizClient:
+    OPTIONS = ["A", "B", "C", "D", "E", "F"]
+
     def __init__(self, root):
         self.root = root
         self.root.title("抢答软件 - 客户端 v2.0")
-        self.root.geometry("600x550")
+        self.root.geometry("600x580")
         self.root.resizable(True, True)
-        self.root.minsize(500, 450)
+        self.root.minsize(500, 480)
 
         # 全屏状态
         self.fullscreen = False
@@ -27,7 +29,10 @@ class QuizClient:
         self.connected = False
         self.player_name = ""
         self.buzzed = False  # 本轮是否已抢答
-        self.answering = False  # 是否在答案输入模式
+        self.answering = False  # 是否在答案选择模式
+
+        # 答案选择状态
+        self.selected_options = {}  # {"A": tk.BooleanVar, ...}
 
         # 设置界面
         self._build_ui()
@@ -89,12 +94,10 @@ class QuizClient:
         )
         self.fs_btn.pack(side=tk.RIGHT, padx=2)
 
-        # ====== 中间主区域：抢答按钮 / 答案输入（互斥显示） ======
-        self.main_area = tk.Frame(self.root)
-        self.main_area.pack(fill=tk.X, padx=10, pady=5)
+        # ====== 主区域：抢答按钮（默认显示） ======
+        self.buzz_frame = tk.Frame(self.root)
+        self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
 
-        # --- 模式1：抢答按钮 ---
-        self.buzz_frame = tk.Frame(self.main_area, height=100)
         self.buzz_btn = tk.Button(
             self.buzz_frame,
             text="🔒 未连接服务器\n请先填写信息并连接",
@@ -105,7 +108,6 @@ class QuizClient:
             command=self._buzz
         )
         self.buzz_btn.pack(fill=tk.BOTH, expand=True)
-        self.buzz_frame.pack(fill=tk.X)
 
         # 抢答操作提示
         self.hint_label = tk.Label(
@@ -116,38 +118,49 @@ class QuizClient:
         )
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
 
-        # --- 模式2：答案输入（默认隐藏） ---
-        self.answer_frame = tk.Frame(self.root)
-        answer_title = tk.Label(
-            self.answer_frame, text="✏️ 你抢到了！请输入你的答案：",
-            font=("微软雅黑", 12, "bold"), fg="#4CAF50"
-        )
-        answer_title.pack(anchor=tk.W, padx=5, pady=(5, 2))
+        # ====== 答案选择区（默认隐藏，抢到答后显示） ======
+        self.answer_frame = tk.LabelFrame(self.root, text="✏️ 请选择答案", font=("微软雅黑", 11, "bold"), fg="#4CAF50")
 
-        answer_row = tk.Frame(self.answer_frame)
-        answer_row.pack(fill=tk.X, padx=5, pady=5)
+        # 选项按钮（两行三列）
+        opt_grid = tk.Frame(self.answer_frame)
+        opt_grid.pack(pady=10)
 
-        self.answer_var = tk.StringVar()
-        self.answer_entry = tk.Entry(
-            answer_row, textvariable=self.answer_var,
-            font=("微软雅黑", 14), state=tk.DISABLED
-        )
-        self.answer_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8), ipady=8)
+        opt_labels = [
+            ("A", "#FF5722"), ("B", "#2196F3"), ("C", "#4CAF50"),
+            ("D", "#9C27B0"), ("E", "#FF9800"), ("F", "#607D8B")
+        ]
+
+        self.option_vars = {}
+        self.option_btns = {}
+
+        for i, (label, color) in enumerate(opt_labels):
+            var = tk.BooleanVar()
+            self.option_vars[label] = var
+            btn = tk.Checkbutton(
+                opt_grid, text=f"  {label}  ",
+                font=("微软雅黑", 14, "bold"),
+                variable=var,
+                fg=color,
+                width=4,
+                indicatoron=False,
+                selectcolor="#E8F5E9"
+            )
+            btn.grid(row=i // 3, column=i % 3, padx=8, pady=5)
+            self.option_btns[label] = btn
+
+        # 提交按钮行
+        submit_row = tk.Frame(self.answer_frame)
+        submit_row.pack(fill=tk.X, pady=(5, 10))
+
+        tk.Label(submit_row, text="可多选，点击选项后提交", font=("微软雅黑", 9), fg="#666").pack(side=tk.LEFT, padx=10)
 
         self.submit_answer_btn = tk.Button(
-            answer_row, text="提交答案 📤",
+            submit_row, text="提交答案 📤",
             font=("微软雅黑", 11, "bold"),
             bg="#2196F3", fg="white", state=tk.DISABLED,
             command=self._submit_answer
         )
-        self.submit_answer_btn.pack(side=tk.RIGHT)
-
-        answer_hint = tk.Label(
-            self.answer_frame,
-            text="💡 输入答案后按 回车键(Enter) 或点击「提交答案」按钮",
-            font=("微软雅黑", 9), fg="#666"
-        )
-        answer_hint.pack(anchor=tk.W, padx=5, pady=(0, 5))
+        self.submit_answer_btn.pack(side=tk.RIGHT, padx=10)
 
         # ====== 底部：信息显示 ======
         info_frame = tk.LabelFrame(self.root, text="信息", font=("微软雅黑", 10))
@@ -194,21 +207,21 @@ class QuizClient:
             self.info_text.config(state=tk.DISABLED)
 
     def _show_answer_mode(self):
-        """切换到答案输入模式"""
+        """切换到答案选择模式"""
         self.answering = True
         self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
-        self.answer_frame.pack(fill=tk.X, padx=10, pady=10)
-        self.answer_var.set("")
-        self.answer_entry.config(state=tk.NORMAL)
-        self.answer_entry.focus()
+        # 重置所有选项
+        for var in self.option_vars.values():
+            var.set(False)
         self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤")
+        self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.root.pack_slaves()[0])
 
     def _hide_answer_mode(self):
-        """隐藏答案输入，恢复抢答模式"""
+        """隐藏答案选择，恢复抢答模式"""
         self.answering = False
         self.answer_frame.pack_forget()
-        self.buzz_frame.pack(fill=tk.X)
+        self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
 
     def _connect(self):
@@ -284,7 +297,6 @@ class QuizClient:
 
     def _receive_loop(self):
         """接收消息循环"""
-        # 设置 socket 超时，避免 recv 永久阻塞
         try:
             self.socket.settimeout(8)
         except:
@@ -298,12 +310,10 @@ class QuizClient:
                 msg = json.loads(data.decode("utf-8"))
                 self.root.after(0, self._handle_message, msg)
             except socket.timeout:
-                # 超时正常，继续循环
                 continue
             except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 break
 
-        # 断开连接
         self.connected = False
         self.root.after(0, self._on_disconnect)
 
@@ -312,7 +322,6 @@ class QuizClient:
         msg_type = msg.get("type")
 
         if msg_type == "ping":
-            # 心跳检测：回复 pong
             try:
                 self.socket.send(json.dumps({"type": "pong"}).encode())
             except:
@@ -353,18 +362,14 @@ class QuizClient:
         elif msg_type == "buzz_result":
             winner = msg.get("winner", False)
             if winner:
-                # 抢到了！切换到答案输入模式
+                # 抢到了！切换到答案选择模式
                 self.buzz_btn.config(
                     state=tk.DISABLED,
                     bg="#4CAF50",
-                    text="🎉🎉 抢答成功！ ✏️ 请输入答案"
+                    text="🎉🎉 抢答成功！请选择答案"
                 )
-                self.info_text.config(state=tk.NORMAL)
-                self.info_text.insert(tk.END, "🎉🎉🎉 太棒了！你抢答成功了！请在下方输入你的答案 🎉🎉🎉\n")
-                self.info_text.see(tk.END)
-                self.info_text.config(state=tk.DISABLED)
+                self._log("🎉🎉🎉 太棒了！你抢答成功了！请选择答案 A-F（可多选） 🎉🎉🎉")
                 self._flash_btn()
-                # 切换到答案输入
                 self._show_answer_mode()
             else:
                 # 没抢到
@@ -427,16 +432,19 @@ class QuizClient:
             self._on_disconnect()
 
     def _submit_answer(self):
-        """提交答案"""
+        """提交选择的答案"""
         if not self.answering:
             return
-        answer = self.answer_var.get().strip()
-        if not answer:
+        selected = [k for k, v in self.option_vars.items() if v.get()]
+        if not selected:
             return
+        answer_str = "".join(selected)
         try:
-            self.socket.send(json.dumps({"type": "answer", "answer": answer}).encode())
-            self._log(f"📤 答案已提交: {answer}")
-            self.answer_entry.config(state=tk.DISABLED)
+            self.socket.send(json.dumps({"type": "answer", "answer": answer_str}).encode())
+            self._log(f"📤 答案已提交: {answer_str}")
+            # 禁用所有选项按钮
+            for btn in self.option_btns.values():
+                btn.config(state=tk.DISABLED)
             self.submit_answer_btn.config(state=tk.DISABLED, text="已提交 ✅")
             self.answering = False
         except:
@@ -444,12 +452,10 @@ class QuizClient:
             self._on_disconnect()
 
     def _on_key_return(self, event):
-        """回车键处理：先判断是否在答案模式，再判断是否抢答"""
+        """回车键处理"""
         if self.answering:
-            # 答案模式：提交答案
             self._submit_answer()
             return "break"
-        # 抢答模式
         if self.buzz_btn["state"] == tk.NORMAL:
             self._buzz()
             return "break"
@@ -457,7 +463,7 @@ class QuizClient:
     def _on_buzz_key(self, event):
         """空格触发抢答"""
         if self.answering:
-            return  # 答案模式下空格不抢答
+            return
         if self.buzz_btn["state"] == tk.NORMAL:
             self._buzz()
             return "break"
