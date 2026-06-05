@@ -730,3 +730,44 @@
 [17:09:41.134] _broadcast 开始: type=system, clients_count=1
 [17:09:41.134] _broadcast 已发送给 [IT]
 [17:09:41.135] _broadcast 结束: type=system
+[17:11:18.706] _handle_client [IT] 收到空数据，断开
+[17:11:18.706] _handle_client [IT] 即将移除
+[17:11:18.707] _remove_client: [IT] 准备抢锁
+[17:11:18.707] _remove_client: [IT] 拿到锁
+[17:11:18.707] _remove_client: [IT] 已从 clients 移除
+[17:11:18.711] _broadcast 开始: type=system, clients_count=0
+[17:11:18.711] _broadcast 结束: type=system
+[17:11:18.744] _handle_client [IT] 网络异常: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+[17:11:18.744] _handle_client [IT] 即将移除
+[17:11:18.745] _remove_client: [IT] 准备抢锁
+[17:11:18.745] _remove_client: [IT] 拿到锁
+[17:11:18.746] _broadcast 开始: type=system, clients_count=0
+[17:11:18.747] _broadcast 结束: type=system
+[17:11:36.711] _handle_client 新连接: ('10.8.51.7', 7895)
+[17:11:36.711] _handle_client 选手名称: IT
+[17:11:36.717] _broadcast 开始: type=system, clients_count=1
+[17:11:36.717] _broadcast 已发送给 [IT]
+[17:11:36.717] _broadcast 结束: type=system
+[17:11:50.485] >>> _start_buzz 被调用
+[17:11:50.485] _start_buzz 准备抢锁, clients=['IT']
+[17:11:50.486] _start_buzz 拿到锁
+[17:11:50.486] _start_buzz 开始第 1 轮
+[17:11:50.498] _start_buzz 准备广播 round_start
+[17:11:50.499] _broadcast 开始: type=round_start, clients_count=1
+[17:11:50.499] _broadcast 已发送给 [IT]
+[17:11:50.499] _broadcast 结束: type=round_start
+[17:11:50.499] _start_buzz round_start 广播完毕
+[17:11:50.500] _broadcast 开始: type=question, clients_count=1
+[17:11:50.500] _broadcast 已发送给 [IT]
+[17:11:50.500] _broadcast 结束: type=question
+[17:11:50.501] _start_buzz question 广播完毕
+[17:11:50.501] <<< _start_buzz 释放锁，正常退出
+[17:11:51.220] _process_client_msg: [IT] type=buzz
+[17:11:51.221] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[17:11:51.221] _process_client_msg: [IT] 拿到锁
+[17:11:51.221] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[17:11:54.501] _process_client_msg: [IT] type=answer
+[17:11:54.504] _process_client_msg: [IT] 提交答案: BC
+[17:11:54.568] _broadcast 开始: type=system, clients_count=1
+[17:11:54.569] _broadcast 已发送给 [IT]
+[17:11:54.569] _broadcast 结束: type=system

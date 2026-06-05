@@ -49,8 +49,10 @@ class QuizServer:
         self.correct_points = 2   # 答对加分
         self.wrong_points = 1     # 答错扣分
         self.answer_timeout = 15  # 答题超时秒数
+        self.win_score = 0        # 获胜积分（0=不启用）
         self._timer_id = None     # 倒计时定时器ID
         self._timer_remaining = 0 # 剩余秒数
+        self.game_over = False    # 是否已结束
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -563,6 +565,9 @@ class QuizServer:
     def _start_buzz(self):
         """开始抢答：把当前题目发送给所有选手"""
         debug_log(">>> _start_buzz 被调用")
+        if self.game_over:
+            self._log("⚠️ 比赛已结束，无法开始抢答")
+            return
         if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
             # 还没选过题目，自动切到第一题
             if len(self.questions) > 0:
@@ -618,8 +623,65 @@ class QuizServer:
                 self._send_to_player_nolock(name, {"type": "score_update", "score": 0, "msg": "🔄 分数已重置"})
         self._update_player_list()
         self._log("🔄 所有选手分数已重置为 0")
+        self.game_over = False
         self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
-        self.buzz_banner.config(text="🔄 分数已全部重置", bg="#795548")
+        self.buzz_banner.config(text="🔄 分数已全部重置，比赛继续", bg="#795548")
+
+    def _check_winner(self):
+        """检测是否有选手达到获胜积分"""
+        if self.game_over:
+            return
+        if self.win_score <= 0:
+            return  # 未启用获胜积分
+        with self.lock:
+            # 按分数从高到低排序
+            sorted_players = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+            if not sorted_players:
+                return
+            top_name, top_data = sorted_players[0]
+            if top_data["score"] < self.win_score:
+                return  # 最高分未达到获胜积分
+
+        # 有选手获胜！锁定比赛
+        self.game_over = True
+        self.round_active = False
+        self.first_buzzer = None
+
+        # 准备排名
+        rank_names = []
+        with self.lock:
+            sorted_players = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+
+        rank_titles = {1: "🥇 冠军", 2: "🥈 亚军", 3: "🥉 季军"}
+        for i, (n, d) in enumerate(sorted_players[:3]):
+            title = rank_titles.get(i + 1, f"第{i+1}名")
+            rank_names.append((n, d["score"], title))
+
+        # 显示在横幅
+        msg_lines = [f"🏆 {t} {n} - {s}分" for n, s, t in rank_names]
+        self.buzz_banner.config(text=" | ".join(msg_lines), bg="#9C27B0")
+
+        # 记录日志
+        self._log("🏆 比赛结束！" + " | ".join(msg_lines))
+        if rank_names:
+            self._log(f"🥇 冠军: {rank_names[0][0]} ({rank_names[0][1]}分)")
+        if len(rank_names) > 1:
+            self._log(f"🥈 亚军: {rank_names[1][0]} ({rank_names[1][1]}分)")
+        if len(rank_names) > 2:
+            self._log(f"🥉 季军: {rank_names[2][0]} ({rank_names[2][1]}分)")
+
+        # 发送给所有客户端（含排名和分数）
+        game_over_msg = {
+            "type": "game_over",
+            "rankings": [{"name": n, "score": s, "title": t} for n, s, t in rank_names]
+        }
+        self._broadcast(game_over_msg)
+
+        # 禁用主控按钮
+        self.start_buzz_btn.config(state=tk.DISABLED)
+        self.stop_round_btn.config(state=tk.DISABLED)
+        self.next_btn.config(state=tk.DISABLED)
+        self.prev_btn.config(state=tk.DISABLED)
 
     def _award_score(self, name):
         """抢答成功后答对给分"""
@@ -636,6 +698,8 @@ class QuizServer:
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"💬 [{name}] 答案: {self._last_answer} | 正确答案: {correct}  ✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
+        # 检测是否有选手达到获胜积分
+        self.root.after(200, self._check_winner)
 
     def _penalty_score(self, name):
         """抢答成功后答错扣分"""
@@ -652,6 +716,8 @@ class QuizServer:
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"💬 [{name}] 答案: {self._last_answer} | 正确答案: {correct}  ❌ [{name}] 答错 -{pts} 分", bg="#f44336")
+        # 检测是否有选手达到获胜积分
+        self.root.after(200, self._check_winner)
 
     def _reset_judge_buttons(self):
         """恢复按钮到默认状态"""
@@ -684,6 +750,7 @@ class QuizServer:
                 self._add_record("超时", "❌ 超时 ❌", correct)
                 self._update_player_list()
                 self._reset_judge_buttons()
+                self._check_winner()
                 return
             # 更新横幅倒计时
             self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
@@ -702,7 +769,7 @@ class QuizServer:
         """显示设置窗口"""
         win = tk.Toplevel(self.root)
         win.title("⚙ 设置")
-        win.geometry("420x400")
+        win.geometry("440x520")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()
@@ -742,6 +809,19 @@ class QuizServer:
         timeout_spin.pack(side=tk.RIGHT)
         tk.Label(timeout_row, text="秒", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
 
+        # 获胜积分
+        win_frame = tk.LabelFrame(win, text="获胜条件", font=("微软雅黑", 10))
+        win_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        win_row = tk.Frame(win_frame)
+        win_row.pack(fill=tk.X, padx=10, pady=5)
+        win_var = tk.IntVar(value=self.win_score)
+        win_spin = tk.Spinbox(win_row, from_=0, to=9999, textvariable=win_var,
+                               font=("微软雅黑", 10), width=8)
+        win_spin.pack(side=tk.RIGHT)
+        tk.Label(win_row, text="分（0=不启用）", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+        tk.Label(win_row, text="达到此积分即获胜:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+
         # 自动判题
         judge_frame = tk.LabelFrame(win, text="判题模式", font=("微软雅黑", 10))
         judge_frame.pack(fill=tk.X, padx=15, pady=5)
@@ -764,8 +844,9 @@ class QuizServer:
             self.correct_points = correct_var.get()
             self.wrong_points = wrong_var.get()
             self.answer_timeout = timeout_var.get()
+            self.win_score = win_var.get()
             self.auto_judge_var.set(auto_var.get())
-            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
             win.destroy()
 
         tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
@@ -920,6 +1001,10 @@ class QuizServer:
                 if p["banned"]:
                     debug_log(f"_process_client_msg: [{name}] 已被禁赛")
                     self._send_to_player_nolock(name, {"type": "error", "msg": "你已被禁赛"})
+                    return
+                if self.game_over:
+                    debug_log(f"_process_client_msg: [{name}] 比赛已结束")
+                    self._send_to_player_nolock(name, {"type": "error", "msg": "比赛已结束"})
                     return
                 if not self.round_active:
                     debug_log(f"_process_client_msg: [{name}] 本轮未激活")

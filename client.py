@@ -30,6 +30,7 @@ class QuizClient:
         self.player_name = ""
         self.buzzed = False  # 本轮是否已抢答
         self.answering = False  # 是否在答案选择模式
+        self.game_over = False  # 比赛是否已结束
         self._client_timer_id = None
         self._client_timer_label = None
         self._client_timer_remaining = 0
@@ -460,6 +461,28 @@ class QuizClient:
             self._log("🛑 服务器已关闭")
             self._on_disconnect()
 
+        elif msg_type == "game_over":
+            rankings = msg.get("rankings", [])
+            self._hide_answer_mode()
+            self._stop_client_timer()
+            lines = []
+            for r in rankings:
+                lines.append(f"{r['title']} {r['name']} - {r['score']}分")
+            rank_str = "\n".join(lines)
+            self._log(f"🏆 比赛结束！\n{rank_str}")
+            self.buzz_btn.config(
+                state=tk.DISABLED,
+                bg="#9C27B0",
+                text=f"🏆 比赛结束\n{rank_str}"
+            )
+            for r in rankings:
+                if r['name'] == self.player_name:
+                    messagebox.showinfo("🏆 比赛结束", f"恭喜！你获得 {r['title']}！\n得分: {r['score']}分")
+                    break
+            else:
+                messagebox.showinfo("🏆 比赛结束", "比赛已结束")
+                self.root.after(500, self._on_close)
+
     def _flash_btn(self):
         """抢答成功闪烁效果"""
         def flash():
@@ -476,6 +499,8 @@ class QuizClient:
         if not self.connected:
             return
         if self.buzzed:
+            return
+        if self.game_over:
             return
 
         self.buzzed = True
