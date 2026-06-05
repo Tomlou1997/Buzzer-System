@@ -677,3 +677,22 @@
 [17:05:27.683] _remove_client: [IT] 准备抢锁
 [17:05:27.684] _remove_client: [IT] 拿到锁
 [17:05:27.684] _remove_client: [IT] 已从 clients 移除
+[17:07:04.944] _handle_client 新连接: ('127.0.0.1', 45988)
+[17:07:04.945] _handle_client 选手名称: 10.8.51.7
+[17:07:04.958] _broadcast 开始: type=system, clients_count=1
+[17:07:04.959] _broadcast 已发送给 [10.8.51.7]
+[17:07:04.959] _broadcast 结束: type=system
+[17:07:09.061] _handle_client 新连接: ('127.0.0.1', 45989)
+[17:07:09.062] _handle_client 选手名称: 10.8.51.7
+[17:07:09.062] _handle_client 名称重复: 10.8.51.7，已拒绝
+[17:07:09.063] _handle_client [10.8.51.7] 即将移除
+[17:07:09.063] _remove_client: [10.8.51.7] 准备抢锁
+[17:07:09.064] _remove_client: [10.8.51.7] 拿到锁
+[17:07:09.064] _remove_client: [10.8.51.7] 已从 clients 移除
+[17:07:09.065] _broadcast 开始: type=system, clients_count=0
+[17:07:09.065] _broadcast 结束: type=system
+[17:07:12.150] _handle_client 新连接: ('127.0.0.1', 45990)
+[17:07:12.150] _handle_client 选手名称: 10.8.51.7
+[17:07:12.154] _broadcast 开始: type=system, clients_count=1
+[17:07:12.154] _broadcast 已发送给 [10.8.51.7]
+[17:07:12.154] _broadcast 结束: type=system
