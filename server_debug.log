@@ -459,3 +459,5 @@
 [16:31:10.526] _broadcast 结束: type=shutdown
 [16:32:59.458] _broadcast 开始: type=shutdown, clients_count=0
 [16:32:59.459] _broadcast 结束: type=shutdown
+[16:35:00.269] _broadcast 开始: type=shutdown, clients_count=0
+[16:35:00.269] _broadcast 结束: type=shutdown
