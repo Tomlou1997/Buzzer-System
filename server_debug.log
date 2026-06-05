@@ -637,3 +637,5 @@
 [16:58:56.467] _remove_client: [IT] 已从 clients 移除
 [16:59:09.900] _broadcast 开始: type=system, clients_count=0
 [16:59:09.900] _broadcast 结束: type=system
+[16:59:37.067] _broadcast 开始: type=shutdown, clients_count=0
+[16:59:37.068] _broadcast 结束: type=shutdown

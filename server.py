@@ -154,7 +154,7 @@ class QuizServer:
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
         self.buzz_banner = tk.Label(
-            banner_frame, text="⏳ 等待开始抢答...",
+            banner_frame, text="⚠️ 请先导入题库",
             font=("微软雅黑", 18, "bold"),
             bg="#FF9800", fg="white",
             height=2
@@ -299,6 +299,7 @@ class QuizServer:
             self._update_question_list()
             self._show_question(-1)
             self._update_progress()
+            self.buzz_banner.config(text="⏳ 题库已就绪，等待开始...", bg="#FF9800")
             self.status_label.config(
                 text=f"IP: {self.host_ip} | 端口: 8888 | 题库: {os.path.basename(file_path)} ({len(questions)} 题)"
             )
