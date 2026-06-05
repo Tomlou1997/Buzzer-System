@@ -453,3 +453,5 @@
 [16:25:57.729] _remove_client: [ITIT] 准备抢锁
 [16:25:57.729] _remove_client: [ITIT] 拿到锁
 [16:25:57.730] _remove_client: [ITIT] 已从 clients 移除
+[16:27:00.963] _broadcast 开始: type=shutdown, clients_count=0
+[16:27:00.964] _broadcast 结束: type=shutdown

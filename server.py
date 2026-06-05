@@ -123,7 +123,7 @@ class QuizServer:
         self.start_buzz_btn.pack(side=tk.LEFT, padx=2)
 
         self.stop_round_btn = tk.Button(
-            ctrl_frame, text="结束本轮 ■", font=("微软雅黑", 10),
+            ctrl_frame, text="结束抢答 ■", font=("微软雅黑", 10),
             bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round
         )
         self.stop_round_btn.pack(side=tk.LEFT, padx=2)
@@ -632,7 +632,7 @@ class QuizServer:
     def _reset_judge_buttons(self):
         """恢复按钮到默认状态"""
         self.start_buzz_btn.config(text="开始抢答 🚀", bg="#FF5722", fg="white", width=10, command=self._start_buzz)
-        self.stop_round_btn.config(text="结束本轮 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
+        self.stop_round_btn.config(text="结束抢答 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
         self.first_buzzer = None
 
     def _show_settings(self):
