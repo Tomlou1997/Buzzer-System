@@ -608,10 +608,8 @@ class QuizServer:
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
 
     def _reset_scores(self):
-        """重置所有选手计分（需二次确认）"""
+        """重置所有选手计分"""
         if not messagebox.askyesno("确认重置", "⚠️ 确定要重置所有选手的分数吗？\n\n此操作不可撤销！"):
-            return
-        if not messagebox.askyesno("二次确认", "⚠️⚠️ 再次确认：\n所有选手分数将归零，确定继续？"):
             return
         with self.lock:
             for name in self.clients:
