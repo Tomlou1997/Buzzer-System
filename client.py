@@ -461,6 +461,22 @@ class QuizClient:
             self._log("🛑 服务器已关闭")
             self._on_disconnect()
 
+        elif msg_type == "rank_locked":
+            rank = msg.get("rank", 0)
+            rank_titles = {1: "🥇 第1名", 2: "🥈 第2名", 3: "🥉 第3名"}
+            title = rank_titles.get(rank, f"第{rank}名")
+            self._log(f"🎉 {msg.get('msg', '')}")
+            self.game_over = True
+            self.buzz_btn.config(state=tk.DISABLED, bg="#9C27B0", text=f"🏆 已锁定排名\n{title}")
+            self._hide_answer_mode()
+            self._stop_client_timer()
+            messagebox.showinfo("🎉 排名锁定", f"恭喜！你获得 {title}！\n比赛仍在继续，请等待其他选手")
+
+        elif msg_type == "rank_update":
+            rankings = msg.get("rankings", [])
+            lines = [f"{r['title']} {r['name']} - {r['score']}分" for r in rankings]
+            self._log("🏆 最新排名: " + " | ".join(lines))
+
         elif msg_type == "game_over":
             rankings = msg.get("rankings", [])
             self._hide_answer_mode()
@@ -469,19 +485,18 @@ class QuizClient:
             for r in rankings:
                 lines.append(f"{r['title']} {r['name']} - {r['score']}分")
             rank_str = "\n".join(lines)
-            self._log(f"🏆 比赛结束！\n{rank_str}")
+            self._log(f"🏁 比赛全部结束！\n{rank_str}")
             self.buzz_btn.config(
                 state=tk.DISABLED,
                 bg="#9C27B0",
-                text=f"🏆 比赛结束\n{rank_str}"
+                text=f"🏁 比赛结束\n{rank_str}"
             )
             for r in rankings:
                 if r['name'] == self.player_name:
-                    messagebox.showinfo("🏆 比赛结束", f"恭喜！你获得 {r['title']}！\n得分: {r['score']}分")
+                    messagebox.showinfo("🏁 比赛结束", f"恭喜！你获得 {r['title']}！\n得分: {r['score']}分")
                     break
             else:
-                messagebox.showinfo("🏆 比赛结束", "比赛已结束")
-                self.root.after(500, self._on_close)
+                messagebox.showinfo("🏁 比赛结束", "所有排名已产生，比赛结束")
 
     def _flash_btn(self):
         """抢答成功闪烁效果"""

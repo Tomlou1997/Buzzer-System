@@ -52,7 +52,8 @@ class QuizServer:
         self.win_score = 0        # 获胜积分（0=不启用）
         self._timer_id = None     # 倒计时定时器ID
         self._timer_remaining = 0 # 剩余秒数
-        self.game_over = False    # 是否已结束
+        self.game_over = False    # 是否已结束（第三名产生后）
+        self.ranked_players = []  # 已锁定排名的选手列表 [(name, score, rank), ...]
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -624,64 +625,77 @@ class QuizServer:
         self._update_player_list()
         self._log("🔄 所有选手分数已重置为 0")
         self.game_over = False
+        self.ranked_players = []
         self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
         self.buzz_banner.config(text="🔄 分数已全部重置，比赛继续", bg="#795548")
 
     def _check_winner(self):
-        """检测是否有选手达到获胜积分"""
+        """检测是否有选手达到获胜积分并锁定排名"""
         if self.game_over:
             return
         if self.win_score <= 0:
-            return  # 未启用获胜积分
+            return
+
+        rank_titles = {1: "🥇 第1名", 2: "🥈 第2名", 3: "🥉 第3名"}
+        newly_ranked = []  # 本轮新排名的选手
+
         with self.lock:
-            # 按分数从高到低排序
-            sorted_players = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+            already_ranked_names = [r[0] for r in self.ranked_players]
+            # 找还没排名且达到分数的选手
+            sorted_players = sorted(
+                [(n, d["score"]) for n, d in self.clients.items() if n not in already_ranked_names],
+                key=lambda x: x[1], reverse=True
+            )
             if not sorted_players:
                 return
-            top_name, top_data = sorted_players[0]
-            if top_data["score"] < self.win_score:
-                return  # 最高分未达到获胜积分
+            top_name, top_score = sorted_players[0]
+            if top_score < self.win_score:
+                return  # 最高分都未达到
 
-        # 有选手获胜！锁定比赛
-        self.game_over = True
-        self.round_active = False
-        self.first_buzzer = None
+            # 达到分数，锁定排名
+            next_rank = len(self.ranked_players) + 1
+            self.ranked_players.append((top_name, top_score, next_rank))
+            newly_ranked.append((top_name, top_score, next_rank))
+            self._log(f"🏆 [{top_name}] 达到 {self.win_score} 分，锁定为第{next_rank}名！")
+            self._send_to_player_nolock(top_name, {"type": "rank_locked", "rank": next_rank, "msg": f"🎉 恭喜获得第{next_rank}名！得分: {top_score}"})
+            self._broadcast({"type": "system", "msg": f"🏆 [{top_name}] 获得第{next_rank}名！当前得分: {top_score}"})
 
-        # 准备排名
-        rank_names = []
-        with self.lock:
-            sorted_players = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+        # 检查是否已满3名
+        if len(self.ranked_players) >= 3 or len(self.ranked_players) >= len(self.clients):
+            self.game_over = True
+            self.round_active = False
+            self.first_buzzer = None
 
-        rank_titles = {1: "🥇 冠军", 2: "🥈 亚军", 3: "🥉 季军"}
-        for i, (n, d) in enumerate(sorted_players[:3]):
-            title = rank_titles.get(i + 1, f"第{i+1}名")
-            rank_names.append((n, d["score"], title))
+            # 显示最终排名
+            lines = []
+            for n, s, r in self.ranked_players:
+                lines.append(f"{rank_titles[r]} {n} - {s}分")
+            self.buzz_banner.config(text=" | ".join(lines), bg="#9C27B0")
+            self._log("🏁 比赛全部结束！最终排名: " + " | ".join(lines))
 
-        # 显示在横幅
-        msg_lines = [f"🏆 {t} {n} - {s}分" for n, s, t in rank_names]
-        self.buzz_banner.config(text=" | ".join(msg_lines), bg="#9C27B0")
+            # 通知所有客户端
+            rankings = [{"name": n, "score": s, "title": rank_titles[r]} for n, s, r in self.ranked_players]
+            self._broadcast({"type": "game_over", "rankings": rankings})
 
-        # 记录日志
-        self._log("🏆 比赛结束！" + " | ".join(msg_lines))
-        if rank_names:
-            self._log(f"🥇 冠军: {rank_names[0][0]} ({rank_names[0][1]}分)")
-        if len(rank_names) > 1:
-            self._log(f"🥈 亚军: {rank_names[1][0]} ({rank_names[1][1]}分)")
-        if len(rank_names) > 2:
-            self._log(f"🥉 季军: {rank_names[2][0]} ({rank_names[2][1]}分)")
+            # 禁用主控按钮
+            self.start_buzz_btn.config(state=tk.DISABLED)
+            self.stop_round_btn.config(state=tk.DISABLED)
+            self.next_btn.config(state=tk.DISABLED)
+            self.prev_btn.config(state=tk.DISABLED)
+            return
 
-        # 发送给所有客户端（含排名和分数）
-        game_over_msg = {
-            "type": "game_over",
-            "rankings": [{"name": n, "score": s, "title": t} for n, s, t in rank_names]
-        }
-        self._broadcast(game_over_msg)
+        # 仅有人获得排名，但游戏继续
+        rank_titles = {1: "🥇 第1名", 2: "🥈 第2名", 3: "🥉 第3名"}
+        lines = []
+        for n, s, r in self.ranked_players:
+            lines.append(f"{rank_titles[r]} {n} - {s}分")
+        lines.append("⏳ 比赛继续...")
+        self.buzz_banner.config(text=" | ".join(lines), bg="#9C27B0")
+        self._broadcast({"type": "rank_update", "rankings": [{"name": n, "score": s, "title": rank_titles[r]} for n, s, r in self.ranked_players]})
 
-        # 禁用主控按钮
-        self.start_buzz_btn.config(state=tk.DISABLED)
-        self.stop_round_btn.config(state=tk.DISABLED)
-        self.next_btn.config(state=tk.DISABLED)
-        self.prev_btn.config(state=tk.DISABLED)
+        # 为新锁定排名的选手广播提示
+        for n, s, r in newly_ranked:
+            self._broadcast({"type": "system", "msg": f"🏆 [{n}] 获得第{r}名！当前得分: {s}"})
 
     def _award_score(self, name):
         """抢答成功后答对给分"""
@@ -691,6 +705,10 @@ class QuizServer:
             correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
+                # 已锁定排名的选手不再参与得分
+                if any(r[0] == name for r in self.ranked_players):
+                    self._log(f"⚠️ [{name}] 已获得排名，跳过加分")
+                    return
                 self.clients[name]["score"] += pts
                 self._log(f"✅ [{name}] 答对 +{pts} 分 → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
@@ -709,6 +727,10 @@ class QuizServer:
             correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
+                # 已锁定排名的选手不再参与扣分
+                if any(r[0] == name for r in self.ranked_players):
+                    self._log(f"⚠️ [{name}] 已获得排名，跳过扣分")
+                    return
                 self.clients[name]["score"] -= pts  # 支持负数
                 self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
