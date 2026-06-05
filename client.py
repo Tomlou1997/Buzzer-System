@@ -498,6 +498,8 @@ class QuizClient:
         try:
             self.socket.send(json.dumps({"type": "answer", "answer": answer_str}).encode())
             self._log(f"📤 答案已提交: {answer_str}")
+            # 停止倒计时
+            self._stop_client_timer()
             # 禁用所有选项按钮
             for btn in self.option_btns.values():
                 btn.config(state=tk.DISABLED)
