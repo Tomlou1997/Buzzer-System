@@ -270,19 +270,28 @@ class QuizClient:
             self._log(f"🔴 {msg.get('msg', '')}")
 
         elif msg_type == "buzz_result":
-            winner = msg.get("winner", "")
-            if winner == self.player_name:
-                self._log("🎉🎉🎉 你抢答成功了！ 🎉🎉🎉")
-                # 闪烁效果
+            winner = msg.get("winner", False)
+            if winner:
+                # 抢到了！
+                self.buzz_btn.config(
+                    state=tk.DISABLED,
+                    bg="#4CAF50",
+                    text="🎉🎉 抢答成功！ 🎉🎉"
+                )
+                self.info_text.config(state=tk.NORMAL)
+                self.info_text.insert(tk.END, "🎉🎉🎉 太棒了！你抢答成功了！ 🎉🎉🎉\n")
+                self.info_text.see(tk.END)
+                self.info_text.config(state=tk.DISABLED)
                 self._flash_btn()
             else:
-                self._log(f"ℹ️ {msg.get('msg', '')}")
+                # 没抢到
+                self.buzz_btn.config(
+                    state=tk.DISABLED,
+                    bg="#f44336",
+                    text="😅 慢了！"
+                )
 
-            self.buzz_btn.config(
-                state=tk.DISABLED,
-                bg="#9E9E9E",
-                text="⏳ 本轮已结束"
-            )
+            self._log(f"{msg.get('msg', '')}")
 
         elif msg_type == "score_update":
             score = msg.get("score", 0)

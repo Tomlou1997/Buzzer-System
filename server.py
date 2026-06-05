@@ -114,6 +114,17 @@ class QuizServer:
         )
         self.import_btn.pack(side=tk.LEFT, padx=2)
 
+        # === 抢答结果横幅 ===
+        banner_frame = tk.Frame(top_frame)
+        banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
+        self.buzz_banner = tk.Label(
+            banner_frame, text="⏳ 等待开始抢答...",
+            font=("微软雅黑", 14, "bold"),
+            bg="#FF9800", fg="white",
+            height=1
+        )
+        self.buzz_banner.pack(fill=tk.X)
+
         # === 中部左：题库 ===
         question_frame = tk.LabelFrame(mid_frame, text="📖 题库", font=("微软雅黑", 10))
         question_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 4))
@@ -500,6 +511,7 @@ class QuizServer:
                 self.question_listbox.itemconfig(self.current_question_index, bg="#E8F5E9")
 
             self._log(f"🟢 === 第 {self.round_num} 轮: 第 {self.current_question_index+1} 题（{q['points']} 分）===")
+            self.buzz_banner.config(text=f"🟢 第 {self.round_num} 轮抢答进行中...", bg="#4CAF50")
             self._broadcast({"type": "round_start", "round": self.round_num, "msg": f"🟢 第 {self.round_num} 轮抢答开始！按 空格键 或 回车键 抢答！"})
             self._broadcast({"type": "question", "msg": f"📝 第 {self.current_question_index+1} 题（{q['points']} 分）: {q['question']}"})
 
@@ -508,6 +520,7 @@ class QuizServer:
             self.round_active = False
             self.start_buzz_btn.config(state=tk.NORMAL) if self.current_question_index >= 0 else None
             self.stop_round_btn.config(state=tk.DISABLED)
+        self.buzz_banner.config(text="⏳ 抢答已结束，准备下一题", bg="#FF9800")
         self._log("🔴 本轮抢答已手动结束")
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
 
@@ -649,7 +662,12 @@ class QuizServer:
                 if self.first_buzzer is None:
                     self.first_buzzer = name
                     self._log(f"🔔 [{name}] 抢答成功！")
-                    self._broadcast({"type": "buzz_result", "winner": name, "msg": f"🎉 {name} 抢答成功！"})
+                    self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！ 🎉🎉🎉", bg="#FF5722")
+                    # 抢答者收到成功，其他人收到失败
+                    self._send_to_player(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！"})
+                    for other in list(self.clients.keys()):
+                        if other != name:
+                            self._send_to_player(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
                     self.round_active = False
                     self.start_buzz_btn.config(state=tk.NORMAL)
                     self.stop_round_btn.config(state=tk.DISABLED)
