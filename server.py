@@ -130,6 +130,13 @@ class QuizServer:
         )
         self.import_btn.pack(side=tk.LEFT, padx=2)
 
+        self.auto_judge_var = tk.BooleanVar(value=False)
+        self.auto_judge_cb = tk.Checkbutton(
+            ctrl_frame, text="🤖 自动判题",
+            font=("微软雅黑", 9), variable=self.auto_judge_var
+        )
+        self.auto_judge_cb.pack(side=tk.LEFT, padx=5)
+
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
@@ -805,6 +812,22 @@ class QuizServer:
             player_answer = msg.get("answer", "")
             self._last_answer = player_answer
             debug_log(f"_process_client_msg: [{name}] 提交答案: {player_answer}")
+
+            # 如果开启了自动判题，直接比对
+            if self.auto_judge_var.get():
+                correct = ""
+                if 0 <= self.current_question_index < len(self.questions):
+                    correct = self.questions[self.current_question_index]["answer"].strip().upper()
+                is_correct = player_answer.strip().upper() == correct
+                if is_correct:
+                    self._log(f"🤖 自动判题: [{name}] 答案 {player_answer} ✅ 正确")
+                    self._award_score(name)
+                else:
+                    self._log(f"🤖 自动判题: [{name}] 答案 {player_answer} ❌ 错误（正确答案: {correct}）")
+                    self._penalty_score(name)
+                self._broadcast({"type": "system", "msg": f"🤖 {name} 的答案 {'✅ 正确' if is_correct else '❌ 错误'}"})
+                return
+
             self.buzz_banner.config(text=f"💬 [{name}] 的答案: {player_answer}", bg="#2196F3")
             self._log(f"💬 [{name}] 提交答案: {player_answer}")
             self._broadcast({"type": "system", "msg": f"💬 [{name}] 已提交答案，等待主持人判定..."})

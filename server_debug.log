@@ -329,3 +329,83 @@
 [15:46:47.331] _broadcast 结束: type=shutdown
 [15:49:10.235] _broadcast 开始: type=shutdown, clients_count=0
 [15:49:10.235] _broadcast 结束: type=shutdown
+[16:09:36.780] _broadcast 开始: type=shutdown, clients_count=0
+[16:09:36.780] _broadcast 结束: type=shutdown
+[16:10:11.920] >>> _start_buzz 被调用
+[16:10:11.934] <<< _start_buzz 退出: 无客户端连接
+[16:10:13.142] >>> _start_buzz 被调用
+[16:10:13.143] <<< _start_buzz 退出: 无客户端连接
+[16:10:43.634] _handle_client 新连接: ('10.8.51.7', 45940)
+[16:10:43.635] _handle_client 选手名称: 44455
+[16:10:43.651] _broadcast 开始: type=system, clients_count=1
+[16:10:43.652] _broadcast 已发送给 [44455]
+[16:10:43.652] _broadcast 结束: type=system
+[16:10:45.184] >>> _start_buzz 被调用
+[16:10:45.184] _start_buzz 准备抢锁, clients=['44455']
+[16:10:45.184] _start_buzz 拿到锁
+[16:10:45.185] _start_buzz 开始第 1 轮
+[16:10:45.195] _start_buzz 准备广播 round_start
+[16:10:45.195] _broadcast 开始: type=round_start, clients_count=1
+[16:10:45.196] _broadcast 已发送给 [44455]
+[16:10:45.196] _broadcast 结束: type=round_start
+[16:10:45.196] _start_buzz round_start 广播完毕
+[16:10:45.196] _broadcast 开始: type=question, clients_count=1
+[16:10:45.197] _broadcast 已发送给 [44455]
+[16:10:45.197] _broadcast 结束: type=question
+[16:10:45.197] _start_buzz question 广播完毕
+[16:10:45.198] <<< _start_buzz 释放锁，正常退出
+[16:10:46.896] _process_client_msg: [44455] type=buzz
+[16:10:46.896] _process_client_msg: [44455] 尝试抢答，准备抢锁
+[16:10:46.897] _process_client_msg: [44455] 拿到锁
+[16:10:46.897] _process_client_msg: [44455] 抢答成功！first_buzzer 设为 44455
+[16:10:53.554] _process_client_msg: [44455] type=answer
+[16:10:53.554] _process_client_msg: [44455] 提交答案: DEF
+[16:10:53.571] _broadcast 开始: type=system, clients_count=1
+[16:10:53.572] _broadcast 已发送给 [44455]
+[16:10:53.572] _broadcast 结束: type=system
+[16:11:18.817] >>> _start_buzz 被调用
+[16:11:18.817] _start_buzz 准备抢锁, clients=['44455']
+[16:11:18.817] _start_buzz 拿到锁
+[16:11:18.818] _start_buzz 开始第 2 轮
+[16:11:18.818] _start_buzz 准备广播 round_start
+[16:11:18.819] _broadcast 开始: type=round_start, clients_count=1
+[16:11:18.819] _broadcast 已发送给 [44455]
+[16:11:18.819] _broadcast 结束: type=round_start
+[16:11:18.820] _start_buzz round_start 广播完毕
+[16:11:18.820] _broadcast 开始: type=question, clients_count=1
+[16:11:18.820] _broadcast 已发送给 [44455]
+[16:11:18.820] _broadcast 结束: type=question
+[16:11:18.821] _start_buzz question 广播完毕
+[16:11:18.821] <<< _start_buzz 释放锁，正常退出
+[16:11:19.779] _process_client_msg: [44455] type=buzz
+[16:11:19.779] _process_client_msg: [44455] 尝试抢答，准备抢锁
+[16:11:19.779] _process_client_msg: [44455] 拿到锁
+[16:11:19.780] _process_client_msg: [44455] 抢答成功！first_buzzer 设为 44455
+[16:11:23.539] _process_client_msg: [44455] type=answer
+[16:11:23.539] _process_client_msg: [44455] 提交答案: BC
+[16:11:23.542] _broadcast 开始: type=system, clients_count=1
+[16:11:23.543] _broadcast 已发送给 [44455]
+[16:11:23.543] _broadcast 结束: type=system
+[16:11:48.268] >>> _start_buzz 被调用
+[16:11:48.268] _start_buzz 准备抢锁, clients=['44455']
+[16:11:48.268] _start_buzz 拿到锁
+[16:11:48.269] _start_buzz 开始第 3 轮
+[16:11:48.270] _start_buzz 准备广播 round_start
+[16:11:48.270] _broadcast 开始: type=round_start, clients_count=1
+[16:11:48.270] _broadcast 已发送给 [44455]
+[16:11:48.271] _broadcast 结束: type=round_start
+[16:11:48.271] _start_buzz round_start 广播完毕
+[16:11:48.271] _broadcast 开始: type=question, clients_count=1
+[16:11:48.271] _broadcast 已发送给 [44455]
+[16:11:48.272] _broadcast 结束: type=question
+[16:11:48.272] _start_buzz question 广播完毕
+[16:11:48.272] <<< _start_buzz 释放锁，正常退出
+[16:11:50.242] _process_client_msg: [44455] type=buzz
+[16:11:50.242] _process_client_msg: [44455] 尝试抢答，准备抢锁
+[16:11:50.243] _process_client_msg: [44455] 拿到锁
+[16:11:50.243] _process_client_msg: [44455] 抢答成功！first_buzzer 设为 44455
+[16:11:57.467] _process_client_msg: [44455] type=answer
+[16:11:57.467] _process_client_msg: [44455] 提交答案: BC
+[16:11:57.470] _broadcast 开始: type=system, clients_count=1
+[16:11:57.471] _broadcast 已发送给 [44455]
+[16:11:57.471] _broadcast 结束: type=system
