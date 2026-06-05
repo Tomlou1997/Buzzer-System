@@ -17,9 +17,9 @@ class QuizClient:
     def __init__(self, root):
         self.root = root
         self.root.title("抢答软件 - 客户端 v2.0")
-        self.root.geometry("600x580")
+        self.root.geometry("650x600")
         self.root.resizable(True, True)
-        self.root.minsize(500, 480)
+        self.root.minsize(550, 520)
 
         # 全屏状态
         self.fullscreen = False
@@ -171,7 +171,8 @@ class QuizClient:
             font=("微软雅黑", 10),
             bg="#1e1e1e", fg="#d4d4d4",
             state=tk.DISABLED,
-            wrap=tk.WORD
+            wrap=tk.WORD,
+            height=8  # 限制初始高度为8行
         )
         self.info_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -211,10 +212,12 @@ class QuizClient:
         self.answering = True
         self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
-        # 重置所有选项
+        # 重置所有选项为可用和未选中
         for var in self.option_vars.values():
             var.set(False)
-        self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤")
+        for btn in self.option_btns.values():
+            btn.config(state=tk.NORMAL)
+        self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤", bg="#2196F3")
         self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.root.pack_slaves()[0])
 
     def _hide_answer_mode(self):
