@@ -461,3 +461,53 @@
 [16:32:59.459] _broadcast 结束: type=shutdown
 [16:35:00.269] _broadcast 开始: type=shutdown, clients_count=0
 [16:35:00.269] _broadcast 结束: type=shutdown
+[16:36:28.985] _broadcast 开始: type=shutdown, clients_count=0
+[16:36:28.986] _broadcast 结束: type=shutdown
+[16:37:15.428] >>> _start_buzz 被调用
+[16:37:15.429] <<< _start_buzz 退出: 无客户端连接
+[16:37:43.888] _handle_client 新连接: ('10.8.51.7', 14962)
+[16:37:43.889] _handle_client 选手名称: IT
+[16:37:43.891] _broadcast 开始: type=system, clients_count=1
+[16:37:43.892] _broadcast 已发送给 [IT]
+[16:37:43.892] _broadcast 结束: type=system
+[16:37:46.757] >>> _start_buzz 被调用
+[16:37:46.757] _start_buzz 准备抢锁, clients=['IT']
+[16:37:46.758] _start_buzz 拿到锁
+[16:37:46.758] _start_buzz 开始第 1 轮
+[16:37:46.768] _start_buzz 准备广播 round_start
+[16:37:46.769] _broadcast 开始: type=round_start, clients_count=1
+[16:37:46.769] _broadcast 已发送给 [IT]
+[16:37:46.769] _broadcast 结束: type=round_start
+[16:37:46.770] _start_buzz round_start 广播完毕
+[16:37:46.770] _broadcast 开始: type=question, clients_count=1
+[16:37:46.770] _broadcast 已发送给 [IT]
+[16:37:46.771] _broadcast 结束: type=question
+[16:37:46.771] _start_buzz question 广播完毕
+[16:37:46.771] <<< _start_buzz 释放锁，正常退出
+[16:37:50.798] _process_client_msg: [IT] type=buzz
+[16:37:50.798] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[16:37:50.798] _process_client_msg: [IT] 拿到锁
+[16:37:50.799] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[16:38:12.190] _process_client_msg: [IT] type=answer
+[16:38:12.191] _process_client_msg: [IT] 提交答案: ABC
+[16:38:12.213] _broadcast 开始: type=system, clients_count=1
+[16:38:12.213] _broadcast 已发送给 [IT]
+[16:38:12.214] _broadcast 结束: type=system
+[16:39:22.416] >>> _start_buzz 被调用
+[16:39:22.417] _start_buzz 准备抢锁, clients=['IT']
+[16:39:22.417] _start_buzz 拿到锁
+[16:39:22.417] _start_buzz 开始第 2 轮
+[16:39:22.418] _start_buzz 准备广播 round_start
+[16:39:22.419] _broadcast 开始: type=round_start, clients_count=1
+[16:39:22.419] _broadcast 已发送给 [IT]
+[16:39:22.419] _broadcast 结束: type=round_start
+[16:39:22.420] _start_buzz round_start 广播完毕
+[16:39:22.420] _broadcast 开始: type=question, clients_count=1
+[16:39:22.420] _broadcast 已发送给 [IT]
+[16:39:22.421] _broadcast 结束: type=question
+[16:39:22.421] _start_buzz question 广播完毕
+[16:39:22.421] <<< _start_buzz 释放锁，正常退出
+[16:39:49.738] _process_client_msg: [IT] type=buzz
+[16:39:49.738] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[16:39:49.739] _process_client_msg: [IT] 拿到锁
+[16:39:49.739] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT

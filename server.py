@@ -146,9 +146,9 @@ class QuizServer:
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
         self.buzz_banner = tk.Label(
             banner_frame, text="⏳ 等待开始抢答...",
-            font=("微软雅黑", 14, "bold"),
+            font=("微软雅黑", 18, "bold"),
             bg="#FF9800", fg="white",
-            height=1
+            height=2
         )
         self.buzz_banner.pack(fill=tk.X)
 
