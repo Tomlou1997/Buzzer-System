@@ -100,6 +100,12 @@ class QuizServer:
         ctrl_frame = tk.Frame(status_frame)
         ctrl_frame.pack(side=tk.RIGHT, padx=8, pady=4)
 
+        self.prev_btn = tk.Button(
+            ctrl_frame, text="上一题 ◀", font=("微软雅黑", 10),
+            bg="#2196F3", fg="white", width=10, state=tk.DISABLED, command=self._prev_question
+        )
+        self.prev_btn.pack(side=tk.LEFT, padx=2)
+
         self.next_round_btn = tk.Button(
             ctrl_frame, text="下一题 ▶", font=("微软雅黑", 10),
             bg="#4CAF50", fg="white", width=10, command=self._next_question
@@ -457,6 +463,18 @@ class QuizServer:
             self.answer_label.config(text="--")
         self.question_display.config(state=tk.DISABLED)
         self._update_progress()
+        self._update_nav_buttons()
+
+    def _update_nav_buttons(self):
+        """更新上一题/下一题按钮状态"""
+        if self.current_question_index <= 0:
+            self.prev_btn.config(state=tk.DISABLED)
+        else:
+            self.prev_btn.config(state=tk.NORMAL)
+        if self.current_question_index >= len(self.questions) - 1:
+            self.next_round_btn.config(state=tk.DISABLED)
+        else:
+            self.next_round_btn.config(state=tk.NORMAL)
 
     def _show_welcome(self):
         """导入题库后显示过渡页面"""
@@ -472,6 +490,7 @@ class QuizServer:
         self.question_display.insert(tk.END, "📌 选手连接后即可开始比赛")
         self.question_display.config(state=tk.DISABLED)
         self._update_progress()
+        self._update_nav_buttons()
         self.start_buzz_btn.config(state=tk.NORMAL)
 
     def _toggle_answer(self):
@@ -507,6 +526,18 @@ class QuizServer:
         self._show_question(next_idx)
         self.start_buzz_btn.config(state=tk.NORMAL)
         self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
+
+    def _prev_question(self):
+        """切换到上一题"""
+        if not self.questions:
+            return
+        prev_idx = self.current_question_index - 1
+        if prev_idx < 0:
+            self._log("📋 已是第一题")
+            return
+        self._show_question(prev_idx)
+        self.start_buzz_btn.config(state=tk.NORMAL)
+        self._log(f"📋 切换到第 {prev_idx+1} 题")
 
     def _start_buzz(self):
         """开始抢答：把当前题目发送给所有选手"""

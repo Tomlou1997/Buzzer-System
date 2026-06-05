@@ -327,3 +327,5 @@
 [15:46:44.031] _broadcast 结束: type=system
 [15:46:47.331] _broadcast 开始: type=shutdown, clients_count=0
 [15:46:47.331] _broadcast 结束: type=shutdown
+[15:49:10.235] _broadcast 开始: type=shutdown, clients_count=0
+[15:49:10.235] _broadcast 结束: type=shutdown
