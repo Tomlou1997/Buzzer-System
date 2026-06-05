@@ -453,10 +453,16 @@ class QuizServer:
             self._show_question(selection[0])
 
     def _start_round(self):
+        # 先检查选手，不加锁，避免弹窗卡住
+        if not self.clients:
+            self._log("⚠️ 目前没有选手连接，题目已准备好，选手连上后即可开始")
+            # 如果选中了题目，还是显示到日志里
+            if 0 <= self.current_question_index < len(self.questions):
+                q = self.questions[self.current_question_index]
+                self._log(f"📋 准备就绪: 第 {self.current_question_index+1} 题（{q['points']} 分）")
+            return
+
         with self.lock:
-            if not self.clients:
-                messagebox.showwarning("提示", "没有选手连接")
-                return
 
             if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
                 msg = self.msg_entry.get().strip()
