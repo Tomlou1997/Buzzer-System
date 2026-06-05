@@ -639,7 +639,7 @@ class QuizServer:
         """显示设置窗口"""
         win = tk.Toplevel(self.root)
         win.title("⚙ 设置")
-        win.geometry("360x240")
+        win.geometry("400x300")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()

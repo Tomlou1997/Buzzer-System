@@ -455,3 +455,7 @@
 [16:25:57.730] _remove_client: [ITIT] 已从 clients 移除
 [16:27:00.963] _broadcast 开始: type=shutdown, clients_count=0
 [16:27:00.964] _broadcast 结束: type=shutdown
+[16:31:10.526] _broadcast 开始: type=shutdown, clients_count=0
+[16:31:10.526] _broadcast 结束: type=shutdown
+[16:32:59.458] _broadcast 开始: type=shutdown, clients_count=0
+[16:32:59.459] _broadcast 结束: type=shutdown
