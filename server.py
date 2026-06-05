@@ -673,16 +673,15 @@ class QuizServer:
                     pass
 
     def _broadcast(self, msg):
-        with self.lock:
-            disc = []
-            for n, i in self.clients.items():
-                try:
-                    i["socket"].send(json.dumps(msg).encode())
-                except:
-                    disc.append(n)
-            for n in disc:
-                if n in self.clients:
-                    del self.clients[n]
+        disc = []
+        for n, i in self.clients.items():
+            try:
+                i["socket"].send(json.dumps(msg).encode())
+            except:
+                disc.append(n)
+        for n in disc:
+            if n in self.clients:
+                del self.clients[n]
 
     def _update_player_list(self):
         def upd():
