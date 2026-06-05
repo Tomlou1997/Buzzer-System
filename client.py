@@ -197,6 +197,12 @@ class QuizClient:
 
     def _receive_loop(self):
         """接收消息循环"""
+        # 设置 socket 超时，避免 recv 永久阻塞
+        try:
+            self.socket.settimeout(8)
+        except:
+            pass
+
         while self.connected:
             try:
                 data = self.socket.recv(4096)
@@ -204,6 +210,9 @@ class QuizClient:
                     break
                 msg = json.loads(data.decode("utf-8"))
                 self.root.after(0, self._handle_message, msg)
+            except socket.timeout:
+                # 超时正常，继续循环
+                continue
             except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 break
 
@@ -214,6 +223,14 @@ class QuizClient:
     def _handle_message(self, msg):
         """处理服务器消息"""
         msg_type = msg.get("type")
+
+        if msg_type == "ping":
+            # 心跳检测：回复 pong
+            try:
+                self.socket.send(json.dumps({"type": "pong"}).encode())
+            except:
+                pass
+            return
 
         if msg_type == "info":
             self._log(f"📢 {msg.get('msg', '')}")

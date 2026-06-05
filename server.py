@@ -11,6 +11,7 @@ import threading
 import json
 import os
 import csv
+import time
 from datetime import datetime
 
 
@@ -34,6 +35,7 @@ class QuizServer:
         self.question_file_path = ""
 
         self.host_ip = self._get_local_ip()
+        self.heartbeat_interval = 5  # 心跳间隔（秒）
         self._build_ui()
         self._start_server()
 
@@ -581,12 +583,34 @@ class QuizServer:
             self._log(f"✅ 选手 [{name}] 已连接 ({addr[0]})")
             self._send_to_player(name, {"type": "info", "msg": "连接成功！等待管理员开始抢答..."})
             self._broadcast({"type": "system", "msg": f"选手 [{name}] 加入了比赛"})
+
+            # 设置 socket 超时，以便心跳和断开检测
+            c.settimeout(self.heartbeat_interval)
+
+            last_heartbeat = time.time()
+
             while self.running:
                 try:
                     data = c.recv(1024)
                     if not data:
                         break
-                    self._process_client_msg(name, json.loads(data.decode("utf-8")))
+                    msg = json.loads(data.decode("utf-8"))
+                    # 客户端发来的心跳，不做处理，只说明连接还活着
+                    if msg.get("type") == "pong":
+                        continue
+                    self._process_client_msg(name, msg)
+                except socket.timeout:
+                    # 超时了，检查是否需要发送心跳
+                    now = time.time()
+                    if now - last_heartbeat >= self.heartbeat_interval:
+                        try:
+                            c.send(json.dumps({"type": "ping"}).encode())
+                            last_heartbeat = now
+                        except:
+                            break
+                    continue
+                except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError):
+                    break
                 except:
                     break
         except:
