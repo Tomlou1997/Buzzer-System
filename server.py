@@ -144,6 +144,12 @@ class QuizServer:
         )
         self.settings_btn.pack(side=tk.LEFT, padx=2)
 
+        self.reset_score_btn = tk.Button(
+            ctrl_frame, text="🔄 重置计分", font=("微软雅黑", 9),
+            bg="#795548", fg="white", width=10, command=self._reset_scores
+        )
+        self.reset_score_btn.pack(side=tk.LEFT, padx=2)
+
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
@@ -600,6 +606,21 @@ class QuizServer:
         self.buzz_banner.config(text="⏳ 抢答已结束，准备下一题", bg="#FF9800")
         self._log("🔴 本轮抢答已手动结束")
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
+
+    def _reset_scores(self):
+        """重置所有选手计分（需二次确认）"""
+        if not messagebox.askyesno("确认重置", "⚠️ 确定要重置所有选手的分数吗？\n\n此操作不可撤销！"):
+            return
+        if not messagebox.askyesno("二次确认", "⚠️⚠️ 再次确认：\n所有选手分数将归零，确定继续？"):
+            return
+        with self.lock:
+            for name in self.clients:
+                self.clients[name]["score"] = 0
+                self._send_to_player_nolock(name, {"type": "score_update", "score": 0, "msg": "🔄 分数已重置"})
+        self._update_player_list()
+        self._log("🔄 所有选手分数已重置为 0")
+        self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
+        self.buzz_banner.config(text="🔄 分数已全部重置", bg="#795548")
 
     def _award_score(self, name):
         """抢答成功后答对给分"""
