@@ -92,9 +92,15 @@ class QuizServer:
 
         self.next_round_btn = tk.Button(
             ctrl_frame, text="下一题 ▶", font=("微软雅黑", 10),
-            bg="#4CAF50", fg="white", width=10, command=self._start_round
+            bg="#4CAF50", fg="white", width=10, command=self._next_question
         )
         self.next_round_btn.pack(side=tk.LEFT, padx=2)
+
+        self.start_buzz_btn = tk.Button(
+            ctrl_frame, text="开始抢答 🚀", font=("微软雅黑", 10),
+            bg="#FF5722", fg="white", width=10, state=tk.DISABLED, command=self._start_buzz
+        )
+        self.start_buzz_btn.pack(side=tk.LEFT, padx=2)
 
         self.stop_round_btn = tk.Button(
             ctrl_frame, text="结束本轮 ■", font=("微软雅黑", 10),
@@ -451,39 +457,43 @@ class QuizServer:
         selection = self.question_listbox.curselection()
         if selection:
             self._show_question(selection[0])
+            self.start_buzz_btn.config(state=tk.NORMAL)
+            self._log(f"📋 已选中第 {selection[0]+1} 题，点击「开始抢答 🚀」发送给选手")
 
-    def _start_round(self):
-        # 先检查选手，不加锁，避免弹窗卡住
+    def _next_question(self):
+        """切换到下一题（仅本地预览）"""
+        if not self.questions:
+            self._log("⚠️ 请先导入题库")
+            return
+
+        # 移到下一题
+        next_idx = self.current_question_index + 1
+        if next_idx >= len(self.questions):
+            self._log("📋 已到最后一题")
+            return
+
+        self.question_listbox.selection_clear(0, tk.END)
+        self.question_listbox.selection_set(next_idx)
+        self._show_question(next_idx)
+        self.start_buzz_btn.config(state=tk.NORMAL)
+        self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
+
+    def _start_buzz(self):
+        """开始抢答：把当前题目发送给所有选手"""
+        if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
+            self._log("⚠️ 请先在题库中选择一道题")
+            return
+
         if not self.clients:
-            self._log("⚠️ 目前没有选手连接，题目已准备好，选手连上后即可开始")
-            # 如果选中了题目，还是显示到日志里
-            if 0 <= self.current_question_index < len(self.questions):
-                q = self.questions[self.current_question_index]
-                self._log(f"📋 准备就绪: 第 {self.current_question_index+1} 题（{q['points']} 分）")
+            self._log("⚠️ 没有选手连接，无法开始抢答")
             return
 
         with self.lock:
-
-            if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
-                msg = self.msg_entry.get().strip()
-                if not msg or msg == "发送消息给所有选手...":
-                    self._log("⚠️ 请在左侧题库中选择一道题，或在消息框中输入题目")
-                    return
-                self.round_num += 1
-                self.round_active = True
-                self.first_buzzer = None
-                self.next_round_btn.config(state=tk.DISABLED)
-                self.stop_round_btn.config(state=tk.NORMAL)
-                self._log(f"🟢 === 第 {self.round_num} 轮抢答开始（手动）===")
-                self._broadcast({"type": "round_start", "round": self.round_num, "msg": f"🟢 第 {self.round_num} 轮抢答开始！按 空格键 或 回车键 抢答！"})
-                self._broadcast({"type": "question", "msg": f"📝 题目: {msg}"})
-                return
-
             q = self.questions[self.current_question_index]
             self.round_num += 1
             self.round_active = True
             self.first_buzzer = None
-            self.next_round_btn.config(state=tk.DISABLED)
+            self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
 
             if self.question_listbox.size() > 0:
@@ -496,7 +506,7 @@ class QuizServer:
     def _stop_round(self):
         with self.lock:
             self.round_active = False
-            self.next_round_btn.config(state=tk.NORMAL)
+            self.start_buzz_btn.config(state=tk.NORMAL) if self.current_question_index >= 0 else None
             self.stop_round_btn.config(state=tk.DISABLED)
         self._log("🔴 本轮抢答已手动结束")
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
@@ -641,7 +651,7 @@ class QuizServer:
                     self._log(f"🔔 [{name}] 抢答成功！")
                     self._broadcast({"type": "buzz_result", "winner": name, "msg": f"🎉 {name} 抢答成功！"})
                     self.round_active = False
-                    self.next_round_btn.config(state=tk.NORMAL)
+                    self.start_buzz_btn.config(state=tk.NORMAL)
                     self.stop_round_btn.config(state=tk.DISABLED)
                 else:
                     self._send_to_player(name, {"type": "error", "msg": "已有选手抢答成功"})
