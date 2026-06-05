@@ -90,6 +90,17 @@ class QuizClient:
         )
         self.buzz_btn.pack(fill=tk.BOTH, expand=True)
 
+        # ====== 操作提示 ======
+        hint_frame = tk.Frame(self.root)
+        hint_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
+        hint = tk.Label(
+            hint_frame,
+            text="💡 抢答操作：按 空格键(Space) 或 回车键(Enter)",
+            font=("微软雅黑", 9),
+            fg="#FF5722"
+        )
+        hint.pack()
+
         # ====== 底部：信息显示 ======
         info_frame = tk.LabelFrame(self.root, text="信息", font=("微软雅黑", 10))
         info_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)

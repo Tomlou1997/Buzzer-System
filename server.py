@@ -467,7 +467,7 @@ class QuizServer:
             if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
                 msg = self.msg_entry.get().strip()
                 if not msg or msg == "发送消息给所有选手...":
-                    messagebox.showwarning("提示", "请在题库中选择一道题或在消息框中输入题目")
+                    self._log("⚠️ 请在左侧题库中选择一道题，或在消息框中输入题目")
                     return
                 self.round_num += 1
                 self.round_active = True
