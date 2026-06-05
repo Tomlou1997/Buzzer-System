@@ -552,7 +552,7 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] += pts
                 self._log(f"✅ [{name}] 答对 +{pts} 分 → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"✅ [{name}] 答对 +{pts} 分！", bg="#4CAF50")
@@ -566,7 +566,7 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] = max(0, self.clients[name]["score"] - pts)
                 self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
         self._update_player_list()
         self._reset_judge_buttons()
         self.buzz_banner.config(text=f"❌ [{name}] 答错 -{pts} 分", bg="#f44336")
@@ -723,11 +723,11 @@ class QuizServer:
                 p = self.clients[name]
                 if p["banned"]:
                     debug_log(f"_process_client_msg: [{name}] 已被禁赛")
-                    self._send_to_player(name, {"type": "error", "msg": "你已被禁赛"})
+                    self._send_to_player_nolock(name, {"type": "error", "msg": "你已被禁赛"})
                     return
                 if not self.round_active:
                     debug_log(f"_process_client_msg: [{name}] 本轮未激活")
-                    self._send_to_player(name, {"type": "error", "msg": "本轮尚未开始"})
+                    self._send_to_player_nolock(name, {"type": "error", "msg": "本轮尚未开始"})
                     return
                 if self.first_buzzer is None:
                     debug_log(f"_process_client_msg: [{name}] 抢答成功！first_buzzer 设为 {name}")
@@ -735,10 +735,10 @@ class QuizServer:
                     self._log(f"🔔 [{name}] 抢答成功！")
                     self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！请在下方输入答案 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
-                    self._send_to_player(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案："})
+                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案："})
                     for other in list(self.clients.keys()):
                         if other != name:
-                            self._send_to_player(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
+                            self._send_to_player_nolock(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
                     self.round_active = False
                     self.start_buzz_btn.config(state=tk.DISABLED)
                     self.stop_round_btn.config(state=tk.DISABLED)
@@ -749,7 +749,7 @@ class QuizServer:
                     self.show_answer_btn.config(text="隐藏答案 🙈")
                     self._log(f"📋 参考答案: {q['answer']}")
                 else:
-                    self._send_to_player(name, {"type": "error", "msg": "已有选手抢答成功"})
+                    self._send_to_player_nolock(name, {"type": "error", "msg": "已有选手抢答成功"})
         elif msg_type == "answer":
             # 选手提交了答案
             player_answer = msg.get("answer", "")
@@ -762,7 +762,7 @@ class QuizServer:
             self.start_buzz_btn.config(bg="#4CAF50", command=lambda: self._award_score(name))
             self.stop_round_btn.config(state=tk.NORMAL, text="❌ 答错扣分")
             self.stop_round_btn.config(bg="#f44336", command=lambda: self._penalty_score(name))
-            self._send_to_player(name, {"type": "answer_received", "msg": "答案已提交，等待主持人判定"})
+            self._send_to_player_nolock(name, {"type": "answer_received", "msg": "答案已提交，等待主持人判定"})
 
     def _remove_client(self, name):
         debug_log(f"_remove_client: [{name}] 准备抢锁")
@@ -782,6 +782,14 @@ class QuizServer:
                     self.clients[name]["socket"].send(json.dumps(msg).encode())
                 except:
                     pass
+
+    def _send_to_player_nolock(self, name, msg):
+        """无锁版本，用于调用方已持有锁的场景"""
+        if name in self.clients:
+            try:
+                self.clients[name]["socket"].send(json.dumps(msg).encode())
+            except:
+                pass
 
     def _broadcast(self, msg):
         msg_type = msg.get("type", "unknown")

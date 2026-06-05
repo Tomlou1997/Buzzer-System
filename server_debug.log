@@ -46,3 +46,31 @@
 [15:15:12.390] _process_client_msg: [lll] 尝试抢答，准备抢锁
 [15:15:12.391] _process_client_msg: [lll] 拿到锁
 [15:15:12.391] _process_client_msg: [lll] 抢答成功！first_buzzer 设为 lll
+[15:18:12.908] _broadcast 开始: type=shutdown, clients_count=1
+[15:18:12.909] _broadcast 已发送给 [lll]
+[15:18:12.909] _broadcast 结束: type=shutdown
+[15:20:26.791] _broadcast 开始: type=shutdown, clients_count=0
+[15:20:26.791] _broadcast 结束: type=shutdown
+[15:21:48.132] _handle_client 新连接: ('10.8.51.7', 37653)
+[15:21:48.133] _handle_client 选手名称: hhhhjjjj
+[15:21:48.137] _broadcast 开始: type=system, clients_count=1
+[15:21:48.137] _broadcast 已发送给 [hhhhjjjj]
+[15:21:48.137] _broadcast 结束: type=system
+[15:22:04.946] >>> _start_buzz 被调用
+[15:22:04.946] _start_buzz 准备抢锁, clients=['hhhhjjjj']
+[15:22:04.947] _start_buzz 拿到锁
+[15:22:04.947] _start_buzz 开始第 1 轮
+[15:22:04.957] _start_buzz 准备广播 round_start
+[15:22:04.957] _broadcast 开始: type=round_start, clients_count=1
+[15:22:04.957] _broadcast 已发送给 [hhhhjjjj]
+[15:22:04.958] _broadcast 结束: type=round_start
+[15:22:04.958] _start_buzz round_start 广播完毕
+[15:22:04.958] _broadcast 开始: type=question, clients_count=1
+[15:22:04.959] _broadcast 已发送给 [hhhhjjjj]
+[15:22:04.959] _broadcast 结束: type=question
+[15:22:04.959] _start_buzz question 广播完毕
+[15:22:04.959] <<< _start_buzz 释放锁，正常退出
+[15:22:07.628] _process_client_msg: [hhhhjjjj] type=buzz
+[15:22:07.629] _process_client_msg: [hhhhjjjj] 尝试抢答，准备抢锁
+[15:22:07.629] _process_client_msg: [hhhhjjjj] 拿到锁
+[15:22:07.630] _process_client_msg: [hhhhjjjj] 抢答成功！first_buzzer 设为 hhhhjjjj
