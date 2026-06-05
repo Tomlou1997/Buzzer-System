@@ -134,13 +134,6 @@ class QuizServer:
         )
         self.import_btn.pack(side=tk.LEFT, padx=2)
 
-        self.auto_judge_var = tk.BooleanVar(value=False)
-        self.auto_judge_cb = tk.Checkbutton(
-            ctrl_frame, text="🤖 自动判题",
-            font=("微软雅黑", 9), variable=self.auto_judge_var
-        )
-        self.auto_judge_cb.pack(side=tk.LEFT, padx=5)
-
         self.settings_btn = tk.Button(
             ctrl_frame, text="⚙ 设置", font=("微软雅黑", 9),
             bg="#607D8B", fg="white", width=8, command=self._show_settings

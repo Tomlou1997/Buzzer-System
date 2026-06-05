@@ -445,3 +445,11 @@
 [16:21:45.524] _broadcast 开始: type=system, clients_count=1
 [16:21:45.525] _broadcast 已发送给 [ITIT]
 [16:21:45.525] _broadcast 结束: type=system
+[16:25:57.726] _broadcast 开始: type=shutdown, clients_count=1
+[16:25:57.727] _broadcast 已发送给 [ITIT]
+[16:25:57.727] _broadcast 结束: type=shutdown
+[16:25:57.728] _handle_client [ITIT] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[16:25:57.729] _handle_client [ITIT] 即将移除
+[16:25:57.729] _remove_client: [ITIT] 准备抢锁
+[16:25:57.729] _remove_client: [ITIT] 拿到锁
+[16:25:57.730] _remove_client: [ITIT] 已从 clients 移除
