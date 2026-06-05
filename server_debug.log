@@ -282,3 +282,48 @@
 [15:41:35.908] _broadcast 开始: type=system, clients_count=1
 [15:41:35.908] _broadcast 已发送给 [IIT]
 [15:41:35.909] _broadcast 结束: type=system
+[15:44:51.009] _broadcast 开始: type=shutdown, clients_count=1
+[15:44:51.010] _broadcast 已发送给 [IIT]
+[15:44:51.010] _broadcast 结束: type=shutdown
+[15:44:51.011] _handle_client [IIT] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[15:44:51.011] _handle_client [IIT] 即将移除
+[15:44:51.011] _remove_client: [IIT] 准备抢锁
+[15:44:51.011] _remove_client: [IIT] 拿到锁
+[15:44:51.012] _remove_client: [IIT] 已从 clients 移除
+[15:45:58.454] _handle_client 新连接: ('10.8.51.7', 29544)
+[15:45:58.455] _handle_client 选手名称: DDFF
+[15:45:58.459] _broadcast 开始: type=system, clients_count=1
+[15:45:58.459] _broadcast 已发送给 [DDFF]
+[15:45:58.459] _broadcast 结束: type=system
+[15:46:22.285] >>> _start_buzz 被调用
+[15:46:22.285] _start_buzz 准备抢锁, clients=['DDFF']
+[15:46:22.286] _start_buzz 拿到锁
+[15:46:22.286] _start_buzz 开始第 1 轮
+[15:46:22.298] _start_buzz 准备广播 round_start
+[15:46:22.298] _broadcast 开始: type=round_start, clients_count=1
+[15:46:22.298] _broadcast 已发送给 [DDFF]
+[15:46:22.299] _broadcast 结束: type=round_start
+[15:46:22.299] _start_buzz round_start 广播完毕
+[15:46:22.299] _broadcast 开始: type=question, clients_count=1
+[15:46:22.299] _broadcast 已发送给 [DDFF]
+[15:46:22.300] _broadcast 结束: type=question
+[15:46:22.300] _start_buzz question 广播完毕
+[15:46:22.300] <<< _start_buzz 释放锁，正常退出
+[15:46:24.709] _process_client_msg: [DDFF] type=buzz
+[15:46:24.709] _process_client_msg: [DDFF] 尝试抢答，准备抢锁
+[15:46:24.710] _process_client_msg: [DDFF] 拿到锁
+[15:46:24.710] _process_client_msg: [DDFF] 抢答成功！first_buzzer 设为 DDFF
+[15:46:26.661] _process_client_msg: [DDFF] type=answer
+[15:46:26.662] _process_client_msg: [DDFF] 提交答案: EF
+[15:46:26.677] _broadcast 开始: type=system, clients_count=1
+[15:46:26.677] _broadcast 已发送给 [DDFF]
+[15:46:26.678] _broadcast 结束: type=system
+[15:46:44.025] _handle_client [DDFF] 收到空数据，断开
+[15:46:44.026] _handle_client [DDFF] 即将移除
+[15:46:44.026] _remove_client: [DDFF] 准备抢锁
+[15:46:44.026] _remove_client: [DDFF] 拿到锁
+[15:46:44.027] _remove_client: [DDFF] 已从 clients 移除
+[15:46:44.030] _broadcast 开始: type=system, clients_count=0
+[15:46:44.031] _broadcast 结束: type=system
+[15:46:47.331] _broadcast 开始: type=shutdown, clients_count=0
+[15:46:47.331] _broadcast 结束: type=shutdown

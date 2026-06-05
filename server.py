@@ -278,7 +278,7 @@ class QuizServer:
             )
             self._log(f"📚 成功导入题库: {os.path.basename(file_path)} — 共 {len(questions)} 题")
             if questions:
-                self._show_question(0)
+                self._show_welcome()
         except Exception as e:
             messagebox.showerror("导入失败", f"读取文件出错:\n{e}")
 
@@ -458,6 +458,22 @@ class QuizServer:
         self.question_display.config(state=tk.DISABLED)
         self._update_progress()
 
+    def _show_welcome(self):
+        """导入题库后显示过渡页面"""
+        self.current_question_index = -1
+        self.answer_visible = False
+        self.show_answer_btn.config(text="显示答案 👁")
+        self.answer_label.config(text="--")
+        self.question_display.config(state=tk.NORMAL)
+        self.question_display.delete("1.0", tk.END)
+        self.question_display.insert(tk.END, f"📚 题库已加载：{len(self.questions)} 道题\n\n")
+        self.question_display.insert(tk.END, "✅ 点击「▶ 下一题」开始浏览题目\n")
+        self.question_display.insert(tk.END, "🚀 点击「开始抢答 🚀」发起抢答\n\n")
+        self.question_display.insert(tk.END, "📌 选手连接后即可开始比赛")
+        self.question_display.config(state=tk.DISABLED)
+        self._update_progress()
+        self.start_buzz_btn.config(state=tk.NORMAL)
+
     def _toggle_answer(self):
         if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
             return
@@ -496,7 +512,13 @@ class QuizServer:
         """开始抢答：把当前题目发送给所有选手"""
         debug_log(">>> _start_buzz 被调用")
         if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
-            self._log("⚠️ 请先在题库中选择一道题")
+            # 还没选过题目，自动切到第一题
+            if len(self.questions) > 0:
+                self._show_question(0)
+                self._log(f"📋 自动切换到第 1 题")
+            else:
+                self._log("⚠️ 请先导入题库")
+                return
             debug_log("<<< _start_buzz 退出: 无有效题目")
             return
 
