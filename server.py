@@ -44,6 +44,10 @@ class QuizServer:
         self.question_file_path = ""
         self._last_answer = ""  # 选手最后一次提交的答案
 
+        # 分数配置
+        self.correct_points = 2   # 答对加分
+        self.wrong_points = 1     # 答错扣分
+
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
         self._build_ui()
@@ -136,6 +140,12 @@ class QuizServer:
             font=("微软雅黑", 9), variable=self.auto_judge_var
         )
         self.auto_judge_cb.pack(side=tk.LEFT, padx=5)
+
+        self.settings_btn = tk.Button(
+            ctrl_frame, text="⚙ 设置", font=("微软雅黑", 9),
+            bg="#607D8B", fg="white", width=8, command=self._show_settings
+        )
+        self.settings_btn.pack(side=tk.LEFT, padx=2)
 
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
@@ -596,10 +606,9 @@ class QuizServer:
 
     def _award_score(self, name):
         """抢答成功后答对给分"""
-        pts = 10
+        pts = self.correct_points
         correct = ""
         if 0 <= self.current_question_index < len(self.questions):
-            pts = self.questions[self.current_question_index]["points"]
             correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
@@ -613,14 +622,13 @@ class QuizServer:
 
     def _penalty_score(self, name):
         """抢答成功后答错扣分"""
-        pts = 5
+        pts = self.wrong_points
         correct = ""
         if 0 <= self.current_question_index < len(self.questions):
-            pts = max(1, self.questions[self.current_question_index]["points"] // 2)
             correct = self.questions[self.current_question_index]["answer"]
         with self.lock:
             if name in self.clients:
-                self.clients[name]["score"] = max(0, self.clients[name]["score"] - pts)
+                self.clients[name]["score"] -= pts  # 支持负数
                 self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了！-{pts} 分"})
         self._add_record(self._last_answer, "❌ 错误 ❌", correct)
@@ -633,6 +641,67 @@ class QuizServer:
         self.start_buzz_btn.config(text="开始抢答 🚀", bg="#FF5722", fg="white", width=10, command=self._start_buzz)
         self.stop_round_btn.config(text="结束本轮 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
         self.first_buzzer = None
+
+    def _show_settings(self):
+        """显示设置窗口"""
+        win = tk.Toplevel(self.root)
+        win.title("⚙ 设置")
+        win.geometry("360x240")
+        win.resizable(False, False)
+        win.transient(self.root)
+        win.grab_set()
+
+        # 分数设置
+        score_frame = tk.LabelFrame(win, text="得分设置", font=("微软雅黑", 10))
+        score_frame.pack(fill=tk.X, padx=15, pady=10)
+
+        row1 = tk.Frame(score_frame)
+        row1.pack(fill=tk.X, padx=10, pady=5)
+        tk.Label(row1, text="答对加分:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        correct_var = tk.IntVar(value=self.correct_points)
+        correct_spin = tk.Spinbox(row1, from_=0, to=999, textvariable=correct_var,
+                                   font=("微软雅黑", 10), width=6)
+        correct_spin.pack(side=tk.RIGHT)
+        tk.Label(row1, text="分", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+
+        row2 = tk.Frame(score_frame)
+        row2.pack(fill=tk.X, padx=10, pady=5)
+        tk.Label(row2, text="答错扣分:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        wrong_var = tk.IntVar(value=self.wrong_points)
+        wrong_spin = tk.Spinbox(row2, from_=0, to=999, textvariable=wrong_var,
+                                 font=("微软雅黑", 10), width=6)
+        wrong_spin.pack(side=tk.RIGHT)
+        tk.Label(row2, text="分", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+
+        # 自动判题
+        judge_frame = tk.LabelFrame(win, text="判题模式", font=("微软雅黑", 10))
+        judge_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        judge_row = tk.Frame(judge_frame)
+        judge_row.pack(fill=tk.X, padx=10, pady=5)
+        auto_var = tk.BooleanVar(value=self.auto_judge_var.get())
+        tk.Checkbutton(judge_row, text="🤖 自动判题（服务器自动比对答案）",
+                       font=("微软雅黑", 10), variable=auto_var).pack(side=tk.LEFT)
+
+        # 说明
+        tk.Label(win, text="💡 答错扣分支持负数，且得分可低于0分",
+                 font=("微软雅黑", 9), fg="#666").pack(pady=(0, 5))
+
+        # 按钮
+        btn_row = tk.Frame(win)
+        btn_row.pack(fill=tk.X, padx=15, pady=5)
+
+        def save():
+            self.correct_points = correct_var.get()
+            self.wrong_points = wrong_var.get()
+            self.auto_judge_var.set(auto_var.get())
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
+            win.destroy()
+
+        tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
+                  bg="#4CAF50", fg="white", width=10, command=save).pack(side=tk.RIGHT, padx=2)
+        tk.Button(btn_row, text="取消", font=("微软雅黑", 10),
+                  bg="#9E9E9E", fg="white", width=10, command=win.destroy).pack(side=tk.RIGHT, padx=2)
 
     def _send_message_to_all(self):
         msg = self.msg_entry.get().strip()

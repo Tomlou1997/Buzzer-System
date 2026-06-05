@@ -409,3 +409,39 @@
 [16:11:57.470] _broadcast 开始: type=system, clients_count=1
 [16:11:57.471] _broadcast 已发送给 [44455]
 [16:11:57.471] _broadcast 结束: type=system
+[16:20:21.639] _broadcast 开始: type=shutdown, clients_count=1
+[16:20:21.640] _broadcast 已发送给 [44455]
+[16:20:21.640] _broadcast 结束: type=shutdown
+[16:20:21.641] _handle_client [44455] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[16:20:21.642] _handle_client [44455] 即将移除
+[16:20:21.642] _remove_client: [44455] 准备抢锁
+[16:20:21.642] _remove_client: [44455] 拿到锁
+[16:20:21.643] _remove_client: [44455] 已从 clients 移除
+[16:21:29.621] _handle_client 新连接: ('10.8.51.7', 61384)
+[16:21:29.621] _handle_client 选手名称: ITIT
+[16:21:29.636] _broadcast 开始: type=system, clients_count=1
+[16:21:29.636] _broadcast 已发送给 [ITIT]
+[16:21:29.637] _broadcast 结束: type=system
+[16:21:33.553] >>> _start_buzz 被调用
+[16:21:33.553] _start_buzz 准备抢锁, clients=['ITIT']
+[16:21:33.554] _start_buzz 拿到锁
+[16:21:33.554] _start_buzz 开始第 1 轮
+[16:21:33.566] _start_buzz 准备广播 round_start
+[16:21:33.567] _broadcast 开始: type=round_start, clients_count=1
+[16:21:33.567] _broadcast 已发送给 [ITIT]
+[16:21:33.567] _broadcast 结束: type=round_start
+[16:21:33.568] _start_buzz round_start 广播完毕
+[16:21:33.568] _broadcast 开始: type=question, clients_count=1
+[16:21:33.568] _broadcast 已发送给 [ITIT]
+[16:21:33.569] _broadcast 结束: type=question
+[16:21:33.569] _start_buzz question 广播完毕
+[16:21:33.569] <<< _start_buzz 释放锁，正常退出
+[16:21:37.114] _process_client_msg: [ITIT] type=buzz
+[16:21:37.115] _process_client_msg: [ITIT] 尝试抢答，准备抢锁
+[16:21:37.115] _process_client_msg: [ITIT] 拿到锁
+[16:21:37.115] _process_client_msg: [ITIT] 抢答成功！first_buzzer 设为 ITIT
+[16:21:45.499] _process_client_msg: [ITIT] type=answer
+[16:21:45.499] _process_client_msg: [ITIT] 提交答案: DEF
+[16:21:45.524] _broadcast 开始: type=system, clients_count=1
+[16:21:45.525] _broadcast 已发送给 [ITIT]
+[16:21:45.525] _broadcast 结束: type=system
