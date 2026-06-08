@@ -642,6 +642,8 @@ class QuizServer:
             debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
+            self.prev_btn.config(state=tk.DISABLED)
+            self.next_round_btn.config(state=tk.DISABLED)
 
             self._log(f"🟢 === 第 {self.round_num} 轮: 第 {self.current_question_index+1} 题（{q['points']} 分）===")
             self.buzz_banner.config(text=f"🟢 第 {self.round_num} 轮抢答进行中...", bg="#4CAF50")
@@ -657,6 +659,7 @@ class QuizServer:
             self.round_active = False
             self.start_buzz_btn.config(state=tk.NORMAL) if self.current_question_index >= 0 else None
             self.stop_round_btn.config(state=tk.DISABLED)
+            self._update_nav_buttons()
         self.buzz_banner.config(text="⏳ 抢答已结束，准备下一题", bg="#FF9800")
         self._log("🔴 本轮抢答已手动结束")
         self._broadcast({"type": "round_end", "msg": "🔴 本轮抢答已结束"})
@@ -868,6 +871,8 @@ class QuizServer:
         self.start_buzz_btn.config(text="开始抢答 🚀", bg="#FF5722", fg="white", width=10, command=self._start_buzz)
         self.stop_round_btn.config(text="结束抢答 ■", bg="#f44336", fg="white", width=10, state=tk.DISABLED, command=self._stop_round)
         self.first_buzzer = None
+        # 恢复上一题/下一题按钮
+        self._update_nav_buttons()
 
     def _start_timer(self, name):
         """启动答题倒计时"""
