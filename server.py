@@ -260,28 +260,6 @@ class QuizServer:
         self.show_answer_btn.pack(side=tk.RIGHT)
         self.answer_visible = False
 
-        # === 题目导航列表 ===
-        nav_frame = tk.LabelFrame(question_frame, text="📑 题目导航", font=("微软雅黑", 10))
-        nav_frame.pack(fill=tk.X, padx=5, pady=(0, 2))
-
-        nav_top = tk.Frame(nav_frame)
-        nav_top.pack(fill=tk.X, padx=5, pady=2)
-        tk.Label(nav_top, text="点击切换题目（已答不可选）", font=("微软雅黑", 8), fg="#666").pack(side=tk.LEFT)
-
-        qnav_frame = tk.Frame(nav_frame)
-        qnav_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
-
-        self.question_nav_listbox = tk.Listbox(
-            qnav_frame, font=("微软雅黑", 9), height=4,
-            selectmode=tk.SINGLE, exportselection=False,
-            activestyle="none"
-        )
-        self.question_nav_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        nav_scroll = tk.Scrollbar(qnav_frame, orient=tk.VERTICAL, command=self.question_nav_listbox.yview)
-        self.question_nav_listbox.configure(yscrollcommand=nav_scroll.set)
-        nav_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.question_nav_listbox.bind("<<ListboxSelect>>", self._on_nav_select)
-
         # === 抢答记录 ===
         record_frame = tk.LabelFrame(question_frame, text="📋 抢答记录", font=("微软雅黑", 10))
         record_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -610,9 +588,9 @@ class QuizServer:
     def _update_progress(self):
         total = len(self.questions)
         current = self.current_question_index + 1 if self.current_question_index >= 0 else 0
-        if not self.allow_repeat and self.used_questions:
+        if not self.allow_repeat:
             remaining = total - len(self.used_questions)
-            self.progress_label.config(text=f"进度: {current} / {total}  |  剩余 {remaining} 题")
+            self.progress_label.config(text=f"进度: {current} / {total}  |  未答: {remaining} 题")
         else:
             self.progress_label.config(text=f"进度: {current} / {total}")
         if 0 <= self.current_question_index < len(self.questions):
@@ -620,39 +598,6 @@ class QuizServer:
             self.points_label.config(text=f"分值: {pts} 分")
         else:
             self.points_label.config(text="分值: --")
-
-    def _update_question_nav(self):
-        """更新题目导航列表"""
-        self.question_nav_listbox.delete(0, tk.END)
-        for i, q in enumerate(self.questions):
-            used = i in self.used_questions
-            prefix = "✅" if used else "⬜"
-            text = f"  {prefix}  第 {i+1} 题（{q['points']} 分）"
-            self.question_nav_listbox.insert(tk.END, text)
-            # 不可重复模式下已用的设为灰色
-            if not self.allow_repeat and used:
-                self.question_nav_listbox.itemconfig(tk.END, fg="#BDBDBD", selectforeground="#BDBDBD")
-            else:
-                self.question_nav_listbox.itemconfig(tk.END, fg="#333", selectforeground="white")
-        # 高亮当前题
-        if 0 <= self.current_question_index < len(self.questions):
-            self.question_nav_listbox.selection_clear(0, tk.END)
-            self.question_nav_listbox.selection_set(self.current_question_index)
-            self.question_nav_listbox.see(self.current_question_index)
-
-    def _on_nav_select(self, event):
-        """题目导航列表点击事件"""
-        sel = self.question_nav_listbox.curselection()
-        if not sel:
-            return
-        idx = sel[0]
-        # 不可重复模式下已用的不能选
-        if not self.allow_repeat and idx in self.used_questions:
-            self.question_nav_listbox.selection_clear(0, tk.END)
-            if 0 <= self.current_question_index < len(self.questions):
-                self.question_nav_listbox.selection_set(self.current_question_index)
-            return
-        self._show_question(idx)
 
     def _show_question(self, index):
         self.current_question_index = index
@@ -675,7 +620,6 @@ class QuizServer:
         else:
             self.start_buzz_btn.config(state=tk.NORMAL)
         self._update_progress()
-        self._update_question_nav()
         self._update_nav_buttons()
 
     def _update_nav_buttons(self):
@@ -713,7 +657,6 @@ class QuizServer:
         self.question_display.insert(tk.END, "📌 选手连接后即可开始比赛")
         self.question_display.config(state=tk.DISABLED)
         self._update_progress()
-        self._update_question_nav()
         self._update_nav_buttons()
         self.start_buzz_btn.config(state=tk.NORMAL)
 
@@ -756,29 +699,24 @@ class QuizServer:
                 return
 
         self._show_question(next_idx)
-        if not self.allow_repeat and next_idx in self.used_questions:
-            self.start_buzz_btn.config(state=tk.DISABLED)
-            self._log(f"📋 切换到第 {next_idx+1} 题（已使用过，不可重复抢答）")
-        else:
-            self.start_buzz_btn.config(state=tk.NORMAL)
-            self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
+        self.start_buzz_btn.config(state=tk.NORMAL)
+        self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
 
     def _prev_question(self):
         """切换到上一题"""
         if not self.questions:
             return
         prev_idx = self.current_question_index - 1
+        # 不可重复模式下跳过已使用的题目
+        if not self.allow_repeat:
+            while prev_idx >= 0 and prev_idx in self.used_questions:
+                prev_idx -= 1
         if prev_idx < 0:
             self._log("📋 已是第一题")
             return
         self._show_question(prev_idx)
-        # 如果不允许重复且该题已使用，禁用开始抢答
-        if not self.allow_repeat and prev_idx in self.used_questions:
-            self.start_buzz_btn.config(state=tk.DISABLED)
-            self._log(f"📋 切换到第 {prev_idx+1} 题（已使用过，不可重复抢答）")
-        else:
-            self.start_buzz_btn.config(state=tk.NORMAL)
-            self._log(f"📋 切换到第 {prev_idx+1} 题，点击「开始抢答 🚀」发送给选手")
+        self.start_buzz_btn.config(state=tk.NORMAL)
+        self._log(f"📋 切换到第 {prev_idx+1} 题，点击「开始抢答 🚀」发送给选手")
 
     def _start_buzz(self):
         """开始抢答：把当前题目发送给所有选手"""
@@ -820,7 +758,6 @@ class QuizServer:
             # 记录已使用题目
             if not self.allow_repeat:
                 self.used_questions.add(self.current_question_index)
-            self._update_question_nav()
             debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
