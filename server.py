@@ -1073,15 +1073,16 @@ class QuizServer:
         if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜并返回主页。"):
             return
         self.stop_timer()
+        self.round_active = False
         self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
-        # 展示积分榜
-        self._show_rankings()
         # 通知客户端
         rankings = [{"name": n, "score": d.get("score", 0)} for n, d in self.clients.items()]
         rankings.sort(key=lambda x: x["score"], reverse=True)
         self._broadcast({"type": "game_over", "rankings": rankings})
         self._log("🏁 比赛已手动结束")
-        # 回到主页
+        # 展示结束积分榜（传参表示是最终排名）
+        self._show_rankings(final=True)
+        # 等积分榜关掉后返回主页
         self._switch_to_home()
 
     def _check_winner(self):
@@ -1152,14 +1153,17 @@ class QuizServer:
         for n, s, r in newly_ranked:
             self._broadcast({"type": "system", "msg": f"🏆 [{n}] 获得第{r}名！当前得分: {s}"})
 
-    def _show_rankings(self):
-        """弹出全屏积分排名窗口"""
+    def _show_rankings(self, final=False):
+        """弹出全屏积分排名窗口
+        final=True 时表示比赛已经结束，显示结束标题
+        """
         if not self.clients:
             messagebox.showinfo("提示", "暂无选手数据")
             return
 
         win = tk.Toplevel(self.root)
-        win.title("📊 积分排名榜")
+        title_text = "🏆 比赛结束 - 最终排名 🏆" if final else "🏆 积分排名榜 🏆"
+        win.title(title_text)
         win.attributes("-fullscreen", True)
         win.attributes("-topmost", True)
         win.configure(bg="#1a1a2e")
@@ -1171,7 +1175,7 @@ class QuizServer:
         close_btn.place(x=20, y=20, width=100, height=40)
 
         # 标题
-        title_lbl = tk.Label(win, text="🏆 积分排名榜 🏆",
+        title_lbl = tk.Label(win, text=title_text,
                              font=("微软雅黑", 36, "bold"),
                              bg="#1a1a2e", fg="#FFD700")
         title_lbl.pack(pady=(40, 20))
