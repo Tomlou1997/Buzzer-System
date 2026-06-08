@@ -168,7 +168,7 @@ class QuizServer:
         self.home_bank_btn = tk.Button(
             btn_container, text="📚 题库管理", font=btn_font,
             bg="#FF9800", fg="white", width=btn_width, height=2,
-            command=self._import_questions
+            command=self._switch_to_bank
         )
         self.home_bank_btn.pack(pady=10)
 
@@ -178,6 +178,59 @@ class QuizServer:
             command=self._show_settings
         )
         self.home_settings_btn.pack(pady=10)
+
+        # ========== 题库管理页面 ==========
+        self.bank_page_frame = tk.Frame(self.root)
+
+        bank_top = tk.Frame(self.bank_page_frame)
+        bank_top.pack(fill=tk.X, padx=10, pady=(10, 0))
+        tk.Button(
+            bank_top, text="← 返回主页", font=("微软雅黑", 9),
+            bg="#333", fg="white", command=self._switch_to_home_from_bank
+        ).pack(side=tk.LEFT)
+        tk.Label(bank_top, text="📚 题库管理", font=("微软雅黑", 14, "bold"),
+                 fg="#FF9800").pack(side=tk.LEFT, padx=15)
+
+        # 题库列表
+        bank_list_frame = tk.LabelFrame(self.bank_page_frame, text="已导入的题库",
+                                         font=("微软雅黑", 10))
+        bank_list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.bank_listbox = tk.Listbox(
+            bank_list_frame, font=("微软雅黑", 11),
+            selectmode=tk.SINGLE, activestyle="none"
+        )
+        self.bank_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        bank_scroll = tk.Scrollbar(bank_list_frame, orient=tk.VERTICAL,
+                                    command=self.bank_listbox.yview)
+        self.bank_listbox.configure(yscrollcommand=bank_scroll.set)
+        bank_scroll.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+
+        self.bank_listbox.bind("<ButtonRelease-1>", self._on_bank_list_select)
+        self.bank_listbox.bind("<Delete>", lambda e: self._remove_bank_from_list())
+
+        # 底部按钮
+        bank_btn_frame = tk.Frame(self.bank_page_frame)
+        bank_btn_frame.pack(fill=tk.X, padx=10, pady=(0, 15))
+
+        self.bank_import_btn = tk.Button(
+            bank_btn_frame, text="📂 导入题库", font=("微软雅黑", 11),
+            bg="#FF9800", fg="white", width=12, command=self._import_questions
+        )
+        self.bank_import_btn.pack(side=tk.LEFT, padx=5)
+
+        self.bank_del_list_btn = tk.Button(
+            bank_btn_frame, text="🗑 删除选中", font=("微软雅黑", 11),
+            bg="#f44336", fg="white", width=12, command=self._remove_bank_from_list
+        )
+        self.bank_del_list_btn.pack(side=tk.LEFT, padx=5)
+
+        self.bank_use_btn = tk.Button(
+            bank_btn_frame, text="▶ 使用此题库比赛", font=("微软雅黑", 11),
+            bg="#4CAF50", fg="white", width=16,
+            command=self._use_selected_bank
+        )
+        self.bank_use_btn.pack(side=tk.RIGHT, padx=5)
 
         # ========== 比赛页面 ==========
         self.game_frame = tk.Frame(self.root)
@@ -401,6 +454,84 @@ class QuizServer:
         self.home_frame.pack(fill=tk.BOTH, expand=True)
         self._log("🏠 返回主页")
 
+    def _switch_to_bank(self):
+        """切换到题库管理页面"""
+        self.home_frame.pack_forget()
+        self._update_bank_listbox()
+        self.bank_page_frame.pack(fill=tk.BOTH, expand=True)
+        self._log("📚 进入题库管理")
+
+    def _switch_to_home_from_bank(self):
+        """从题库管理页面返回主页"""
+        self.bank_page_frame.pack_forget()
+        self.home_frame.pack(fill=tk.BOTH, expand=True)
+
+    def _update_bank_listbox(self):
+        """更新题库管理页面的列表"""
+        self.bank_listbox.delete(0, tk.END)
+        if not self.question_banks:
+            self.bank_listbox.insert(tk.END, "(暂无题库，点击下方「导入题库」添加)")
+            self.bank_del_list_btn.config(state=tk.DISABLED)
+            self.bank_use_btn.config(state=tk.DISABLED)
+            return
+        self.bank_del_list_btn.config(state=tk.NORMAL)
+        self.bank_use_btn.config(state=tk.NORMAL)
+        for name, questions in self.question_banks.items():
+            active = " ✅ 使用中" if name == self.active_bank_name else ""
+            self.bank_listbox.insert(tk.END, f"  {name}（{len(questions)} 题）{active}")
+
+    def _on_bank_list_select(self, event):
+        """点击题库列表项"""
+        sel = self.bank_listbox.curselection()
+        if not sel:
+            return
+        self.bank_del_list_btn.config(state=tk.NORMAL)
+        self.bank_use_btn.config(state=tk.NORMAL)
+
+    def _remove_bank_from_list(self):
+        """从题库管理页面删除选中题库"""
+        sel = self.bank_listbox.curselection()
+        if not sel:
+            return
+        text = self.bank_listbox.get(sel[0])
+        # 提取题库名
+        name = text.split("（")[0].strip()
+        if name.startswith("  "):
+            name = name[2:]
+        if not name or name not in self.question_banks:
+            return
+        if not messagebox.askyesno("确认删除", f"确定要从内存中删除题库「{name}」吗？\n（不会删除源文件）"):
+            return
+        del self.question_banks[name]
+        self._update_bank_listbox()
+        self._update_bank_combo()
+        if name == self.active_bank_name:
+            if self.question_banks:
+                first = list(self.question_banks.keys())[0]
+                self._activate_bank(first)
+            else:
+                self.questions = []
+                self.active_bank_name = None
+                self.used_questions.clear()
+        self._log(f"🗑 已删除题库: {name}")
+
+    def _use_selected_bank(self):
+        """使用选中的题库开始比赛"""
+        sel = self.bank_listbox.curselection()
+        if not sel:
+            return
+        text = self.bank_listbox.get(sel[0])
+        name = text.split("（")[0].strip()
+        if name.startswith("  "):
+            name = name[2:]
+        if not name or name not in self.question_banks:
+            return
+        self._activate_bank(name)
+        self._update_bank_listbox()
+        self._log(f"📌 选定题库: {name}，共 {len(self.question_banks[name])} 题")
+        # 自动跳转到比赛页面
+        self._switch_to_game()
+
     # =============== 题库 ===============
 
     def _import_questions(self):
@@ -444,6 +575,7 @@ class QuizServer:
             self._update_bank_combo()
             self.bank_combo.set(bank_name)
             self._activate_bank(bank_name)
+            self._update_bank_listbox()
 
             self._log(f"📚 导入题库: {bank_name} — 共 {len(questions)} 题")
         except Exception as e:
@@ -504,6 +636,7 @@ class QuizServer:
             self.status_label.config(text=f"IP: {self.host_ip} | 端口: 8888 | 题库: 无")
             self._show_welcome()
         self._log(f"🗑 已删除题库: {name}")
+        self._update_bank_listbox()
 
     def _parse_txt(self, file_path):
         questions = []
