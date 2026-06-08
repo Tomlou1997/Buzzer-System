@@ -423,6 +423,9 @@ class QuizClient:
 
         if msg_type == "info":
             self._log(f"📢 {msg.get('msg', '')}")
+            game_name = msg.get("game_name", "")
+            if game_name:
+                self.root.title(f"抢答软件 - 客户端 | {game_name}")
 
         elif msg_type == "system":
             self._log(f"ℹ️ {msg.get('msg', '')}")

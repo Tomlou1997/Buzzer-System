@@ -60,6 +60,8 @@ class QuizServer:
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
+        self.game_name = ""       # 比赛名称
+        self._ask_game_name()
         self._build_ui()
         self._start_server()
 
@@ -72,6 +74,42 @@ class QuizServer:
             return ip
         except:
             return "127.0.0.1"
+
+    def _ask_game_name(self):
+        """启动时弹窗输入比赛名称"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("比赛名称")
+        dialog.geometry("350x150")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        # 置中
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() - 350) // 2
+        y = (dialog.winfo_screenheight() - 150) // 2
+        dialog.geometry(f"+{x}+{y}")
+
+        tk.Label(dialog, text="请输入比赛名称：", font=("微软雅黑", 12)).pack(pady=(20, 10))
+        name_var = tk.StringVar(value="知识竞赛")
+        entry = tk.Entry(dialog, textvariable=name_var, font=("微软雅黑", 12), width=25)
+        entry.pack(pady=(0, 10))
+        entry.select_range(0, tk.END)
+        entry.focus()
+
+        def confirm():
+            self.game_name = name_var.get().strip()
+            if not self.game_name:
+                self.game_name = "知识竞赛"
+            self.root.title(f"抢答软件 - 主控端 | {self.game_name}")
+            dialog.destroy()
+
+        dialog.protocol("WM_DELETE_WINDOW", confirm)
+        entry.bind("<Return>", lambda e: confirm())
+        tk.Button(dialog, text="确 定", font=("微软雅黑", 10),
+                  bg="#4CAF50", fg="white", width=10, command=confirm).pack()
+
+        # 等待输入完成
+        self.root.wait_window(dialog)
 
     def _build_ui(self):
         menubar = tk.Menu(self.root)
@@ -1075,7 +1113,7 @@ class QuizServer:
                 self.extend_limits[name] = self.extend_max
             self._update_player_list()
             self._log(f"✅ 选手 [{name}] 已连接 ({addr[0]})")
-            self._send_to_player(name, {"type": "info", "msg": "连接成功！等待管理员开始抢答..."})
+            self._send_to_player(name, {"type": "info", "msg": "连接成功！等待管理员开始抢答...", "game_name": self.game_name})
             self._broadcast({"type": "system", "msg": f"选手 [{name}] 加入了比赛"})
 
             # 设置 socket 超时，以便心跳和断开检测
