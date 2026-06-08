@@ -38,8 +38,7 @@ class QuizServer:
         self.round_num = 0
         self.round_active = False
         self.first_buzzer = None
-        self.game_started = False  # 是否已进入比赛模式，控制客户端连接
-        self.game_ever_started = False  # 曾经进入过比赛（用于判断返回时是否需要弹窗）
+        self.game_started = False  # 是否在比赛状态（非结束），控制客户端连接
 
         self.questions = []
         self.current_question_index = -1
@@ -449,7 +448,7 @@ class QuizServer:
     # ========== 页面切换 ==========
 
     def _switch_to_game(self):
-        """切换到比赛页面"""
+        """切换到比赛页面（首次进入弹出名称，再次进入为继续比赛）"""
         if not self.question_banks:
             messagebox.showwarning("提示", "请先导入题库才能开始比赛\n点击「📚 题库管理」导入题库")
             return
@@ -457,12 +456,11 @@ class QuizServer:
         if not self.active_bank_name or not self.questions:
             first = list(self.question_banks.keys())[0]
             self._activate_bank(first)
-        # 如果已经进入过比赛，直接切回去，不再弹窗
-        if self.game_ever_started:
-            self.game_started = True
+        # 如果已经在比赛状态，直接切回去
+        if self.game_started:
             self.game_frame.pack(fill=tk.BOTH, expand=True)
             self.home_frame.pack_forget()
-            self._log("🎮 返回比赛模式")
+            self._log("🎮 继续比赛")
             return
         name = self._ask_game_name()
         if name is None:  # 用户取消了
@@ -470,15 +468,13 @@ class QuizServer:
         self.game_name = name
         self.root.title(f"抢答软件 - 主控端 | {self.game_name}")
         self.game_started = True
-        self.game_ever_started = True
         self.home_frame.pack_forget()
         self.game_frame.pack(fill=tk.BOTH, expand=True)
         self.game_title_label.config(text=f"🏆 {self.game_name}")
         self._log(f"🎮 进入比赛模式 — 比赛名称: {self.game_name}")
 
     def _switch_to_home(self):
-        """切换到主页面"""
-        self.game_started = False  # 客户端不能连接
+        """切换到主页面（保持比赛状态，客户端连接不受影响）"""
         self.game_frame.pack_forget()
         self.home_frame.pack(fill=tk.BOTH, expand=True)
         self._log("🏠 返回主页")
@@ -1068,8 +1064,7 @@ class QuizServer:
         self.round_num = 0
         self.round_active = False
         self.first_buzzer = None
-        self.game_started = False  # 是否已进入比赛模式，控制客户端连接
-        self.game_ever_started = False  # 曾经进入过比赛（用于判断返回时是否需要弹窗）
+        self.game_started = False  # 是否在比赛状态（非结束），控制客户端连接
         self.record_tree.delete(*self.record_tree.get_children())
         # 回到题库起始
         if self.active_bank_name and self.active_bank_name in self.question_banks:
@@ -1086,7 +1081,7 @@ class QuizServer:
         """结束比赛：展示积分榜并返回主页"""
         if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜并返回主页。"):
             return
-        self.game_ever_started = False
+        self.game_started = False
         self.game_name = ""
         self.stop_timer()
         self.round_active = False
