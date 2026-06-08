@@ -1086,6 +1086,8 @@ class QuizServer:
         """结束比赛：展示积分榜并返回主页"""
         if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜并返回主页。"):
             return
+        self.game_ever_started = False
+        self.game_name = ""
         self.stop_timer()
         self.round_active = False
         self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
