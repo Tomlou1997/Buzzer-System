@@ -57,7 +57,7 @@ class QuizServer:
         self.extend_limits = {}   # 选手每场比赛可延长次数 {name: remaining}
         self.extend_max = 1       # 每次比赛默认可延长次数
         self.extend_seconds = 15  # 每次延长秒数
-        self.allow_repeat = True  # 题目是否可重复使用
+        self.allow_repeat = False  # 题目是否可重复使用（默认不可重复）
         self.used_questions = set()  # 已使用过的题目索引
 
         self.host_ip = self._get_local_ip()
@@ -1042,7 +1042,7 @@ class QuizServer:
         reuse_row = tk.Frame(reuse_frame)
         reuse_row.pack(fill=tk.X, padx=10, pady=5)
         reuse_var = tk.BooleanVar(value=self.allow_repeat)
-        tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（取消勾选后，已抢答过的题目自动跳过）",
+        tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（勾选后已用题目可以再次抢答）",
                        font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
 
         # 说明
