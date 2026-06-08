@@ -513,7 +513,11 @@ class QuizServer:
     def _update_progress(self):
         total = len(self.questions)
         current = self.current_question_index + 1 if self.current_question_index >= 0 else 0
-        self.progress_label.config(text=f"进度: {current} / {total}")
+        if not self.allow_repeat and self.used_questions:
+            remaining = total - len(self.used_questions)
+            self.progress_label.config(text=f"进度: {current} / {total}  |  剩余 {remaining} 题")
+        else:
+            self.progress_label.config(text=f"进度: {current} / {total}")
         if 0 <= self.current_question_index < len(self.questions):
             pts = self.questions[self.current_question_index]["points"]
             self.points_label.config(text=f"分值: {pts} 分")
@@ -535,6 +539,11 @@ class QuizServer:
             self.question_display.insert(tk.END, "请导入题库或点击题目列表中的题目查看")
             self.answer_label.config(text="--")
         self.question_display.config(state=tk.DISABLED)
+        # 不允许重复时，如果当前题已用完则禁用开始抢答
+        if not self.allow_repeat and 0 <= index < len(self.questions) and index in self.used_questions:
+            self.start_buzz_btn.config(state=tk.DISABLED)
+        else:
+            self.start_buzz_btn.config(state=tk.NORMAL)
         self._update_progress()
         self._update_nav_buttons()
 
@@ -544,10 +553,18 @@ class QuizServer:
             self.prev_btn.config(state=tk.DISABLED)
         else:
             self.prev_btn.config(state=tk.NORMAL)
+        # 下一题：不允许重复且所有题都用完时禁用，或到边界时禁用
         if self.current_question_index >= len(self.questions) - 1:
             self.next_round_btn.config(state=tk.DISABLED)
         elif not self.allow_repeat and len(self.used_questions) >= len(self.questions):
             self.next_round_btn.config(state=tk.DISABLED)
+        elif not self.allow_repeat:
+            # 检查是否还有未使用的题目
+            remaining = [i for i in range(len(self.questions)) if i not in self.used_questions]
+            if not remaining:
+                self.next_round_btn.config(state=tk.DISABLED)
+            else:
+                self.next_round_btn.config(state=tk.NORMAL)
         else:
             self.next_round_btn.config(state=tk.NORMAL)
 
@@ -564,6 +581,11 @@ class QuizServer:
         self.question_display.insert(tk.END, "🚀 点击「开始抢答 🚀」发起抢答\n\n")
         self.question_display.insert(tk.END, "📌 选手连接后即可开始比赛")
         self.question_display.config(state=tk.DISABLED)
+        # 不允许重复时，如果当前题已用完则禁用开始抢答
+        if not self.allow_repeat and 0 <= index < len(self.questions) and index in self.used_questions:
+            self.start_buzz_btn.config(state=tk.DISABLED)
+        else:
+            self.start_buzz_btn.config(state=tk.NORMAL)
         self._update_progress()
         self._update_nav_buttons()
         self.start_buzz_btn.config(state=tk.NORMAL)
