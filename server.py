@@ -641,6 +641,7 @@ class QuizServer:
 
         if not self.clients:
             self._log("⚠️ 没有选手连接，无法开始抢答")
+            messagebox.showwarning("提示", "没有选手连接，无法开始抢答")
             debug_log("<<< _start_buzz 退出: 无客户端连接")
             return
 
