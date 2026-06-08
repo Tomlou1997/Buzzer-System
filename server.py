@@ -38,6 +38,7 @@ class QuizServer:
         self.round_num = 0
         self.round_active = False
         self.first_buzzer = None
+        self.game_started = False  # 是否已进入比赛模式，控制客户端连接
 
         self.questions = []
         self.current_question_index = -1
@@ -460,6 +461,7 @@ class QuizServer:
             return
         self.game_name = name
         self.root.title(f"抢答软件 - 主控端 | {self.game_name}")
+        self.game_started = True
         self.home_frame.pack_forget()
         self.game_frame.pack(fill=tk.BOTH, expand=True)
         self.game_title_label.config(text=f"🏆 {self.game_name}")
@@ -467,6 +469,7 @@ class QuizServer:
 
     def _switch_to_home(self):
         """切换到主页面"""
+        self.game_started = False
         self.game_frame.pack_forget()
         self.home_frame.pack(fill=tk.BOTH, expand=True)
         self._log("🏠 返回主页")
@@ -1056,6 +1059,7 @@ class QuizServer:
         self.round_num = 0
         self.round_active = False
         self.first_buzzer = None
+        self.game_started = False  # 是否已进入比赛模式，控制客户端连接
         self.record_tree.delete(*self.record_tree.get_children())
         # 回到题库起始
         if self.active_bank_name and self.active_bank_name in self.question_banks:
@@ -1520,6 +1524,12 @@ class QuizServer:
 
     def _handle_client(self, c, addr):
         debug_log(f"_handle_client 新连接: {addr}")
+        # 比赛未开始时拒绝连接
+        if not self.game_started:
+            c.send(json.dumps({"type": "error", "msg": "⏳ 比赛尚未开始，请等待管理员开启比赛后再连接"}).encode())
+            c.close()
+            debug_log(f"_handle_client 比赛未开始，拒绝连接: {addr}")
+            return
         try:
             data = c.recv(1024).decode("utf-8")
             msg = json.loads(data)
