@@ -226,26 +226,35 @@ class QuizClient:
             btn.config(state=tk.NORMAL)
         self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤", bg="#2196F3")
         self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.root.pack_slaves()[0])
-        # 添加延长按钮
-        if self.extend_btn is None:
+        # 有剩余延长次数才显示延长按钮
+        if self.extend_btn:
+            try:
+                self.extend_btn.destroy()
+            except:
+                pass
+            self.extend_btn = None
+        if self.extend_remaining > 0:
             self.extend_btn = tk.Button(
-                self.answer_frame, text="⏱ 延长回答",
+                self.answer_frame, text=f"⏱ 延长回答（余{self.extend_remaining}次）",
                 font=("微软雅黑", 10, "bold"),
                 bg="#FF9800", fg="white", bd=0,
                 command=self._extend_time
             )
             self.extend_btn.pack(anchor=tk.W, padx=5, pady=(5, 0))
-        self._update_extend_btn()
 
     def _update_extend_btn(self):
         """更新延长按钮状态"""
         if self.extend_btn:
             if self.extend_remaining > 0:
-                self.extend_btn.config(state=tk.NORMAL, text=f"⏱ 延长回答（剩余{self.extend_remaining}次）",
+                self.extend_btn.config(state=tk.NORMAL, text=f"⏱ 延长回答（余{self.extend_remaining}次）",
                                        bg="#FF9800")
             else:
-                self.extend_btn.config(state=tk.DISABLED, text="⏱ 延长次数已用完",
-                                       bg="#9E9E9E")
+                # 次数用完，隐藏按钮
+                try:
+                    self.extend_btn.destroy()
+                except:
+                    pass
+                self.extend_btn = None
 
     def _extend_time(self):
         """发送延长答题时间请求"""
@@ -448,7 +457,7 @@ class QuizClient:
             if winner:
                 # 抢到了！切换到答案选择模式
                 timeout = msg.get("timeout", 15)
-                self.extend_remaining = msg.get("extend_max", 0)
+                self.extend_remaining = msg.get("extend_remaining", 0)
                 self.extend_seconds = msg.get("extend_seconds", 15)
                 self._start_client_timer(timeout)
                 self.buzz_btn.config(

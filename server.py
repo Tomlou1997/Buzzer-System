@@ -1147,7 +1147,7 @@ class QuizServer:
                     self._log(f"🔔 [{name}] 抢答成功！")
                     self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self.answer_timeout}s 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
-                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_max": self.extend_max, "extend_seconds": self.extend_seconds})
+                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_remaining": self.extend_limits.get(name, 0), "extend_seconds": self.extend_seconds})
                     for other in list(self.clients.keys()):
                         if other != name:
                             self._send_to_player_nolock(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
