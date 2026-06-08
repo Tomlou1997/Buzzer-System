@@ -443,6 +443,13 @@ class QuizServer:
 
     def _switch_to_game(self):
         """切换到比赛页面"""
+        if not self.question_banks:
+            messagebox.showwarning("提示", "请先导入题库才能开始比赛\n点击「📚 题库管理」导入题库")
+            return
+        # 没有选中的题库时自动选第一个
+        if not self.active_bank_name or not self.questions:
+            first = list(self.question_banks.keys())[0]
+            self._activate_bank(first)
         name = self._ask_game_name()
         if name is None:  # 用户取消了
             return
