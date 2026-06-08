@@ -34,6 +34,9 @@ class QuizClient:
         self._client_timer_id = None
         self._client_timer_label = None
         self._client_timer_remaining = 0
+        self.extend_remaining = 0   # 本轮可延长次数
+        self.extend_seconds = 15    # 每次延长秒数
+        self.extend_btn = None     # 延长按钮
 
         # 答案选择状态
         self.selected_options = {}  # {"A": tk.BooleanVar, ...}
@@ -223,11 +226,48 @@ class QuizClient:
             btn.config(state=tk.NORMAL)
         self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤", bg="#2196F3")
         self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.root.pack_slaves()[0])
+        # 添加延长按钮
+        if self.extend_btn is None:
+            self.extend_btn = tk.Button(
+                self.answer_frame, text="⏱ 延长回答",
+                font=("微软雅黑", 10, "bold"),
+                bg="#FF9800", fg="white", bd=0,
+                command=self._extend_time
+            )
+            self.extend_btn.pack(anchor=tk.W, padx=5, pady=(5, 0))
+        self._update_extend_btn()
+
+    def _update_extend_btn(self):
+        """更新延长按钮状态"""
+        if self.extend_btn:
+            if self.extend_remaining > 0:
+                self.extend_btn.config(state=tk.NORMAL, text=f"⏱ 延长回答（剩余{self.extend_remaining}次）",
+                                       bg="#FF9800")
+            else:
+                self.extend_btn.config(state=tk.DISABLED, text="⏱ 延长次数已用完",
+                                       bg="#9E9E9E")
+
+    def _extend_time(self):
+        """发送延长答题时间请求"""
+        if not self.connected or self.extend_remaining <= 0:
+            return
+        try:
+            self.socket.send(json.dumps({"type": "extend_time"}).encode())
+            self._log("📤 请求延长答题时间...")
+        except:
+            self._log("❌ 发送延长请求失败")
 
     def _hide_answer_mode(self):
         """隐藏答案选择，恢复抢答模式"""
         self.answering = False
         self._stop_client_timer()
+        # 移除延长按钮
+        if self.extend_btn:
+            try:
+                self.extend_btn.destroy()
+            except:
+                pass
+            self.extend_btn = None
         self.answer_frame.pack_forget()
         self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
@@ -408,6 +448,8 @@ class QuizClient:
             if winner:
                 # 抢到了！切换到答案选择模式
                 timeout = msg.get("timeout", 15)
+                self.extend_remaining = msg.get("extend_max", 0)
+                self.extend_seconds = msg.get("extend_seconds", 15)
                 self._start_client_timer(timeout)
                 self.buzz_btn.config(
                     state=tk.DISABLED,
@@ -453,6 +495,17 @@ class QuizClient:
             else:
                 self._log("🟢 你已被管理员恢复参赛资格")
                 self.status_label.config(text="🟢 已连接", fg="green")
+
+        elif msg_type == "extend_result":
+            success = msg.get("success", False)
+            if success:
+                self.extend_remaining = msg.get("remaining", 0)
+                remaining_time = msg.get("time_remaining", 0)
+                self._start_client_timer(remaining_time)
+                self._update_extend_btn()
+                self._log(f"✅ {msg.get('msg', '')}")
+            else:
+                self._log(f"❌ {msg.get('msg', '')}")
 
         elif msg_type == "error":
             self._log(f"⚠️ {msg.get('msg', '')}")

@@ -54,6 +54,9 @@ class QuizServer:
         self._timer_remaining = 0 # 剩余秒数
         self.game_over = False    # 是否已结束（第三名产生后）
         self.ranked_players = []  # 已锁定排名的选手列表 [(name, score, rank), ...]
+        self.extend_limits = {}   # 选手每场比赛可延长次数 {name: remaining}
+        self.extend_max = 1       # 每次比赛默认可延长次数
+        self.extend_seconds = 15  # 每次延长秒数
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -598,6 +601,8 @@ class QuizServer:
             self.round_num += 1
             self.round_active = True
             self.first_buzzer = None
+            # 重置本轮每位选手的延长次数
+            self.extend_limits = {n: self.extend_max for n in self.clients}
             debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
@@ -871,7 +876,7 @@ class QuizServer:
         """显示设置窗口"""
         win = tk.Toplevel(self.root)
         win.title("⚙ 设置")
-        win.geometry("440x520")
+        win.geometry("440x620")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()
@@ -924,6 +929,28 @@ class QuizServer:
         tk.Label(win_row, text="分（0=不启用）", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
         tk.Label(win_row, text="达到此积分即获胜:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
 
+        # 延长回答
+        extend_frame = tk.LabelFrame(win, text="延长回答", font=("微软雅黑", 10))
+        extend_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        ext_row1 = tk.Frame(extend_frame)
+        ext_row1.pack(fill=tk.X, padx=10, pady=5)
+        tk.Label(ext_row1, text="每场比赛可延长次数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        extend_max_var = tk.IntVar(value=self.extend_max)
+        extend_spin = tk.Spinbox(ext_row1, from_=0, to=99, textvariable=extend_max_var,
+                                  font=("微软雅黑", 10), width=6)
+        extend_spin.pack(side=tk.RIGHT)
+        tk.Label(ext_row1, text="次", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+
+        ext_row2 = tk.Frame(extend_frame)
+        ext_row2.pack(fill=tk.X, padx=10, pady=5)
+        tk.Label(ext_row2, text="每次延长秒数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        extend_sec_var = tk.IntVar(value=self.extend_seconds)
+        extend_sec_spin = tk.Spinbox(ext_row2, from_=1, to=120, textvariable=extend_sec_var,
+                                      font=("微软雅黑", 10), width=6)
+        extend_sec_spin.pack(side=tk.RIGHT)
+        tk.Label(ext_row2, text="秒", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+
         # 自动判题
         judge_frame = tk.LabelFrame(win, text="判题模式", font=("微软雅黑", 10))
         judge_frame.pack(fill=tk.X, padx=15, pady=5)
@@ -947,8 +974,10 @@ class QuizServer:
             self.wrong_points = wrong_var.get()
             self.answer_timeout = timeout_var.get()
             self.win_score = win_var.get()
+            self.extend_max = extend_max_var.get()
+            self.extend_seconds = extend_sec_var.get()
             self.auto_judge_var.set(auto_var.get())
-            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 延长回答{self.extend_max}次×{self.extend_seconds}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
             win.destroy()
 
         tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
@@ -1118,7 +1147,7 @@ class QuizServer:
                     self._log(f"🔔 [{name}] 抢答成功！")
                     self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self.answer_timeout}s 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
-                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout})
+                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_max": self.extend_max, "extend_seconds": self.extend_seconds})
                     for other in list(self.clients.keys()):
                         if other != name:
                             self._send_to_player_nolock(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
@@ -1166,6 +1195,23 @@ class QuizServer:
             self.stop_round_btn.config(state=tk.NORMAL, text="❌ 答错扣分")
             self.stop_round_btn.config(bg="#f44336", command=lambda: self._penalty_score(name))
             self._send_to_player_nolock(name, {"type": "answer_received", "msg": "答案已提交，等待主持人判定"})
+
+        elif msg_type == "extend_time":
+            # 选手请求延长答题时间
+            with self.lock:
+                remaining = self.extend_limits.get(name, 0)
+                if remaining <= 0:
+                    self._send_to_player_nolock(name, {"type": "extend_result", "success": False, "msg": "延长次数已用完"})
+                    return
+                if self._timer_id is None or self._timer_remaining <= 0:
+                    self._send_to_player_nolock(name, {"type": "extend_result", "success": False, "msg": "当前不在答题计时中"})
+                    return
+                # 扣减次数，延长计时
+                self.extend_limits[name] = remaining - 1
+                self._timer_remaining += self.extend_seconds
+                self._log(f"⏱ [{name}] 使用延长，剩余{remaining-1}次，当前剩余{self._timer_remaining}秒")
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+                self._send_to_player_nolock(name, {"type": "extend_result", "success": True, "msg": f"⏱ 计时已延长{self.extend_seconds}秒，剩余{remaining-1}次", "remaining": remaining - 1, "time_remaining": self._timer_remaining})
 
     def _remove_client(self, name):
         debug_log(f"_remove_client: [{name}] 准备抢锁")
