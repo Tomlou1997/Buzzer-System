@@ -68,9 +68,9 @@ class QuizServer:
 
         # 题库持久化
         self.banks_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "question_banks.json")
-        self._load_banks()
 
         self._build_ui()
+        self._load_banks()    # UI 构建完成后加载题库
         self._start_server()
 
     def _get_local_ip(self):
