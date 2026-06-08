@@ -1078,22 +1078,34 @@ class QuizServer:
         self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _end_game(self):
-        """结束比赛：展示积分榜并返回主页"""
-        if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜并返回主页。"):
+        """结束比赛：清空所有数据，展示积分榜并返回主页"""
+        if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n所有分数将清零，已答记录将清空，\n并将返回到主页面。"):
             return
         self.game_started = False
         self.game_name = ""
         self.stop_timer()
         self.round_active = False
+        self.game_over = False
+        self.first_buzzer = None
+        # 清空分数
+        with self.lock:
+            for name in list(self.clients.keys()):
+                self.clients[name]["score"] = 0
+        self.ranked_players = []
+        self.used_questions.clear()
+        self.round_num = 0
+        self.record_tree.delete(*self.record_tree.get_children())
+        # 通知客户端已结束
         self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
-        # 通知客户端
-        rankings = [{"name": n, "score": d.get("score", 0)} for n, d in self.clients.items()]
-        rankings.sort(key=lambda x: x["score"], reverse=True)
-        self._broadcast({"type": "game_over", "rankings": rankings})
-        self._log("🏁 比赛已手动结束")
-        # 展示结束积分榜（传参表示是最终排名）
-        self._show_rankings(final=True)
-        # 等积分榜关掉后返回主页
+        # 展示结束积分榜（展示清零前的分数已没有意义，直接跳过了）
+        self._log("🏁 比赛已结束，所有数据已清空")
+        # 回到题库起始
+        if self.active_bank_name and self.active_bank_name in self.question_banks:
+            self._activate_bank(self.active_bank_name)
+        else:
+            self._show_welcome()
+        self.start_buzz_btn.config(state=tk.DISABLED)
+        self._update_nav_buttons()
         self._switch_to_home()
 
     def _check_winner(self):
