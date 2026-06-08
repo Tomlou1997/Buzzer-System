@@ -57,6 +57,8 @@ class QuizServer:
         self.extend_limits = {}   # 选手每场比赛可延长次数 {name: remaining}
         self.extend_max = 1       # 每次比赛默认可延长次数
         self.extend_seconds = 15  # 每次延长秒数
+        self.allow_repeat = True  # 题目是否可重复使用
+        self.used_questions = set()  # 已使用过的题目索引
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -544,6 +546,8 @@ class QuizServer:
             self.prev_btn.config(state=tk.NORMAL)
         if self.current_question_index >= len(self.questions) - 1:
             self.next_round_btn.config(state=tk.DISABLED)
+        elif not self.allow_repeat and len(self.used_questions) >= len(self.questions):
+            self.next_round_btn.config(state=tk.DISABLED)
         else:
             self.next_round_btn.config(state=tk.NORMAL)
 
@@ -594,6 +598,14 @@ class QuizServer:
             self._log("📋 已到最后一题")
             return
 
+        # 如果不允许重复，自动跳过已使用的题目
+        if not self.allow_repeat:
+            while next_idx < len(self.questions) and next_idx in self.used_questions:
+                next_idx += 1
+            if next_idx >= len(self.questions):
+                self._log("📋 所有题目都已使用过")
+                return
+
         self._show_question(next_idx)
         self.start_buzz_btn.config(state=tk.NORMAL)
         self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
@@ -639,6 +651,9 @@ class QuizServer:
             self.round_num += 1
             self.round_active = True
             self.first_buzzer = None
+            # 记录已使用题目
+            if not self.allow_repeat:
+                self.used_questions.add(self.current_question_index)
             debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
@@ -676,6 +691,7 @@ class QuizServer:
         self._log("🔄 所有选手分数已重置为 0")
         self.game_over = False
         self.ranked_players = []
+        self.used_questions.clear()
         self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
         self.buzz_banner.config(text="🔄 分数已全部重置，比赛继续", bg="#795548")
 
@@ -917,7 +933,7 @@ class QuizServer:
         """显示设置窗口"""
         win = tk.Toplevel(self.root)
         win.title("⚙ 设置")
-        win.geometry("440x620")
+        win.geometry("440x680")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()
@@ -1002,6 +1018,16 @@ class QuizServer:
         tk.Checkbutton(judge_row, text="🤖 自动判题（服务器自动比对答案）",
                        font=("微软雅黑", 10), variable=auto_var).pack(side=tk.LEFT)
 
+        # 题目复用
+        reuse_frame = tk.LabelFrame(win, text="题目复用", font=("微软雅黑", 10))
+        reuse_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        reuse_row = tk.Frame(reuse_frame)
+        reuse_row.pack(fill=tk.X, padx=10, pady=5)
+        reuse_var = tk.BooleanVar(value=self.allow_repeat)
+        tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（取消勾选后，已抢答过的题目自动跳过）",
+                       font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
+
         # 说明
         tk.Label(win, text="💡 超时未提交答案视为答错，扣答错分数",
                  font=("微软雅黑", 9), fg="#666").pack(pady=(0, 5))
@@ -1018,7 +1044,10 @@ class QuizServer:
             self.extend_max = extend_max_var.get()
             self.extend_seconds = extend_sec_var.get()
             self.auto_judge_var.set(auto_var.get())
-            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 延长回答{self.extend_max}次×{self.extend_seconds}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}")
+            self.allow_repeat = reuse_var.get()
+            if not self.allow_repeat:
+                self.used_questions.clear()
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 延长回答{self.extend_max}次×{self.extend_seconds}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}, 题目复用={'允许' if self.allow_repeat else '不允许'}")
             win.destroy()
 
         tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
