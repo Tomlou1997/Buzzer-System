@@ -539,7 +539,10 @@ class QuizClient:
                 self._log(f"❌ {msg.get('msg', '')}")
 
         elif msg_type == "error":
-            self._log(f"⚠️ {msg.get('msg', '')}")
+            msg_text = msg.get('msg', '')
+            self._log(f"⚠️ {msg_text}")
+            if "比赛尚未开始" in msg_text and self.root.winfo_exists():
+                messagebox.showwarning("连接失败", msg_text)
 
         elif msg_type == "shutdown":
             self._log("🛑 服务器已关闭")
