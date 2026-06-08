@@ -424,7 +424,7 @@ class QuizClient:
                 self.buzz_btn.config(
                     state=tk.DISABLED,
                     bg="#f44336",
-                    text="😅 慢了！"
+                    text="😅 手慢无，下次加油"
                 )
 
             self._log(f"{msg.get('msg', '')}")

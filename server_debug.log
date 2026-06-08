@@ -1038,3 +1038,10 @@
 [09:01:14.134] _broadcast 开始: type=game_over, clients_count=1
 [09:01:14.135] _broadcast 已发送给 [IT]
 [09:01:14.135] _broadcast 结束: type=game_over
+[09:33:06.628] _handle_client [IT] 收到空数据，断开
+[09:33:06.629] _handle_client [IT] 即将移除
+[09:33:06.629] _remove_client: [IT] 准备抢锁
+[09:33:06.629] _remove_client: [IT] 拿到锁
+[09:33:06.630] _remove_client: [IT] 已从 clients 移除
+[09:33:06.636] _broadcast 开始: type=system, clients_count=0
+[09:33:06.636] _broadcast 结束: type=system
