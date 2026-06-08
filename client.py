@@ -359,6 +359,11 @@ class QuizClient:
             self.socket = sock
             self.connected = True
 
+            # 提前读取连接成功消息中的比赛名称
+            game_name = response.get("game_name", "")
+            if game_name:
+                self.root.title(f"抢答软件 - 客户端 | {game_name}")
+
             self.root.after(0, self._connect_success)
 
             # 开始接收消息
