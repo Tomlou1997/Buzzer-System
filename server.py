@@ -311,6 +311,12 @@ class QuizServer:
         )
         self.restart_btn.pack(side=tk.LEFT, padx=2)
 
+        self.end_game_btn = tk.Button(
+            ctrl_frame, text="🏁 结束比赛", font=("微软雅黑", 9),
+            bg="#9E9E9E", fg="white", width=10, command=self._end_game
+        )
+        self.end_game_btn.pack(side=tk.LEFT, padx=2)
+
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
@@ -1061,6 +1067,22 @@ class QuizServer:
         self._update_nav_buttons()
         self._log("🆕 比赛已重赛，所有数据已重置")
         self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
+
+    def _end_game(self):
+        """结束比赛：展示积分榜并返回主页"""
+        if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜并返回主页。"):
+            return
+        self.stop_timer()
+        self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
+        # 展示积分榜
+        self._show_rankings()
+        # 通知客户端
+        rankings = [{"name": n, "score": d.get("score", 0)} for n, d in self.clients.items()]
+        rankings.sort(key=lambda x: x["score"], reverse=True)
+        self._broadcast({"type": "game_over", "rankings": rankings})
+        self._log("🏁 比赛已手动结束")
+        # 回到主页
+        self._switch_to_home()
 
     def _check_winner(self):
         """检测是否有选手达到获胜积分并锁定排名"""
