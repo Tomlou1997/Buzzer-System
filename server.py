@@ -230,13 +230,6 @@ class QuizServer:
         )
         self.bank_del_list_btn.pack(side=tk.LEFT, padx=5)
 
-        self.bank_use_btn = tk.Button(
-            bank_btn_frame, text="▶ 使用此题库比赛", font=("微软雅黑", 11),
-            bg="#4CAF50", fg="white", width=16,
-            command=self._use_selected_bank
-        )
-        self.bank_use_btn.pack(side=tk.RIGHT, padx=5)
-
         # ========== 比赛页面 ==========
         self.game_frame = tk.Frame(self.root)
 
@@ -492,8 +485,6 @@ class QuizServer:
             self.bank_del_list_btn.config(state=tk.DISABLED)
             self.bank_use_btn.config(state=tk.DISABLED)
             return
-        self.bank_del_list_btn.config(state=tk.NORMAL)
-        self.bank_use_btn.config(state=tk.NORMAL)
         for name, questions in self.question_banks.items():
             active = " ✅ 使用中" if name == self.active_bank_name else ""
             self.bank_listbox.insert(tk.END, f"  {name}（{len(questions)} 题）{active}")
@@ -504,7 +495,6 @@ class QuizServer:
         if not sel:
             return
         self.bank_del_list_btn.config(state=tk.NORMAL)
-        self.bank_use_btn.config(state=tk.NORMAL)
 
     def _remove_bank_from_list(self):
         """从题库管理页面删除选中题库"""
@@ -532,23 +522,6 @@ class QuizServer:
                 self.active_bank_name = None
                 self.used_questions.clear()
         self._log(f"🗑 已删除题库: {name}")
-
-    def _use_selected_bank(self):
-        """使用选中的题库开始比赛"""
-        sel = self.bank_listbox.curselection()
-        if not sel:
-            return
-        text = self.bank_listbox.get(sel[0])
-        name = text.split("（")[0].strip()
-        if name.startswith("  "):
-            name = name[2:]
-        if not name or name not in self.question_banks:
-            return
-        self._activate_bank(name)
-        self._update_bank_listbox()
-        self._log(f"📌 选定题库: {name}，共 {len(self.question_banks[name])} 题")
-        # 自动跳转到比赛页面
-        self._switch_to_game()
 
     # =============== 题库 ===============
 
