@@ -64,8 +64,7 @@ class QuizServer:
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
-        self.game_name = ""       # 比赛名称
-        self._ask_game_name()
+        self.game_name = "知识竞赛"       # 比赛名称，默认值
         self._build_ui()
         self._start_server()
 
@@ -80,20 +79,21 @@ class QuizServer:
             return "127.0.0.1"
 
     def _ask_game_name(self):
-        """启动时弹窗输入比赛名称"""
+        """弹窗输入比赛名称，返回名称（取消则返回 None）"""
         dialog = tk.Toplevel(self.root)
         dialog.title("比赛名称")
-        dialog.geometry("350x150")
+        dialog.geometry("350x170")
         dialog.resizable(False, False)
         dialog.transient(self.root)
         dialog.grab_set()
-        # 置中
         dialog.update_idletasks()
         x = (dialog.winfo_screenwidth() - 350) // 2
-        y = (dialog.winfo_screenheight() - 150) // 2
+        y = (dialog.winfo_screenheight() - 170) // 2
         dialog.geometry(f"+{x}+{y}")
 
-        tk.Label(dialog, text="请输入比赛名称：", font=("微软雅黑", 12)).pack(pady=(20, 10))
+        result = [None]
+
+        tk.Label(dialog, text="请输入本次比赛名称：", font=("微软雅黑", 12)).pack(pady=(20, 10))
         name_var = tk.StringVar(value="知识竞赛")
         entry = tk.Entry(dialog, textvariable=name_var, font=("微软雅黑", 12), width=25)
         entry.pack(pady=(0, 10))
@@ -101,19 +101,25 @@ class QuizServer:
         entry.focus()
 
         def confirm():
-            self.game_name = name_var.get().strip()
-            if not self.game_name:
-                self.game_name = "知识竞赛"
-            self.root.title(f"抢答软件 - 主控端 | {self.game_name}")
+            val = name_var.get().strip()
+            result[0] = val if val else "知识竞赛"
             dialog.destroy()
 
-        dialog.protocol("WM_DELETE_WINDOW", confirm)
-        entry.bind("<Return>", lambda e: confirm())
-        tk.Button(dialog, text="确 定", font=("微软雅黑", 10),
-                  bg="#4CAF50", fg="white", width=10, command=confirm).pack()
+        def cancel():
+            result[0] = None
+            dialog.destroy()
 
-        # 等待输入完成
+        btn_row = tk.Frame(dialog)
+        btn_row.pack(pady=5)
+        tk.Button(btn_row, text="开始比赛", font=("微软雅黑", 10),
+                  bg="#4CAF50", fg="white", width=10, command=confirm).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_row, text="取消", font=("微软雅黑", 10),
+                  bg="#9E9E9E", fg="white", width=8, command=cancel).pack(side=tk.LEFT, padx=5)
+
+        dialog.protocol("WM_DELETE_WINDOW", cancel)
+        entry.bind("<Return>", lambda e: confirm())
         self.root.wait_window(dialog)
+        return result[0]
 
     def _build_ui(self):
         menubar = tk.Menu(self.root)
@@ -379,10 +385,15 @@ class QuizServer:
 
     def _switch_to_game(self):
         """切换到比赛页面"""
+        name = self._ask_game_name()
+        if name is None:  # 用户取消了
+            return
+        self.game_name = name
+        self.root.title(f"抢答软件 - 主控端 | {self.game_name}")
         self.home_frame.pack_forget()
         self.game_frame.pack(fill=tk.BOTH, expand=True)
         self.game_title_label.config(text=f"🏆 {self.game_name}")
-        self._log("🎮 进入比赛模式")
+        self._log(f"🎮 进入比赛模式 — 比赛名称: {self.game_name}")
 
     def _switch_to_home(self):
         """切换到主页面"""
