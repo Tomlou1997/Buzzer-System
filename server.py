@@ -1132,10 +1132,6 @@ class QuizServer:
         tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（勾选后已用题目可以再次抢答）",
                        font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
 
-        # 说明
-        tk.Label(win, text="💡 超时未提交答案视为答错，扣答错分数",
-                 font=("微软雅黑", 9), fg="#666").pack(pady=(0, 5))
-
         # 按钮
         btn_row = tk.Frame(win)
         btn_row.pack(fill=tk.X, padx=15, pady=5)

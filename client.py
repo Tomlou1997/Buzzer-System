@@ -33,6 +33,7 @@ class QuizClient:
         self.game_over = False  # 比赛是否已结束
         self._client_timer_id = None
         self._client_timer_label = None
+        self._client_timer_hint = None
         self._client_timer_remaining = 0
         self.extend_remaining = 0   # 本轮可延长次数
         self.extend_seconds = 15    # 每次延长秒数
@@ -285,6 +286,12 @@ class QuizClient:
         """客户端倒计时"""
         self._stop_client_timer()
         self._client_timer_remaining = seconds
+        hint = tk.Label(
+            self.answer_frame, text="💡 超时未提交答案视为答错",
+            font=("微软雅黑", 9), fg="#666"
+        )
+        hint.pack(anchor=tk.W, padx=5)
+        self._client_timer_hint = hint
         self._client_timer_label = tk.Label(
             self.answer_frame, text=f"⏱ 剩余 {seconds} 秒",
             font=("微软雅黑", 14, "bold"), fg="#FF5722"
@@ -316,6 +323,13 @@ class QuizClient:
             except:
                 pass
             self._client_timer_label = None
+        # 销毁提示标签
+        if hasattr(self, '_client_timer_hint') and self._client_timer_hint:
+            try:
+                self._client_timer_hint.destroy()
+            except:
+                pass
+            self._client_timer_hint = None
 
     def _connect(self):
         """连接服务器"""
