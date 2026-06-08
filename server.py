@@ -132,14 +132,70 @@ class QuizServer:
         help_menu.add_command(label="关于", command=self._show_about)
 
         self.root.bind("<Control-o>", lambda e: self._import_questions())
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-        top_frame = tk.Frame(self.root, height=100)
+        # ========== 主页面 ==========
+        self.home_frame = tk.Frame(self.root)
+        self.home_frame.pack(fill=tk.BOTH, expand=True)
+
+        status_bar = tk.Frame(self.home_frame, bg="#333")
+        status_bar.pack(fill=tk.X)
+        self.home_status = tk.Label(
+            status_bar, text=f"🟢 服务器运行中 | IP: {self.host_ip}:8888",
+            font=("微软雅黑", 10), bg="#333", fg="#fff", pady=8
+        )
+        self.home_status.pack()
+
+        btn_container = tk.Frame(self.home_frame)
+        btn_container.place(relx=0.5, rely=0.45, anchor="center")
+
+        btn_font = ("微软雅黑", 16, "bold")
+        btn_width = 14
+
+        self.home_start_btn = tk.Button(
+            btn_container, text="🚀 开始比赛", font=btn_font,
+            bg="#FF5722", fg="white", width=btn_width, height=2,
+            command=self._switch_to_game
+        )
+        self.home_start_btn.pack(pady=10)
+
+        self.home_bank_btn = tk.Button(
+            btn_container, text="📚 题库管理", font=btn_font,
+            bg="#FF9800", fg="white", width=btn_width, height=2,
+            command=self._import_questions
+        )
+        self.home_bank_btn.pack(pady=10)
+
+        self.home_settings_btn = tk.Button(
+            btn_container, text="⚙ 设置", font=btn_font,
+            bg="#607D8B", fg="white", width=btn_width, height=2,
+            command=self._show_settings
+        )
+        self.home_settings_btn.pack(pady=10)
+
+        # ========== 比赛页面 ==========
+        self.game_frame = tk.Frame(self.root)
+
+        game_top_bar = tk.Frame(self.game_frame)
+        game_top_bar.pack(fill=tk.X, padx=8, pady=(4, 0))
+        self.back_home_btn = tk.Button(
+            game_top_bar, text="← 返回主页", font=("微软雅黑", 9),
+            bg="#333", fg="white", command=self._switch_to_home
+        )
+        self.back_home_btn.pack(side=tk.LEFT)
+        self.game_title_label = tk.Label(
+            game_top_bar, text=f"🏆 {self.game_name}",
+            font=("微软雅黑", 12, "bold"), fg="#FF5722"
+        )
+        self.game_title_label.pack(side=tk.LEFT, padx=15)
+
+        top_frame = tk.Frame(self.game_frame, height=100)
         top_frame.pack(fill=tk.X, padx=8, pady=4)
 
-        mid_frame = tk.Frame(self.root)
+        mid_frame = tk.Frame(self.game_frame)
         mid_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
 
-        bottom_frame = tk.Frame(self.root, height=150)
+        bottom_frame = tk.Frame(self.game_frame, height=150)
         bottom_frame.pack(fill=tk.X, padx=8, pady=4)
 
         # === 顶部 ===
@@ -180,29 +236,17 @@ class QuizServer:
         )
         self.stop_round_btn.pack(side=tk.LEFT, padx=2)
 
-        self.import_btn = tk.Button(
-            ctrl_frame, text="📂 导入题库", font=("微软雅黑", 9),
-            bg="#FF9800", fg="white", width=10, command=self._import_questions
+        self.rank_btn = tk.Button(
+            ctrl_frame, text="📊 积分榜", font=("微软雅黑", 9),
+            bg="#9C27B0", fg="white", width=10, command=self._show_rankings
         )
-        self.import_btn.pack(side=tk.LEFT, padx=2)
-
-        self.settings_btn = tk.Button(
-            ctrl_frame, text="⚙ 设置", font=("微软雅黑", 9),
-            bg="#607D8B", fg="white", width=8, command=self._show_settings
-        )
-        self.settings_btn.pack(side=tk.LEFT, padx=2)
+        self.rank_btn.pack(side=tk.LEFT, padx=2)
 
         self.reset_score_btn = tk.Button(
             ctrl_frame, text="🔄 重置计分", font=("微软雅黑", 9),
             bg="#795548", fg="white", width=10, command=self._reset_scores
         )
         self.reset_score_btn.pack(side=tk.LEFT, padx=2)
-
-        self.rank_btn = tk.Button(
-            ctrl_frame, text="📊 积分榜", font=("微软雅黑", 9),
-            bg="#9C27B0", fg="white", width=10, command=self._show_rankings
-        )
-        self.rank_btn.pack(side=tk.LEFT, padx=2)
 
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
@@ -329,8 +373,22 @@ class QuizServer:
         )
         self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._log(f"🚀 主控端 v2.0 启动，服务器 IP: {self.host_ip}")
+
+    # ========== 页面切换 ==========
+
+    def _switch_to_game(self):
+        """切换到比赛页面"""
+        self.home_frame.pack_forget()
+        self.game_frame.pack(fill=tk.BOTH, expand=True)
+        self.game_title_label.config(text=f"🏆 {self.game_name}")
+        self._log("🎮 进入比赛模式")
+
+    def _switch_to_home(self):
+        """切换到主页面"""
+        self.game_frame.pack_forget()
+        self.home_frame.pack(fill=tk.BOTH, expand=True)
+        self._log("🏠 返回主页")
 
     # =============== 题库 ===============
 
