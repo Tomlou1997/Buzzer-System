@@ -42,6 +42,8 @@ class QuizServer:
         self.questions = []
         self.current_question_index = -1
         self.question_file_path = ""
+        self.question_banks = {}         # 多个题库 {name: [questions]}
+        self.active_bank_name = None     # 当前使用的题库名
         self._last_answer = ""  # 选手最后一次提交的答案
         self.auto_judge_var = tk.BooleanVar(value=True)  # 自动判题开关，默认开启
 
@@ -217,6 +219,22 @@ class QuizServer:
         question_frame = tk.LabelFrame(mid_frame, text="📖 题库", font=("微软雅黑", 10))
         question_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 4))
 
+        # 题库选择器
+        bank_frame = tk.Frame(question_frame)
+        bank_frame.pack(fill=tk.X, padx=5, pady=(3, 0))
+        tk.Label(bank_frame, text="当前题库:", font=("微软雅黑", 9)).pack(side=tk.LEFT)
+        self.bank_combo = ttk.Combobox(
+            bank_frame, state="readonly", font=("微软雅黑", 9),
+            width=20
+        )
+        self.bank_combo.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        self.bank_combo.bind("<<ComboboxSelected>>", self._on_bank_select)
+        self.bank_del_btn = tk.Button(
+            bank_frame, text="✕", font=("微软雅黑", 8),
+            width=2, command=self._remove_bank
+        )
+        self.bank_del_btn.pack(side=tk.RIGHT)
+
         progress_frame = tk.Frame(question_frame)
         progress_frame.pack(fill=tk.X, padx=5, pady=3)
 
@@ -367,21 +385,78 @@ class QuizServer:
                 messagebox.showwarning("导入结果", "题库为空或格式不正确。\n帮助 → 题库格式说明")
                 return
 
-            self.questions = questions
-            self.current_question_index = -1
-            self.question_file_path = file_path
-            self._update_question_list()
-            self._show_question(-1)
-            self._update_progress()
-            self.buzz_banner.config(text="⏳ 题库已就绪，等待开始...", bg="#FF9800")
-            self.status_label.config(
-                text=f"IP: {self.host_ip} | 端口: 8888 | 题库: {os.path.basename(file_path)} ({len(questions)} 题)"
-            )
-            self._log(f"📚 成功导入题库: {os.path.basename(file_path)} — 共 {len(questions)} 题")
-            if questions:
-                self._show_welcome()
+            bank_name = os.path.splitext(os.path.basename(file_path))[0]
+            # 如果同名已存在，添加序号
+            orig_name = bank_name
+            idx = 2
+            while bank_name in self.question_banks:
+                bank_name = f"{orig_name}({idx})"
+                idx += 1
+
+            self.question_banks[bank_name] = questions
+            self._update_bank_combo()
+            self.bank_combo.set(bank_name)
+            self._activate_bank(bank_name)
+
+            self._log(f"📚 导入题库: {bank_name} — 共 {len(questions)} 题")
         except Exception as e:
             messagebox.showerror("导入失败", f"读取文件出错:\n{e}")
+
+    # =============== 题库管理（多题库） ===============
+
+    def _update_bank_combo(self):
+        """更新题库下拉列表"""
+        names = list(self.question_banks.keys())
+        self.bank_combo["values"] = names
+        if not names:
+            self.bank_combo.set("")
+            self.bank_del_btn.config(state=tk.DISABLED)
+        else:
+            self.bank_del_btn.config(state=tk.NORMAL)
+
+    def _on_bank_select(self, event):
+        """下拉选择题库"""
+        name = self.bank_combo.get()
+        if name and name in self.question_banks:
+            self._activate_bank(name)
+
+    def _activate_bank(self, name):
+        """激活指定题库"""
+        if name not in self.question_banks:
+            return
+        self.active_bank_name = name
+        self.questions = self.question_banks[name]
+        self.current_question_index = -1
+        self.used_questions.clear()
+        self.status_label.config(
+            text=f"IP: {self.host_ip} | 端口: 8888 | 题库: {name} ({len(self.questions)} 题)"
+        )
+        self.buzz_banner.config(text=f"⏳ 题库已就绪：{name}（{len(self.questions)} 题），等待开始...", bg="#FF9800")
+        self._show_welcome()
+
+    def _remove_bank(self):
+        """删除当前题库"""
+        name = self.bank_combo.get()
+        if not name or name not in self.question_banks:
+            return
+        if not messagebox.askyesno("确认删除", f"确定要从内存中删除题库「{name}」吗？\n（不会删除源文件）"):
+            return
+        del self.question_banks[name]
+        self._update_bank_combo()
+        if self.question_banks:
+            first = list(self.question_banks.keys())[0]
+            self.bank_combo.set(first)
+            self._activate_bank(first)
+        else:
+            self.bank_combo.set("")
+            self.questions = []
+            self.current_question_index = -1
+            self.active_bank_name = None
+            self.used_questions.clear()
+            self.buzz_banner.config(text="⚠️ 请先导入题库", bg="#FF9800")
+            self.status_label.config(text=f"IP: {self.host_ip} | 端口: 8888 | 题库: 无")
+            self._show_welcome()
+        self._log(f"🗑 已删除题库: {name}")
 
     def _parse_txt(self, file_path):
         questions = []
