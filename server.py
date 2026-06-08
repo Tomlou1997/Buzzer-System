@@ -601,8 +601,6 @@ class QuizServer:
             self.round_num += 1
             self.round_active = True
             self.first_buzzer = None
-            # 重置本轮每位选手的延长次数
-            self.extend_limits = {n: self.extend_max for n in self.clients}
             debug_log(f"_start_buzz 开始第 {self.round_num} 轮")
             self.start_buzz_btn.config(state=tk.DISABLED)
             self.stop_round_btn.config(state=tk.NORMAL)
@@ -1073,6 +1071,8 @@ class QuizServer:
                     debug_log(f"_handle_client 名称重复: {name}，已拒绝")
                     return
                 self.clients[name] = {"socket": c, "address": addr, "score": 0, "banned": False, "connected": True}
+                # 选手连接时初始化延长次数（整个比赛期间用尽即止）
+                self.extend_limits[name] = self.extend_max
             self._update_player_list()
             self._log(f"✅ 选手 [{name}] 已连接 ({addr[0]})")
             self._send_to_player(name, {"type": "info", "msg": "连接成功！等待管理员开始抢答..."})
@@ -1220,6 +1220,8 @@ class QuizServer:
             if name in self.clients:
                 del self.clients[name]
                 debug_log(f"_remove_client: [{name}] 已从 clients 移除")
+            if name in self.extend_limits:
+                del self.extend_limits[name]
         self._update_player_list()
         self._log(f"❌ 选手 [{name}] 已断开")
         self._broadcast({"type": "system", "msg": f"选手 [{name}] 离开了比赛"})
