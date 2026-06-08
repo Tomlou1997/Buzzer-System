@@ -607,8 +607,12 @@ class QuizServer:
                 return
 
         self._show_question(next_idx)
-        self.start_buzz_btn.config(state=tk.NORMAL)
-        self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
+        if not self.allow_repeat and next_idx in self.used_questions:
+            self.start_buzz_btn.config(state=tk.DISABLED)
+            self._log(f"📋 切换到第 {next_idx+1} 题（已使用过，不可重复抢答）")
+        else:
+            self.start_buzz_btn.config(state=tk.NORMAL)
+            self._log(f"📋 切换到第 {next_idx+1} 题，点击「开始抢答 🚀」发送给选手")
 
     def _prev_question(self):
         """切换到上一题"""
@@ -619,8 +623,13 @@ class QuizServer:
             self._log("📋 已是第一题")
             return
         self._show_question(prev_idx)
-        self.start_buzz_btn.config(state=tk.NORMAL)
-        self._log(f"📋 切换到第 {prev_idx+1} 题")
+        # 如果不允许重复且该题已使用，禁用开始抢答
+        if not self.allow_repeat and prev_idx in self.used_questions:
+            self.start_buzz_btn.config(state=tk.DISABLED)
+            self._log(f"📋 切换到第 {prev_idx+1} 题（已使用过，不可重复抢答）")
+        else:
+            self.start_buzz_btn.config(state=tk.NORMAL)
+            self._log(f"📋 切换到第 {prev_idx+1} 题，点击「开始抢答 🚀」发送给选手")
 
     def _start_buzz(self):
         """开始抢答：把当前题目发送给所有选手"""
@@ -643,6 +652,13 @@ class QuizServer:
             self._log("⚠️ 没有选手连接，无法开始抢答")
             messagebox.showwarning("提示", "没有选手连接，无法开始抢答")
             debug_log("<<< _start_buzz 退出: 无客户端连接")
+            return
+
+        # 不允许重复时，检查当前题是否已使用过
+        if not self.allow_repeat and self.current_question_index in self.used_questions:
+            self._log("⚠️ 当前题目已被使用过，请切换到下一题")
+            messagebox.showwarning("提示", "当前题目已被使用过，请切换到下一题")
+            debug_log("<<< _start_buzz 退出: 题目已使用")
             return
 
         debug_log(f"_start_buzz 准备抢锁, clients={list(self.clients.keys())}")
