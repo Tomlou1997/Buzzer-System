@@ -65,6 +65,11 @@ class QuizServer:
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
         self.game_name = "知识竞赛"       # 比赛名称，默认值
+
+        # 题库持久化
+        self.banks_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "question_banks.json")
+        self._load_banks()
+
         self._build_ui()
         self._start_server()
 
@@ -576,6 +581,7 @@ class QuizServer:
             self.bank_combo.set(bank_name)
             self._activate_bank(bank_name)
             self._update_bank_listbox()
+            self._save_banks()
 
             self._log(f"📚 导入题库: {bank_name} — 共 {len(questions)} 题")
         except Exception as e:
@@ -637,6 +643,38 @@ class QuizServer:
             self._show_welcome()
         self._log(f"🗑 已删除题库: {name}")
         self._update_bank_listbox()
+        self._save_banks()
+
+    # =============== 题库持久化 ===============
+
+    def _save_banks(self):
+        """将题库数据保存到 JSON 文件"""
+        try:
+            data = {}
+            for name, questions in self.question_banks.items():
+                data[name] = questions
+            with open(self.banks_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            self._log(f"⚠️ 保存题库失败: {e}")
+
+    def _load_banks(self):
+        """从 JSON 文件加载题库数据"""
+        if not os.path.exists(self.banks_file):
+            return
+        try:
+            with open(self.banks_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.question_banks = {}
+            for name, questions in data.items():
+                if isinstance(questions, list) and len(questions) > 0:
+                    self.question_banks[name] = questions
+            if self.question_banks:
+                first = list(self.question_banks.keys())[0]
+                self._activate_bank(first)
+                self._log(f"📂 已加载 {len(self.question_banks)} 个题库（共 {sum(len(q) for q in self.question_banks.values())} 题）")
+        except Exception as e:
+            self._log(f"⚠️ 加载题库失败: {e}")
 
     def _parse_txt(self, file_path):
         questions = []
@@ -1763,6 +1801,7 @@ class QuizServer:
 
     def _on_close(self):
         if messagebox.askokcancel("退出", "确定要退出吗？所有选手将被断开。"):
+            self._save_banks()
             self.running = False
             self._broadcast({"type": "shutdown", "msg": "服务器已关闭"})
             with self.lock:
