@@ -637,11 +637,6 @@ class QuizServer:
         self.question_display.insert(tk.END, "🚀 点击「开始抢答 🚀」发起抢答\n\n")
         self.question_display.insert(tk.END, "📌 选手连接后即可开始比赛")
         self.question_display.config(state=tk.DISABLED)
-        # 不允许重复时，如果当前题已用完则禁用开始抢答
-        if not self.allow_repeat and 0 <= index < len(self.questions) and index in self.used_questions:
-            self.start_buzz_btn.config(state=tk.DISABLED)
-        else:
-            self.start_buzz_btn.config(state=tk.NORMAL)
         self._update_progress()
         self._update_question_nav()
         self._update_nav_buttons()
