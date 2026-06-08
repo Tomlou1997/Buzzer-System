@@ -655,9 +655,12 @@ class QuizServer:
             for name, questions in data.items():
                 if isinstance(questions, list) and len(questions) > 0:
                     self.question_banks[name] = questions
+            self._update_bank_combo()
             if self.question_banks:
                 first = list(self.question_banks.keys())[0]
+                self.bank_combo.set(first)
                 self._activate_bank(first)
+                self._update_bank_listbox()
                 self._log(f"📂 已加载 {len(self.question_banks)} 个题库（共 {sum(len(q) for q in self.question_banks.values())} 题）")
         except Exception as e:
             self._log(f"⚠️ 加载题库失败: {e}")
