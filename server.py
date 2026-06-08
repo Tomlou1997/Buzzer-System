@@ -312,6 +312,12 @@ class QuizServer:
         )
         self.reset_score_btn.pack(side=tk.LEFT, padx=2)
 
+        self.restart_btn = tk.Button(
+            ctrl_frame, text="🆕 重赛", font=("微软雅黑", 9),
+            bg="#E91E63", fg="white", width=8, command=self._restart_game
+        )
+        self.restart_btn.pack(side=tk.LEFT, padx=2)
+
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
         banner_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
@@ -1045,6 +1051,40 @@ class QuizServer:
         self.used_questions.clear()
         self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
         self.buzz_banner.config(text="🔄 分数已全部重置，比赛继续", bg="#795548")
+
+    def _restart_game(self):
+        """重赛：恢复到比赛刚开始的状态"""
+        if not messagebox.askyesno("确认重赛", "⚠️ 确定要重赛吗？\n\n所有分数将清零，已答记录将清空，\n回到比赛初始状态。"):
+            return
+        # 停止计时器
+        self.stop_timer()
+        # 重置分数
+        with self.lock:
+            for name in self.clients:
+                self.clients[name]["score"] = 0
+                self._send_to_player_nolock(name, {"type": "score_update", "score": 0, "msg": "🔄 重赛，分数已重置"})
+                # 重置延长次数
+                self.extend_limits[name] = self.extend_max
+                self._send_to_player_nolock(name, {"type": "extend_init", "max": self.extend_max, "seconds": self.extend_seconds})
+        self._update_player_list()
+        # 重置比赛状态
+        self.game_over = False
+        self.ranked_players = []
+        self.used_questions.clear()
+        self.round_num = 0
+        self.round_active = False
+        self.first_buzzer = None
+        self.record_tree.delete(*self.record_tree.get_children())
+        # 回到题库起始
+        if self.active_bank_name and self.active_bank_name in self.question_banks:
+            self._activate_bank(self.active_bank_name)
+        else:
+            self._show_welcome()
+        self.start_buzz_btn.config(state=tk.DISABLED)
+        self.stop_round_btn.config(state=tk.DISABLED)
+        self._update_nav_buttons()
+        self._log("🆕 比赛已重赛，所有数据已重置")
+        self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _check_winner(self):
         """检测是否有选手达到获胜积分并锁定排名"""
