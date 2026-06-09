@@ -496,7 +496,14 @@ class QuizClient:
             self._log(f"ℹ️ {msg.get('msg', '')}")
 
         elif msg_type == "question":
-            self._log(f"📝 {msg.get('msg', '')}")
+            q_type = msg.get("q_type", "")
+            q_text = msg.get("msg", "")
+            self.current_question_text = q_text
+            if q_type:
+                self.question_frame.config(text=f"📝 题目 — {q_type}")
+            else:
+                self.question_frame.config(text="📝 题目")
+            self._log(f"📝 {q_text}")
 
         elif msg_type == "round_start":
             if self.game_over:
@@ -541,6 +548,9 @@ class QuizClient:
                 self._log(f"🎉🎉🎉 太棒了！你抢答成功了！请选择答案 A-F（可多选） ⏱ {timeout}秒 🎉🎉🎉")
                 self._flash_btn()
                 question = msg.get("question", "")
+                q_type = msg.get("q_type", "")
+                if q_type:
+                    self.question_frame.config(text=f"📝 题目 — {q_type}")
                 self._show_answer_mode(question)
             else:
                 # 没抢到

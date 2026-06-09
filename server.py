@@ -857,6 +857,23 @@ class QuizServer:
         else:
             self.points_label.config(text="分值: --")
 
+    def _detect_question_type(self, question_text, answer_text):
+        """根据题目和答案推断题型"""
+        q = question_text.strip()
+        a = answer_text.strip().upper() if answer_text else ""
+        # 通过答案判断
+        if a in ("A", "B", "C", "D", "E", "F", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF"):
+            # 再看题目是否含"正确""错误"字样
+            if "正确" in q or "错误" in q or "√" in q or "×" in q:
+                return "判断题"
+            # 如果答案只有A或B，可能是判断题
+            if a in ("A", "B"):
+                return "判断题"
+            return "选择题"
+        if a in ("正确", "错误", "对", "错", "√", "×"):
+            return "判断题"
+        return "填空题"
+
     def _show_question(self, index):
         self.current_question_index = index
         self.answer_visible = False
@@ -865,7 +882,8 @@ class QuizServer:
         self.question_display.delete("1.0", tk.END)
         if 0 <= index < len(self.questions):
             q = self.questions[index]
-            self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分）\n\n")
+            q_type = self._detect_question_type(q["question"], q["answer"])
+            self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分） — {q_type}\n\n")
             self.question_display.insert(tk.END, q["question"])
             self.answer_label.config(text='(点击"显示答案"查看)')
         else:
@@ -1028,7 +1046,8 @@ class QuizServer:
             debug_log("_start_buzz 准备广播 round_start")
             self._broadcast({"type": "round_start", "round": self.round_num, "msg": f"🟢 第 {self.round_num} 轮抢答开始！按 空格键 或 回车键 抢答！"})
             debug_log("_start_buzz round_start 广播完毕")
-            self._broadcast({"type": "question", "msg": f"📝 第 {self.current_question_index+1} 题（{q['points']} 分）: {q['question']}"})
+            q_type = self._detect_question_type(q["question"], q["answer"])
+            self._broadcast({"type": "question", "msg": q["question"], "q_type": q_type, "points": q["points"]})
             debug_log("_start_buzz question 广播完毕")
         debug_log("<<< _start_buzz 释放锁，正常退出")
 
@@ -1690,7 +1709,8 @@ class QuizServer:
                     self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self.answer_timeout}s 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
                     q_text = self.questions[self.current_question_index]["question"]
-                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_remaining": self.extend_limits.get(name, 0), "extend_seconds": self.extend_seconds, "question": q_text})
+                    q_type = self._detect_question_type(q_text, self.questions[self.current_question_index]["answer"])
+                    self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_remaining": self.extend_limits.get(name, 0), "extend_seconds": self.extend_seconds, "question": q_text, "q_type": q_type})
                     for other in list(self.clients.keys()):
                         if other != name:
                             self._send_to_player_nolock(other, {"type": "buzz_result", "winner": False, "msg": f"😅 [{name}] 抢先一步！"})
