@@ -63,7 +63,7 @@ class QuizClient:
         ip_frame = tk.Frame(conn_frame)
         ip_frame.pack(fill=tk.X, padx=5, pady=2)
         tk.Label(ip_frame, text="服务器IP:", font=("微软雅黑", 9), width=8).pack(side=tk.LEFT)
-        self.ip_var = tk.StringVar(value="127.0.0.1")
+        self.ip_var = tk.StringVar(value="10.8.51.7")
         self.ip_entry = tk.Entry(ip_frame, textvariable=self.ip_var, font=("微软雅黑", 9), width=15)
         self.ip_entry.pack(side=tk.LEFT, padx=5)
         tk.Label(ip_frame, text="端口: 8888", font=("微软雅黑", 9), fg="gray").pack(side=tk.LEFT, padx=5)
