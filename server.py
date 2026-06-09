@@ -1065,9 +1065,6 @@ class QuizServer:
                 self._send_to_player_nolock(name, {"type": "score_update", "score": 0, "msg": "🔄 分数已重置"})
         self._update_player_list()
         self._log("🔄 所有选手分数已重置为 0")
-        self.game_over = False
-        self.ranked_players = []
-        self.used_questions.clear()
         self._broadcast({"type": "system", "msg": "🔄 管理员已重置所有选手分数"})
         self.buzz_banner.config(text="🔄 分数已全部重置，比赛继续", bg="#795548")
 
