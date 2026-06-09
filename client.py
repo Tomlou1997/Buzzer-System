@@ -247,9 +247,9 @@ class QuizClient:
             self.info_text.config(state=tk.DISABLED)
 
     def _show_answer_mode(self, question_text=""):
-        """切换到答案选择模式，显示题目（抢答按钮始终显示）"""
+        """切换到答案选择模式，显示题目"""
         self.answering = True
-        # 不隐藏抢答按钮，只隐藏提示标签
+        self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
         # 显示题目（放在分数区之前）
         if question_text:
@@ -306,7 +306,7 @@ class QuizClient:
             self._log("❌ 发送延长请求失败")
 
     def _hide_answer_mode(self):
-        """隐藏答案选择，恢复抢答模式（抢答按钮始终显示）"""
+        """隐藏答案选择，恢复抢答模式"""
         self.answering = False
         self._stop_client_timer()
         # 移除延长按钮
@@ -318,6 +318,7 @@ class QuizClient:
             self.extend_btn = None
         self.answer_frame.pack_forget()
         self.question_frame.pack_forget()
+        self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
 
     def _start_client_timer(self, seconds):
