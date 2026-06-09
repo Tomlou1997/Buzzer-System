@@ -17,9 +17,9 @@ class QuizClient:
     def __init__(self, root):
         self.root = root
         self.root.title("抢答软件 - 客户端 v2.0")
-        self.root.geometry("650x600")
+        self.root.geometry("650x720")
         self.root.resizable(True, True)
-        self.root.minsize(550, 520)
+        self.root.minsize(550, 620)
 
         # 全屏状态
         self.fullscreen = False
@@ -134,7 +134,7 @@ class QuizClient:
             bg="#FFF8E1",
             fg="#333",
             wrap=tk.WORD,
-            height=4,
+            height=5,
             state=tk.DISABLED
         )
         self.question_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -234,9 +234,9 @@ class QuizClient:
         self.answering = True
         self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
-        # 显示题目
+        # 显示题目（放在答案区之前）
         if question_text:
-            self.question_frame.pack(fill=tk.X, padx=10, pady=(5, 0))
+            self.question_frame.pack(fill=tk.X, padx=10, pady=(5, 0), before=self.answer_frame)
             self.question_text.config(state=tk.NORMAL)
             self.question_text.delete(1.0, tk.END)
             self.question_text.insert(tk.END, question_text)
