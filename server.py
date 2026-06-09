@@ -854,12 +854,8 @@ class QuizServer:
 
     def _update_progress(self):
         total = len(self.questions)
-        current = self.current_question_index + 1 if self.current_question_index >= 0 else 0
-        if not self.allow_repeat:
-            remaining = total - len(self.used_questions)
-            self.progress_label.config(text=f"进度: {current} / {total}  |  未答: {remaining} 题")
-        else:
-            self.progress_label.config(text=f"进度: {current} / {total}")
+        answered = len(self.used_questions)
+        self.progress_label.config(text=f"已答: {answered} / {total} 题")
         if 0 <= self.current_question_index < len(self.questions):
             pts = self.questions[self.current_question_index]["points"]
             self.points_label.config(text=f"分值: {pts} 分")
