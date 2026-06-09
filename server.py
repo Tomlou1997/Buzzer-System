@@ -1114,15 +1114,16 @@ class QuizServer:
         self._show_rankings(final=True, on_close=self._cleanup_after_end_game)
 
     def _cleanup_after_end_game(self):
-        """结束比赛积分榜关闭后的清理工作"""
+        """结束比赛积分榜关闭后的清理工作：清空所有比赛数据"""
         self.game_started = False
         self.game_name = ""
         self.game_over = False
         self.first_buzzer = None
-        # 清空分数并通知客户端
+        # 清空所有选手分数并通知客户端断开
         with self.lock:
             for name in list(self.clients.keys()):
                 self.clients[name]["score"] = 0
+                self.clients[name]["banned"] = False
                 self._send_to_player_nolock(name, {"type": "game_over", "rankings": [], "msg": "🏁 比赛已结束，感谢参与！"})
                 self._send_to_player_nolock(name, {"type": "score_update", "score": 0})
         self.ranked_players = []
@@ -1130,12 +1131,15 @@ class QuizServer:
         self.round_num = 0
         self.record_tree.delete(*self.record_tree.get_children())
         self._log("🏁 比赛已结束，所有数据已清空")
+        # 重置题目进度显示
+        self._update_progress()
         # 回到题库起始
         if self.active_bank_name and self.active_bank_name in self.question_banks:
             self._activate_bank(self.active_bank_name)
         else:
             self._show_welcome()
         self.start_buzz_btn.config(state=tk.DISABLED)
+        self.stop_round_btn.config(state=tk.DISABLED)
         self._update_nav_buttons()
         self._switch_to_home()
 
