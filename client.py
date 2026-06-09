@@ -252,9 +252,9 @@ class QuizClient:
         self.answering = True
         self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
-        # 显示题目（放在答案区之前）
+        # 显示题目（放在分数区之前）
         if question_text:
-            self.question_frame.pack(fill=tk.X, padx=10, pady=(5, 0), before=self.answer_frame)
+            self.question_frame.pack(fill=tk.X, padx=10, pady=(5, 0), before=self.score_frame)
             self.question_text.config(state=tk.NORMAL)
             self.question_text.delete(1.0, tk.END)
             self.question_text.insert(tk.END, question_text)
@@ -265,7 +265,7 @@ class QuizClient:
         for btn in self.option_btns.values():
             btn.config(state=tk.NORMAL)
         self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤", bg="#2196F3")
-        self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.root.pack_slaves()[0])
+        self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.score_frame)
         # 有剩余延长次数才显示延长按钮
         if self.extend_btn:
             try:
