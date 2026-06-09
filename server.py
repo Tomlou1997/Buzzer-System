@@ -1081,16 +1081,20 @@ class QuizServer:
         self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _end_game(self):
-        """结束比赛：清空所有数据，展示积分榜并返回主页"""
-        if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n所有分数将清零，已答记录将清空，\n并将返回到主页面。"):
+        """结束比赛：展示最终积分榜 → 清空所有数据 → 返回主页"""
+        if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜，之后所有数据将清空并返回主页。"):
             return
-        self.game_started = False
-        self.game_name = ""
+        # 先停止本轮
         self.stop_timer()
         self.round_active = False
+        self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
+        # 展示最终积分榜（用当前分数，尚未清空）
+        self._show_rankings(final=True)
+        # 积分榜关掉后清空所有数据
+        self.game_started = False
+        self.game_name = ""
         self.game_over = False
         self.first_buzzer = None
-        # 清空分数
         with self.lock:
             for name in list(self.clients.keys()):
                 self.clients[name]["score"] = 0
@@ -1098,9 +1102,6 @@ class QuizServer:
         self.used_questions.clear()
         self.round_num = 0
         self.record_tree.delete(*self.record_tree.get_children())
-        # 通知客户端已结束
-        self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
-        # 展示结束积分榜（展示清零前的分数已没有意义，直接跳过了）
         self._log("🏁 比赛已结束，所有数据已清空")
         # 回到题库起始
         if self.active_bank_name and self.active_bank_name in self.question_banks:
