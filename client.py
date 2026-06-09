@@ -102,6 +102,14 @@ class QuizClient:
         )
         self.fs_btn.pack(side=tk.RIGHT, padx=2)
 
+        # 日志按钮
+        self.log_btn = tk.Button(
+            btn_frame, text="📋 日志",
+            font=("微软雅黑", 9),
+            command=self._toggle_log
+        )
+        self.log_btn.pack(side=tk.RIGHT, padx=2)
+
         # ====== 主区域：抢答按钮（默认显示） ======
         self.buzz_frame = tk.Frame(self.root)
         self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
@@ -184,27 +192,27 @@ class QuizClient:
         )
         self.submit_answer_btn.pack(side=tk.RIGHT, padx=10)
 
-        # ====== 底部：信息显示 ======
-        info_frame = tk.LabelFrame(self.root, text="信息", font=("微软雅黑", 10))
-        info_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        # ====== 底部：信息显示（默认隐藏，点击日志按钮弹出） ======
+        self.info_frame = tk.LabelFrame(self.root, text="📋 日志", font=("微软雅黑", 10))
+        # 初始不 pack，通过日志按钮控制
 
         self.info_text = tk.Text(
-            info_frame,
+            self.info_frame,
             font=("微软雅黑", 10),
             bg="#1e1e1e", fg="#d4d4d4",
             state=tk.DISABLED,
             wrap=tk.WORD,
-            height=8  # 限制初始高度为8行
+            height=6
         )
         self.info_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # 分数显示
-        score_frame = tk.Frame(self.root)
-        score_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+        self.score_frame = tk.Frame(self.root)
+        self.score_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
 
-        tk.Label(score_frame, text="当前分数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        tk.Label(self.score_frame, text="当前分数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
         self.score_label = tk.Label(
-            score_frame, text="0", font=("微软雅黑", 14, "bold"),
+            self.score_frame, text="0", font=("微软雅黑", 14, "bold"),
             fg="#4CAF50"
         )
         self.score_label.pack(side=tk.LEFT, padx=5)
@@ -220,6 +228,16 @@ class QuizClient:
             self.fs_btn.config(text="⛶ 退出全屏")
         else:
             self.fs_btn.config(text="⛶ 全屏")
+
+    def _toggle_log(self):
+        """切换日志显示"""
+        if self.info_frame.winfo_ismapped():
+            self.info_frame.pack_forget()
+            self.log_btn.config(text="📋 日志")
+        else:
+            # 在分数区域之前插入
+            self.info_frame.pack(fill=tk.X, padx=10, pady=5, before=self.score_frame)
+            self.log_btn.config(text="📋 隐藏日志")
 
     def _log(self, msg):
         """添加日志到信息区"""
