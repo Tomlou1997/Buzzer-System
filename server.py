@@ -52,7 +52,7 @@ class QuizServer:
         self.correct_points = 2   # 答对加分
         self.wrong_points = 1     # 答错扣分
         self.answer_timeout = 15  # 答题超时秒数
-        self.win_score = 0        # 获胜积分（0=不启用）
+        self.win_score = 20        # 获胜积分（0=不启用），默认20分
         self._timer_id = None     # 倒计时定时器ID
         self._timer_remaining = 0 # 剩余秒数
         self.game_over = False    # 是否已结束（第三名产生后）
