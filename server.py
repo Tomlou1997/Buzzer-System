@@ -859,10 +859,8 @@ class QuizServer:
             self.points_label.config(text="分值: --")
 
     def _get_question_type(self, q):
-        """获取题型，优先使用入库时保存的题型，否则自动推断"""
-        if q.get("type"):
-            return q["type"]
-        return self._detect_question_type(q.get("question", ""), q.get("answer", ""))
+        """获取题型，直接从导入数据中读取"""
+        return q.get("type", "")
 
     def _show_question(self, index):
         self.current_question_index = index
@@ -873,7 +871,10 @@ class QuizServer:
         if 0 <= index < len(self.questions):
             q = self.questions[index]
             q_type = self._get_question_type(q)
-            self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分） — {q_type}\n\n")
+            if q_type:
+                self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分） — {q_type}\n\n")
+            else:
+                self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分）\n\n")
             self.question_display.insert(tk.END, q["question"])
             self.answer_label.config(text='(点击"显示答案"查看)')
         else:
