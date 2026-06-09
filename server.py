@@ -872,10 +872,7 @@ class QuizServer:
             q = self.questions[index]
             q_type = q.get("type", "")
             if q_type:
-                self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分）\n\n")
                 self.question_display.insert(tk.END, f"{q_type}\n\n")
-            else:
-                self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分）\n\n")
             self.question_display.insert(tk.END, q["question"])
             self.answer_label.config(text='(点击"显示答案"查看)')
         else:
