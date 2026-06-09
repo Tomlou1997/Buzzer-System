@@ -548,7 +548,17 @@ class QuizClient:
         elif msg_type == "score_update":
             score = msg.get("score", 0)
             self.score_label.config(text=str(score))
+            result_msg = msg.get("msg", "")
             self._log(f"💰 当前分数: {score}")
+            # 在抢答按钮上显示判题结果
+            self._hide_answer_mode()
+            if "答对了" in result_msg or "答错" in result_msg:
+                is_correct = "答对了" in result_msg
+                self.buzz_btn.config(
+                    state=tk.DISABLED,
+                    bg="#4CAF50" if is_correct else "#f44336",
+                    text=result_msg
+                )
 
         elif msg_type == "timeout":
             # 答题超时
