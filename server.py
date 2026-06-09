@@ -375,22 +375,30 @@ class QuizServer:
         self.show_answer_btn.pack(side=tk.RIGHT)
         self.answer_visible = False
 
-        # === 抢答记录 ===
-        record_frame = tk.LabelFrame(question_frame, text="📋 抢答记录", font=("微软雅黑", 10))
-        record_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # === 抢答记录按钮（点击展开） ===
+        self.record_btn = tk.Button(
+            question_frame, text="📋 抢答记录", font=("微软雅黑", 9),
+            command=self._toggle_record
+        )
+        self.record_btn.pack(anchor=tk.W, padx=5, pady=(0, 2))
+
+        # === 抢答记录（默认隐藏） ===
+        self.record_frame = tk.LabelFrame(question_frame, text="📋 抢答记录", font=("微软雅黑", 10))
+        # 初始不 pack
 
         rec_columns = ("answer", "result", "correct")
-        self.record_tree = ttk.Treeview(record_frame, columns=rec_columns, show="headings", height=8)
+        self.record_tree = ttk.Treeview(self.record_frame, columns=rec_columns, show="headings", height=8)
         self.record_tree.heading("answer", text="选手答案")
         self.record_tree.heading("result", text="结果")
         self.record_tree.heading("correct", text="正确答案")
         self.record_tree.column("answer", width=120, anchor="center")
         self.record_tree.column("result", width=80, anchor="center")
         self.record_tree.column("correct", width=120, anchor="center")
-        rec_vsb = ttk.Scrollbar(record_frame, orient="vertical", command=self.record_tree.yview)
+        rec_vsb = ttk.Scrollbar(self.record_frame, orient="vertical", command=self.record_tree.yview)
         self.record_tree.configure(yscrollcommand=rec_vsb.set)
         self.record_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
         rec_vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        # record_frame 本身不 pack，点击按钮才显示
 
         # === 中部右：选手 ===
         player_frame = tk.LabelFrame(mid_frame, text="👥 选手管理", font=("微软雅黑", 10))
@@ -1567,6 +1575,15 @@ class QuizServer:
         else:
             self.log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2, before=self.log_btn)
             self.log_btn.config(text="📋 隐藏日志")
+
+    def _toggle_record(self):
+        """切换抢答记录显示"""
+        if self.record_frame.winfo_ismapped():
+            self.record_frame.pack_forget()
+            self.record_btn.config(text="📋 抢答记录")
+        else:
+            self.record_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5), before=self.record_btn)
+            self.record_btn.config(text="📋 隐藏记录")
 
     def _log(self, msg):
         ts = datetime.now().strftime("%H:%M:%S")
