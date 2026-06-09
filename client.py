@@ -126,6 +126,20 @@ class QuizClient:
         )
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
 
+        # ====== 题目展示区 ======
+        self.question_frame = tk.LabelFrame(self.root, text="📝 题目", font=("微软雅黑", 11, "bold"), fg="#FF9800")
+        self.question_text = tk.Text(
+            self.question_frame,
+            font=("微软雅黑", 12),
+            bg="#FFF8E1",
+            fg="#333",
+            wrap=tk.WORD,
+            height=4,
+            state=tk.DISABLED
+        )
+        self.question_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # 默认不显示，抢答成功后才显示
+
         # ====== 答案选择区（默认隐藏，抢到答后显示） ======
         self.answer_frame = tk.LabelFrame(self.root, text="✏️ 请选择答案", font=("微软雅黑", 11, "bold"), fg="#4CAF50")
 
@@ -215,11 +229,18 @@ class QuizClient:
             self.info_text.see(tk.END)
             self.info_text.config(state=tk.DISABLED)
 
-    def _show_answer_mode(self):
-        """切换到答案选择模式"""
+    def _show_answer_mode(self, question_text=""):
+        """切换到答案选择模式，显示题目"""
         self.answering = True
         self.buzz_frame.pack_forget()
         self.hint_label.pack_forget()
+        # 显示题目
+        if question_text:
+            self.question_frame.pack(fill=tk.X, padx=10, pady=(5, 0))
+            self.question_text.config(state=tk.NORMAL)
+            self.question_text.delete(1.0, tk.END)
+            self.question_text.insert(tk.END, question_text)
+            self.question_text.config(state=tk.DISABLED)
         # 重置所有选项为可用和未选中
         for var in self.option_vars.values():
             var.set(False)
@@ -279,6 +300,7 @@ class QuizClient:
                 pass
             self.extend_btn = None
         self.answer_frame.pack_forget()
+        self.question_frame.pack_forget()
         self.buzz_frame.pack(fill=tk.X, padx=10, pady=10)
         self.hint_label.pack(fill=tk.X, padx=10, pady=(0, 5))
 
@@ -491,7 +513,8 @@ class QuizClient:
                 )
                 self._log(f"🎉🎉🎉 太棒了！你抢答成功了！请选择答案 A-F（可多选） ⏱ {timeout}秒 🎉🎉🎉")
                 self._flash_btn()
-                self._show_answer_mode()
+                question = msg.get("question", "")
+                self._show_answer_mode(question)
             else:
                 # 没抢到
                 self._hide_answer_mode()
