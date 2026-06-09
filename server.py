@@ -1523,7 +1523,7 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] += pts
                 self._log(f"✅ [{name}] 答对 +{pts} 分 → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"✅ 答对了！+{pts} 分"})
         self._update_player_list()
 
     def _mark_wrong(self):
@@ -1538,7 +1538,7 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] = max(0, self.clients[name]["score"] - pts)
                 self._log(f"❌ [{name}] 答错 -{pts} 分 → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了 -{pts} 分"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"❌ 答错了 -{pts} 分"})
         self._update_player_list()
 
     # =============== 网络 ===============
@@ -1801,7 +1801,7 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] += delta
                 self._log(f"💰 [{name}] {delta:+d} → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"]})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"]})
         self._update_player_list()
 
     def _foul_penalty(self):
@@ -1816,8 +1816,8 @@ class QuizServer:
             if name in self.clients:
                 self.clients[name]["score"] -= 5
                 self._log(f"🚫 [{name}] 违规扣5分 → {self.clients[name]['score']}")
-                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": "🚫 违规扣5分"})
-                self._broadcast({"type": "system", "msg": f"🚫 [{name}] 违规，扣除5分"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": "🚫 违规扣5分"})
+        self._broadcast({"type": "system", "msg": f"🚫 [{name}] 违规，扣除5分"})
         self._update_player_list()
 
     def _toggle_ban(self):
@@ -1830,7 +1830,7 @@ class QuizServer:
                 self.clients[name]["banned"] = not self.clients[name]["banned"]
                 st = "禁赛" if self.clients[name]["banned"] else "恢复"
                 self._log(f"🚫 [{name}] 已被{st}")
-                self._send_to_player(name, {"type": "ban_status", "banned": self.clients[name]["banned"]})
+                self._send_to_player_nolock(name, {"type": "ban_status", "banned": self.clients[name]["banned"]})
         self._update_player_list()
 
     def _disconnect_player(self):
