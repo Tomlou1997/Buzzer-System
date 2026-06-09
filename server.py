@@ -870,7 +870,7 @@ class QuizServer:
         self.question_display.delete("1.0", tk.END)
         if 0 <= index < len(self.questions):
             q = self.questions[index]
-            q_type = self._get_question_type(q)
+            q_type = q.get("type", "")
             if q_type:
                 self.question_display.insert(tk.END, f"第 {index+1} 题（{q['points']} 分） — {q_type}\n\n")
             else:
@@ -1037,7 +1037,7 @@ class QuizServer:
             debug_log("_start_buzz 准备广播 round_start")
             self._broadcast({"type": "round_start", "round": self.round_num, "msg": f"🟢 第 {self.round_num} 轮抢答开始！按 空格键 或 回车键 抢答！"})
             debug_log("_start_buzz round_start 广播完毕")
-            q_type = self._get_question_type(q)
+            q_type = q.get("type", "")
             self._broadcast({"type": "question", "msg": q["question"], "q_type": q_type, "points": q["points"]})
             debug_log("_start_buzz question 广播完毕")
         debug_log("<<< _start_buzz 释放锁，正常退出")
@@ -1700,7 +1700,7 @@ class QuizServer:
                     self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self.answer_timeout}s 🎉🎉🎉", bg="#4CAF50")
                     # 抢答者收到成功，并进入答案输入模式；其他人收到已有人抢到
                     q_text = self.questions[self.current_question_index]["question"]
-                    q_type = self._get_question_type(self.questions[self.current_question_index])
+                    q_type = self.questions[self.current_question_index].get("type", "")
                     self._send_to_player_nolock(name, {"type": "buzz_result", "winner": True, "msg": "🎉 你抢答成功了！请在此输入你的答案：", "timeout": self.answer_timeout, "extend_remaining": self.extend_limits.get(name, 0), "extend_seconds": self.extend_seconds, "question": q_text, "q_type": q_type})
                     for other in list(self.clients.keys()):
                         if other != name:
