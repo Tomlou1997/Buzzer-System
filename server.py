@@ -415,6 +415,8 @@ class QuizServer:
         self.popup_menu.add_command(label="减分 (-1)", command=lambda: self._change_score(-1))
         self.popup_menu.add_command(label="减分 (-5)", command=lambda: self._change_score(-5))
         self.popup_menu.add_separator()
+        self.popup_menu.add_command(label="🚫 违规扣5分", command=self._foul_penalty)
+        self.popup_menu.add_separator()
         self.popup_menu.add_command(label="✅ 答对加分", command=self._mark_correct)
         self.popup_menu.add_command(label="❌ 答错减分", command=self._mark_wrong)
         self.popup_menu.add_separator()
@@ -1800,6 +1802,22 @@ class QuizServer:
                 self.clients[name]["score"] += delta
                 self._log(f"💰 [{name}] {delta:+d} → {self.clients[name]['score']}")
                 self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"]})
+        self._update_player_list()
+
+    def _foul_penalty(self):
+        """违规扣5分"""
+        sel = self.player_tree.selection()
+        if not sel:
+            return
+        name = self.player_tree.item(sel[0], "values")[0]
+        if not messagebox.askyesno("违规扣分", f"确定要对 [{name}] 进行违规扣分（-5分）吗？"):
+            return
+        with self.lock:
+            if name in self.clients:
+                self.clients[name]["score"] -= 5
+                self._log(f"🚫 [{name}] 违规扣5分 → {self.clients[name]['score']}")
+                self._send_to_player(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": "🚫 违规扣5分"})
+                self._broadcast({"type": "system", "msg": f"🚫 [{name}] 违规，扣除5分"})
         self._update_player_list()
 
     def _toggle_ban(self):
