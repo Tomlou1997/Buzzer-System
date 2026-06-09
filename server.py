@@ -970,6 +970,7 @@ class QuizServer:
         """开始抢答：把当前题目发送给所有选手"""
         debug_log(">>> _start_buzz 被调用")
         if self.game_over:
+            messagebox.showwarning("提示", "⚠️ 比赛已结束，无法开始抢答")
             self._log("⚠️ 比赛已结束，无法开始抢答")
             return
         if self.current_question_index < 0 or self.current_question_index >= len(self.questions):
