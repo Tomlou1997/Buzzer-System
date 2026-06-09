@@ -53,6 +53,7 @@ class QuizServer:
         self.wrong_points = 1     # 答错扣分
         self.answer_timeout = 15  # 答题超时秒数
         self.win_score = 20        # 获胜积分（0=不启用），默认20分
+        self.win_rank_count = 3    # 决出前几名后比赛结束，默认3名
         self._timer_id = None     # 倒计时定时器ID
         self._timer_remaining = 0 # 剩余秒数
         self.game_over = False    # 是否已结束（第三名产生后）
@@ -1149,8 +1150,8 @@ class QuizServer:
             self._send_to_player_nolock(top_name, {"type": "rank_locked", "rank": next_rank, "msg": f"🎉 恭喜获得第{next_rank}名！得分: {top_score}"})
             self._broadcast({"type": "system", "msg": f"🏆 [{top_name}] 获得第{next_rank}名！当前得分: {top_score}"})
 
-        # 检查是否已满3名
-        if len(self.ranked_players) >= 3 or len(self.ranked_players) >= len(self.clients):
+        # 检查是否已满设定名次
+        if len(self.ranked_players) >= self.win_rank_count or len(self.ranked_players) >= len(self.clients):
             self.game_over = True
             self.round_active = False
             self.first_buzzer = None
@@ -1424,6 +1425,15 @@ class QuizServer:
         tk.Label(win_row, text="分（0=不启用）", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
         tk.Label(win_row, text="达到此积分即获胜:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
 
+        rank_row = tk.Frame(win_frame)
+        rank_row.pack(fill=tk.X, padx=10, pady=(0, 5))
+        rank_var = tk.IntVar(value=self.win_rank_count)
+        rank_spin = tk.Spinbox(rank_row, from_=1, to=99, textvariable=rank_var,
+                                font=("微软雅黑", 10), width=6)
+        rank_spin.pack(side=tk.RIGHT)
+        tk.Label(rank_row, text="名（全部选手名额用完后自动结束）", font=("微软雅黑", 10)).pack(side=tk.RIGHT, padx=3)
+        tk.Label(rank_row, text="决出前:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+
         # 延长回答
         extend_frame = tk.LabelFrame(win, text="延长回答", font=("微软雅黑", 10))
         extend_frame.pack(fill=tk.X, padx=15, pady=5)
@@ -1475,13 +1485,14 @@ class QuizServer:
             self.wrong_points = wrong_var.get()
             self.answer_timeout = timeout_var.get()
             self.win_score = win_var.get()
+            self.win_rank_count = rank_var.get()
             self.extend_max = extend_max_var.get()
             self.extend_seconds = extend_sec_var.get()
             self.auto_judge_var.set(auto_var.get())
             self.allow_repeat = reuse_var.get()
             if not self.allow_repeat:
                 self.used_questions.clear()
-            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分)' if self.win_score>0 else '未启用'}, 延长回答{self.extend_max}次×{self.extend_seconds}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}, 题目复用={'允许' if self.allow_repeat else '不允许'}")
+            self._log(f"⚙ 设置已更新: 答对+{self.correct_points}分, 答错-{self.wrong_points}分, 倒计时{self.answer_timeout}秒, 获胜积分{'已启用('+str(self.win_score)+'分/前'+str(self.win_rank_count)+'名)' if self.win_score>0 else '未启用'}, 延长回答{self.extend_max}次×{self.extend_seconds}秒, 自动判题={'开启' if self.auto_judge_var.get() else '关闭'}, 题目复用={'允许' if self.allow_repeat else '不允许'}")
             win.destroy()
 
         tk.Button(btn_row, text="保存", font=("微软雅黑", 10),
