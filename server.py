@@ -1241,9 +1241,25 @@ class QuizServer:
                              bg="#1a1a2e", fg="#FFD700")
         title_lbl.pack(pady=(40, 20))
 
-        # 排名列表
+        # 排名列表：已锁定排名的按名次排在最前，其余按分数降序
         with self.lock:
-            sorted_pl = sorted(self.clients.items(), key=lambda x: x[1]["score"], reverse=True)
+            ranked_list = []
+            unranked_list = []
+            ranked_names = {r[0] for r in self.ranked_players}
+            for name, data in self.clients.items():
+                if name in ranked_names:
+                    # 找排名序号
+                    for rn, rs, rr in self.ranked_players:
+                        if rn == name:
+                            ranked_list.append((rr, name, data["score"]))
+                            break
+                else:
+                    unranked_list.append((name, data["score"]))
+            ranked_list.sort(key=lambda x: x[0])  # 按名次排
+            unranked_list.sort(key=lambda x: x[1], reverse=True)  # 按分数降序
+            # 合并：已排名的在前，其余在后
+            sorted_pl = [(name, {"score": score}) for _, name, score in ranked_list]
+            sorted_pl += [(name, {"score": score}) for name, score in unranked_list]
 
         rank_icons = {0: "🥇", 1: "🥈", 2: "🥉"}
         rank_scores = [0, 0, 0]  # 仅用于视觉
