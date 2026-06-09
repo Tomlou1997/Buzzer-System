@@ -627,6 +627,7 @@ class QuizClient:
 
         elif msg_type == "restart_game":
             """重赛：重置客户端所有UI状态"""
+            self.game_over = False
             self._hide_answer_mode()
             self._stop_client_timer()
             self.score_label.config(text="0")
