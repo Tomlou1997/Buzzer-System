@@ -496,6 +496,8 @@ class QuizClient:
             self._log(f"📝 {msg.get('msg', '')}")
 
         elif msg_type == "round_start":
+            if self.game_over:
+                return
             self.buzzed = False
             self._hide_answer_mode()
             self.buzz_btn.config(
@@ -507,17 +509,20 @@ class QuizClient:
 
         elif msg_type == "round_end":
             self._hide_answer_mode()
-            self.buzz_btn.config(
-                state=tk.DISABLED,
-                bg="#9E9E9E",
-                text="⏳ 等待下一轮..."
-            )
+            if not self.game_over:
+                self.buzz_btn.config(
+                    state=tk.DISABLED,
+                    bg="#9E9E9E",
+                    text="⏳ 等待下一轮..."
+                )
             self._log(f"🔴 {msg.get('msg', '')}")
 
         elif msg_type == "answer_received":
             self._log(f"📤 {msg.get('msg', '')}")
 
         elif msg_type == "buzz_result":
+            if self.game_over:
+                return
             winner = msg.get("winner", False)
             if winner:
                 # 抢到了！切换到答案选择模式
@@ -551,6 +556,9 @@ class QuizClient:
             self.score_label.config(text=str(score))
             result_msg = msg.get("msg", "")
             self._log(f"💰 当前分数: {score}")
+            # 排名已锁定的选手不更新抢答按钮
+            if self.game_over:
+                return
             # 在抢答按钮上显示判题结果
             self._hide_answer_mode()
             if "答对了" in result_msg or "答错" in result_msg:
@@ -565,11 +573,12 @@ class QuizClient:
             # 答题超时
             self._stop_client_timer()
             self._hide_answer_mode()
-            self.buzz_btn.config(
-                state=tk.DISABLED,
-                bg="#f44336",
-                text="⏰ 答题超时！"
-            )
+            if not self.game_over:
+                self.buzz_btn.config(
+                    state=tk.DISABLED,
+                    bg="#f44336",
+                    text="⏰ 答题超时！"
+                )
             self._log(f"⏰ {msg.get('msg', '')}")
 
         elif msg_type == "ban_status":
