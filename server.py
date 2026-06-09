@@ -415,6 +415,7 @@ class QuizServer:
         self.popup_menu.add_command(label="减分 (-1)", command=lambda: self._change_score(-1))
         self.popup_menu.add_command(label="减分 (-5)", command=lambda: self._change_score(-5))
         self.popup_menu.add_separator()
+        self.popup_menu.add_command(label="🎯 设置分数", command=self._set_score)
         self.popup_menu.add_command(label="🚫 违规扣5分", command=self._foul_penalty)
         self.popup_menu.add_separator()
         self.popup_menu.add_command(label="✅ 答对加分", command=self._mark_correct)
@@ -1803,6 +1804,46 @@ class QuizServer:
                 self._log(f"💰 [{name}] {delta:+d} → {self.clients[name]['score']}")
                 self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"]})
         self._update_player_list()
+
+    def _set_score(self):
+        """手动设置选手分数"""
+        sel = self.player_tree.selection()
+        if not sel:
+            return
+        name = self.player_tree.item(sel[0], "values")[0]
+        cur_score = 0
+        with self.lock:
+            if name in self.clients:
+                cur_score = self.clients[name]["score"]
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"设置分数 - {name}")
+        dialog.geometry("300x150")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        tk.Label(dialog, text=f"选手: {name}", font=("微软雅黑", 12, "bold")).pack(pady=(15, 5))
+        tk.Label(dialog, text=f"当前分数: {cur_score}", font=("微软雅黑", 10)).pack()
+        var = tk.IntVar(value=cur_score)
+        row = tk.Frame(dialog)
+        row.pack(pady=10)
+        tk.Label(row, text="设置分数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
+        spin = tk.Spinbox(row, from_=-999, to=9999, textvariable=var,
+                          font=("微软雅黑", 12, "bold"), width=8)
+        spin.pack(side=tk.LEFT, padx=5)
+        def do_set():
+            with self.lock:
+                if name in self.clients:
+                    self.clients[name]["score"] = var.get()
+                    self._log(f"🎯 [{name}] 分数设置为 {var.get()}")
+                    self._send_to_player_nolock(name, {"type": "score_update", "score": var.get()})
+            self._update_player_list()
+            dialog.destroy()
+        btn_row = tk.Frame(dialog)
+        btn_row.pack(pady=5)
+        tk.Button(btn_row, text="确定", font=("微软雅黑", 10),
+                  bg="#4CAF50", fg="white", width=8, command=do_set).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_row, text="取消", font=("微软雅黑", 10),
+                  bg="#9E9E9E", fg="white", width=8, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _foul_penalty(self):
         """违规扣5分"""
