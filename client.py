@@ -616,6 +616,18 @@ class QuizClient:
             lines = [f"{r['title']} {r['name']} - {r['score']}分" for r in rankings]
             self._log("🏆 最新排名: " + " | ".join(lines))
 
+        elif msg_type == "restart_game":
+            """重赛：重置客户端所有UI状态"""
+            self._hide_answer_mode()
+            self._stop_client_timer()
+            self.score_label.config(text="0")
+            self.buzz_btn.config(
+                state=tk.DISABLED,
+                bg="#9E9E9E",
+                text="⏳ 等待开始..."
+            )
+            self._log(f"🆕 {msg.get('msg', '')}")
+
         elif msg_type == "game_over":
             rankings = msg.get("rankings", [])
             self._hide_answer_mode()

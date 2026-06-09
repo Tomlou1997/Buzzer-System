@@ -1078,6 +1078,7 @@ class QuizServer:
         self.stop_round_btn.config(state=tk.DISABLED)
         self._update_nav_buttons()
         self._log("🆕 比赛已重赛，所有数据已重置")
+        self._broadcast({"type": "restart_game", "msg": "🆕 比赛已重赛，准备开始新一轮"})
         self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _end_game(self):
