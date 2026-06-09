@@ -672,6 +672,19 @@ class QuizClient:
             else:
                 messagebox.showinfo("🏁 比赛结束", "所有排名已产生，比赛结束")
 
+        elif msg_type == "server_closed":
+            # 比赛结束，服务端主动断开
+            self._hide_answer_mode()
+            self._stop_client_timer()
+            self.game_over = True
+            self.buzz_btn.config(
+                state=tk.DISABLED,
+                bg="#9C27B0",
+                text="🏁 比赛已结束\n连接已断开"
+            )
+            messagebox.showinfo("比赛结束", f"🏁 比赛已结束，连接已断开\n感谢参与！")
+            self.running = False
+
     def _flash_btn(self):
         """抢答成功闪烁效果"""
         def flash():

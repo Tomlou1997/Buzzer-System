@@ -1124,8 +1124,12 @@ class QuizServer:
             for name in list(self.clients.keys()):
                 self.clients[name]["score"] = 0
                 self.clients[name]["banned"] = False
-                self._send_to_player_nolock(name, {"type": "game_over", "rankings": [], "msg": "🏁 比赛已结束，感谢参与！"})
-                self._send_to_player_nolock(name, {"type": "score_update", "score": 0})
+                self._send_to_player_nolock(name, {"type": "server_closed", "msg": "🏁 比赛已结束，连接已断开"})
+                try:
+                    self.clients[name]["socket"].close()
+                except:
+                    pass
+            self.clients.clear()
         self.ranked_players = []
         self.used_questions.clear()
         self.round_num = 0
