@@ -475,6 +475,10 @@ class QuizServer:
 
     def _switch_to_home(self):
         """切换到主页面（保持比赛状态，客户端连接不受影响）"""
+        if self.game_started:
+            self.home_start_btn.config(text="▶ 继续比赛", bg="#4CAF50")
+        else:
+            self.home_start_btn.config(text="🚀 开始比赛", bg="#FF5722")
         self.game_frame.pack_forget()
         self.home_frame.pack(fill=tk.BOTH, expand=True)
         self._log("🏠 返回主页")
