@@ -1081,23 +1081,28 @@ class QuizServer:
         self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _end_game(self):
-        """结束比赛：展示最终积分榜 → 清空所有数据 → 返回主页"""
+        """结束比赛：展示最终积分榜，关闭后清空数据并返回主页"""
         if not messagebox.askyesno("确认结束", "🏁 确定要结束当前比赛吗？\n\n将展示最终积分榜，之后所有数据将清空并返回主页。"):
             return
         # 先停止本轮
         self.stop_timer()
         self.round_active = False
         self._broadcast({"type": "round_end", "msg": "🔴 比赛已结束"})
-        # 展示最终积分榜（用当前分数，尚未清空）
-        self._show_rankings(final=True)
-        # 积分榜关掉后清空所有数据
+        # 展示最终积分榜（用当前分数，尚未清空），关闭时执行清理
+        self._show_rankings(final=True, on_close=self._cleanup_after_end_game)
+
+    def _cleanup_after_end_game(self):
+        """结束比赛积分榜关闭后的清理工作"""
         self.game_started = False
         self.game_name = ""
         self.game_over = False
         self.first_buzzer = None
+        # 清空分数并通知客户端
         with self.lock:
             for name in list(self.clients.keys()):
                 self.clients[name]["score"] = 0
+                self._send_to_player_nolock(name, {"type": "game_over", "rankings": [], "msg": "🏁 比赛已结束，感谢参与！"})
+                self._send_to_player_nolock(name, {"type": "score_update", "score": 0})
         self.ranked_players = []
         self.used_questions.clear()
         self.round_num = 0
@@ -1180,12 +1185,16 @@ class QuizServer:
         for n, s, r in newly_ranked:
             self._broadcast({"type": "system", "msg": f"🏆 [{n}] 获得第{r}名！当前得分: {s}"})
 
-    def _show_rankings(self, final=False):
+    def _show_rankings(self, final=False, on_close=None):
         """弹出全屏积分排名窗口
         final=True 时表示比赛已经结束，显示结束标题
+        on_close 为关闭窗口后的回调函数
         """
         if not self.clients:
             messagebox.showinfo("提示", "暂无选手数据")
+            # 即使没有选手，也要执行回调
+            if on_close:
+                on_close()
             return
 
         win = tk.Toplevel(self.root)
@@ -1194,6 +1203,9 @@ class QuizServer:
         win.attributes("-fullscreen", True)
         win.attributes("-topmost", True)
         win.configure(bg="#1a1a2e")
+
+        # 存储回调
+        self._rank_close_callback = on_close
 
         # 关闭按钮
         close_btn = tk.Button(win, text="✕ 关闭", font=("微软雅黑", 14),
@@ -1253,9 +1265,14 @@ class QuizServer:
 
     def _close_rankings(self, win=None):
         w = win or getattr(self, '_rank_window', None)
+        cb = getattr(self, '_rank_close_callback', None)
         if w:
             w.destroy()
             self._rank_window = None
+            self._rank_close_callback = None
+        # 执行回调
+        if cb:
+            cb()
 
     def _award_score(self, name):
         """抢答成功后答对给分"""
