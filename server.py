@@ -1081,7 +1081,6 @@ class QuizServer:
         self._update_nav_buttons()
         self._log("🆕 比赛已重赛，所有数据已重置")
         self._broadcast({"type": "restart_game", "msg": "🆕 比赛已重赛，准备开始新一轮"})
-        self._broadcast({"type": "system", "msg": "🆕 比赛已重赛，准备开始新一轮"})
 
     def _end_game(self):
         """结束比赛：展示最终积分榜，关闭后清空数据并返回主页"""
@@ -1770,18 +1769,13 @@ class QuizServer:
     def _broadcast(self, msg):
         msg_type = msg.get("type", "unknown")
         debug_log(f"_broadcast 开始: type={msg_type}, clients_count={len(self.clients)}")
-        disc = []
         for n, i in self.clients.items():
             try:
                 i["socket"].send(json.dumps(msg).encode())
                 debug_log(f"_broadcast 已发送给 [{n}]")
             except Exception as e:
                 debug_log(f"_broadcast 发送给 [{n}] 失败: {e}")
-                disc.append(n)
-        for n in disc:
-            if n in self.clients:
-                del self.clients[n]
-                debug_log(f"_broadcast 已移除断线客户端 [{n}]")
+                # 不在这里移除客户端，让心跳机制处理断开
         debug_log(f"_broadcast 结束: type={msg_type}")
 
     def _update_player_list(self):
