@@ -1239,7 +1239,7 @@ class QuizServer:
                      bg="#16213e", fg=score_color).pack(side=tk.RIGHT, padx=30, pady=12)
 
         # 底部
-        if self.game_over:
+        if final or self.game_over:
             tk.Label(win, text="🏁 比赛已结束",
                      font=("微软雅黑", 20),
                      bg="#1a1a2e", fg="#9E9E9E").pack(pady=20)
