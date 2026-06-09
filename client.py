@@ -684,6 +684,12 @@ class QuizClient:
             )
             messagebox.showinfo("比赛结束", f"🏁 比赛已结束，连接已断开\n感谢参与！")
             self.running = False
+            self.connected = False
+            if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
 
     def _flash_btn(self):
         """抢答成功闪烁效果"""

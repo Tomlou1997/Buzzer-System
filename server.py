@@ -1119,16 +1119,12 @@ class QuizServer:
         self.game_name = ""
         self.game_over = False
         self.first_buzzer = None
-        # 清空所有选手分数并通知客户端断开
+        # 通知所有客户端断开连接，让客户端自己关 socket
         with self.lock:
             for name in list(self.clients.keys()):
                 self.clients[name]["score"] = 0
                 self.clients[name]["banned"] = False
                 self._send_to_player_nolock(name, {"type": "server_closed", "msg": "🏁 比赛已结束，连接已断开"})
-                try:
-                    self.clients[name]["socket"].close()
-                except:
-                    pass
             self.clients.clear()
         self.ranked_players = []
         self.used_questions.clear()
