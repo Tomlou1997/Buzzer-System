@@ -438,11 +438,18 @@ class QuizServer:
         send_btn = tk.Button(msg_frame, text="发送", font=("微软雅黑", 9), bg="#2196F3", fg="white", command=self._send_message_to_all)
         send_btn.pack(side=tk.RIGHT)
 
-        # === 底部：日志 ===
-        log_frame = tk.LabelFrame(bottom_frame, text="系统日志", font=("微软雅黑", 10))
-        log_frame.pack(fill=tk.BOTH, expand=True)
+        # === 底部：日志按钮 ===
+        self.log_btn = tk.Button(
+            bottom_frame, text="📋 日志", font=("微软雅黑", 9),
+            command=self._toggle_log
+        )
+        self.log_btn.pack(anchor=tk.W, padx=5, pady=2)
+
+        # === 日志区域（默认隐藏） ===
+        self.log_frame = tk.LabelFrame(bottom_frame, text="系统日志", font=("微软雅黑", 10))
+        # 初始不 pack，通过日志按钮控制
         self.log_area = scrolledtext.ScrolledText(
-            log_frame, height=5, font=("微软雅黑", 9),
+            self.log_frame, height=5, font=("微软雅黑", 9),
             bg="#1e1e1e", fg="#d4d4d4", state=tk.DISABLED
         )
         self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1543,6 +1550,15 @@ class QuizServer:
         self._update_player_list()
 
     # =============== 网络 ===============
+
+    def _toggle_log(self):
+        """切换日志显示"""
+        if self.log_frame.winfo_ismapped():
+            self.log_frame.pack_forget()
+            self.log_btn.config(text="📋 日志")
+        else:
+            self.log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2, before=self.log_btn)
+            self.log_btn.config(text="📋 隐藏日志")
 
     def _log(self, msg):
         ts = datetime.now().strftime("%H:%M:%S")
