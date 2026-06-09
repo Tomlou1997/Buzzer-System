@@ -206,9 +206,8 @@ class QuizClient:
         )
         self.info_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # 分数显示
+        # 分数显示（默认隐藏，连接成功后显示）
         self.score_frame = tk.Frame(self.root)
-        self.score_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
 
         tk.Label(self.score_frame, text="当前分数:", font=("微软雅黑", 10)).pack(side=tk.LEFT)
         self.score_label = tk.Label(
@@ -437,6 +436,8 @@ class QuizClient:
         self.connect_btn.config(state=tk.DISABLED, text="已连接 ✅")
         self.ip_entry.config(state=tk.DISABLED)
         self.name_entry.config(state=tk.DISABLED)
+        # 连接成功后显示分数区
+        self.score_frame.pack(fill=tk.X, padx=10, pady=(0, 10), before=self.root.pack_slaves()[-1])
         self._log(f"✅ 已连接到服务器 [{self.ip_var.get()}]")
         self._log("🎯 请等待管理员开始抢答...")
         self.buzz_btn.config(state=tk.DISABLED, bg="#9E9E9E", text="⏳ 等待开始...")
