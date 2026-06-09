@@ -1068,7 +1068,6 @@ class QuizServer:
         self.round_num = 0
         self.round_active = False
         self.first_buzzer = None
-        self.game_started = False  # 是否在比赛状态（非结束），控制客户端连接
         self.record_tree.delete(*self.record_tree.get_children())
         # 回到题库起始
         if self.active_bank_name and self.active_bank_name in self.question_banks:
