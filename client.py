@@ -448,7 +448,10 @@ class QuizClient:
         self.connect_btn.config(state=tk.NORMAL, text="连接服务器")
         self._log(f"❌ 连接失败: {reason}")
         if self.root.winfo_exists():
-            messagebox.showwarning("连接失败", reason)
+            title = "连接失败"
+            if "比赛尚未开始" in reason:
+                title = "比赛尚未开始"
+            messagebox.showwarning(title, reason)
 
     def _receive_loop(self):
         """接收消息循环"""
