@@ -35,9 +35,9 @@ class QuizClient:
         self._client_timer_label = None
         self._client_timer_hint = None
         self._client_timer_remaining = 0
-        self.extend_remaining = 0   # 本轮可延长次数
-        self.extend_seconds = 15    # 每次延长秒数
-        self.extend_btn = None     # 延长按钮
+        self.extend_remaining = 0   # 本轮可求助啦啦队次数
+        self.extend_seconds = 15    # 每次求助增加秒数
+        self.extend_btn = None     # 求助啦啦队按钮
 
         # 答案选择状态
         self.selected_options = {}  # {"A": tk.BooleanVar, ...}
@@ -265,7 +265,7 @@ class QuizClient:
             btn.config(state=tk.NORMAL)
         self.submit_answer_btn.config(state=tk.NORMAL, text="提交答案 📤", bg="#2196F3")
         self.answer_frame.pack(fill=tk.X, padx=10, pady=10, before=self.score_frame)
-        # 有剩余延长次数才显示延长按钮
+        # 有剩余求助次数才显示求助按钮
         if self.extend_btn:
             try:
                 self.extend_btn.destroy()
@@ -274,7 +274,7 @@ class QuizClient:
             self.extend_btn = None
         if self.extend_remaining > 0:
             self.extend_btn = tk.Button(
-                self.answer_frame, text=f"⏱ 延长回答（余{self.extend_remaining}次）",
+                self.answer_frame, text=f"📣 求助啦啦队（余{self.extend_remaining}次）",
                 font=("微软雅黑", 10, "bold"),
                 bg="#FF9800", fg="white", bd=0,
                 command=self._extend_time
@@ -282,10 +282,10 @@ class QuizClient:
             self.extend_btn.pack(anchor=tk.W, padx=5, pady=(5, 0))
 
     def _update_extend_btn(self):
-        """更新延长按钮状态"""
+        """更新求助啦啦队按钮状态"""
         if self.extend_btn:
             if self.extend_remaining > 0:
-                self.extend_btn.config(state=tk.NORMAL, text=f"⏱ 延长回答（余{self.extend_remaining}次）",
+                self.extend_btn.config(state=tk.NORMAL, text=f"📣 求助啦啦队（余{self.extend_remaining}次）",
                                        bg="#FF9800")
             else:
                 # 次数用完，隐藏按钮
@@ -296,20 +296,20 @@ class QuizClient:
                 self.extend_btn = None
 
     def _extend_time(self):
-        """发送延长答题时间请求"""
+        """发送求助啦啦队请求"""
         if not self.connected or self.extend_remaining <= 0:
             return
         try:
             self.socket.send(json.dumps({"type": "extend_time"}).encode())
-            self._log("📤 请求延长答题时间...")
+            self._log("📤 请求啦啦队支援...")
         except:
-            self._log("❌ 发送延长请求失败")
+            self._log("❌ 发送求助请求失败")
 
     def _hide_answer_mode(self):
         """隐藏答案选择，恢复抢答模式"""
         self.answering = False
         self._stop_client_timer()
-        # 移除延长按钮
+        # 移除求助啦啦队按钮
         if self.extend_btn:
             try:
                 self.extend_btn.destroy()
