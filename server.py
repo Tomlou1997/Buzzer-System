@@ -390,11 +390,13 @@ class QuizServer:
         self.record_frame = tk.LabelFrame(question_frame, text="📋 抢答记录", font=("微软雅黑", 10))
         # 初始不 pack
 
-        rec_columns = ("answer", "result", "correct")
+        rec_columns = ("player", "answer", "result", "correct")
         self.record_tree = ttk.Treeview(self.record_frame, columns=rec_columns, show="headings", height=8)
+        self.record_tree.heading("player", text="选手")
         self.record_tree.heading("answer", text="选手答案")
         self.record_tree.heading("result", text="结果")
         self.record_tree.heading("correct", text="正确答案")
+        self.record_tree.column("player", width=70, anchor="center")
         self.record_tree.column("answer", width=120, anchor="center")
         self.record_tree.column("result", width=80, anchor="center")
         self.record_tree.column("correct", width=120, anchor="center")
@@ -919,7 +921,8 @@ class QuizServer:
 
     def _add_record(self, player_answer, result, correct_answer):
         """添加一条抢答记录"""
-        self.record_tree.insert("", 0, values=(player_answer, result, correct_answer))
+        player_name = self.first_buzzer or "--"
+        self.record_tree.insert("", 0, values=(player_name, player_answer, result, correct_answer))
 
     def _next_question(self):
         """切换到下一题"""
