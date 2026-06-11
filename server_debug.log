@@ -1203,3 +1203,14 @@
 [10:55:27.852] _broadcast 开始: type=system, clients_count=1
 [10:55:27.852] _broadcast 已发送给 [IT]
 [10:55:27.853] _broadcast 结束: type=system
+[10:58:57.847] _handle_client [IT] 收到空数据，断开
+[10:58:57.847] _handle_client [IT] 即将移除
+[10:58:57.848] _remove_client: [IT] 准备抢锁
+[10:58:57.848] _remove_client: [IT] 拿到锁
+[10:58:57.849] _remove_client: [IT] 已从 clients 移除
+[10:58:57.858] _broadcast 开始: type=system, clients_count=0
+[10:58:57.858] _broadcast 结束: type=system
+[10:58:59.511] _broadcast 开始: type=shutdown, clients_count=0
+[10:58:59.512] _broadcast 结束: type=shutdown
+[10:59:18.655] _broadcast 开始: type=shutdown, clients_count=0
+[10:59:18.656] _broadcast 结束: type=shutdown

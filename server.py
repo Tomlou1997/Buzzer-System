@@ -56,6 +56,7 @@ class QuizServer:
         self.win_rank_count = 3    # 决出前几名后比赛结束，默认3名
         self._timer_id = None     # 倒计时定时器ID
         self._timer_remaining = 0 # 剩余秒数
+        self._has_extended = False # 是否已求助啦啦队
         self.game_over = False    # 是否已结束（第三名产生后）
         self.ranked_players = []  # 已锁定排名的选手列表 [(name, score, rank), ...]
         self.extend_limits = {}   # 选手每场比赛可延长次数 {name: remaining}
@@ -1374,13 +1375,17 @@ class QuizServer:
                         self.clients[name]["score"] -= self.wrong_points
                         self._send_to_player_nolock(name, {"type": "score_update", "score": self.clients[name]["score"], "msg": f"⏰ 答题超时！-{self.wrong_points}分"})
                         self._send_to_player_nolock(name, {"type": "timeout", "msg": f"⏰ 答题超时！"})
+                self._has_extended = False
                 self._add_record("超时", "❌ 超时 ❌", correct)
                 self._update_player_list()
                 self._reset_judge_buttons()
                 self._check_winner()
                 return
             # 更新横幅倒计时
-            self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+            if self._has_extended:
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+            else:
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
             self._timer_id = self.root.after(1000, tick)
 
         self._timer_id = self.root.after(1000, tick)
@@ -1391,6 +1396,7 @@ class QuizServer:
             self.root.after_cancel(self._timer_id)
             self._timer_id = None
             self._timer_remaining = 0
+            self._has_extended = False
 
     def _show_settings(self):
         """显示设置窗口"""
@@ -1816,6 +1822,7 @@ class QuizServer:
                 # 扣减次数，延长计时
                 self.extend_limits[name] = remaining - 1
                 self._timer_remaining += self.extend_seconds
+                self._has_extended = True
                 self._log(f"⏱ [{name}] 求助啦啦队，剩余{remaining-1}次，当前剩余{self._timer_remaining}秒")
                 self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
                 self._send_to_player_nolock(name, {"type": "extend_result", "success": True, "msg": f"🎉 啦啦队增加了{self.extend_seconds}秒，剩余{remaining-1}次", "remaining": remaining - 1, "time_remaining": self._timer_remaining})
