@@ -1107,3 +1107,99 @@
 [10:51:08.794] _broadcast 开始: type=system, clients_count=1
 [10:51:08.795] _broadcast 已发送给 [IT]
 [10:51:08.796] _broadcast 结束: type=system
+[10:53:27.233] _handle_client [IT] 收到空数据，断开
+[10:53:27.234] _handle_client [IT] 即将移除
+[10:53:27.234] _remove_client: [IT] 准备抢锁
+[10:53:27.234] _remove_client: [IT] 拿到锁
+[10:53:27.235] _remove_client: [IT] 已从 clients 移除
+[10:53:27.242] _broadcast 开始: type=system, clients_count=0
+[10:53:27.242] _broadcast 结束: type=system
+[10:53:29.115] _broadcast 开始: type=shutdown, clients_count=0
+[10:53:29.115] _broadcast 结束: type=shutdown
+[10:53:42.679] _handle_client 新连接: ('10.8.51.7', 8702)
+[10:53:42.680] _handle_client 选手名称: IT
+[10:53:42.687] _broadcast 开始: type=system, clients_count=1
+[10:53:42.687] _broadcast 已发送给 [IT]
+[10:53:42.688] _broadcast 结束: type=system
+[10:53:46.069] >>> _start_buzz 被调用
+[10:53:46.069] _start_buzz 准备抢锁, clients=['IT']
+[10:53:46.069] _start_buzz 拿到锁
+[10:53:46.070] _start_buzz 开始第 1 轮
+[10:53:46.080] _start_buzz 准备广播 round_start
+[10:53:46.080] _broadcast 开始: type=round_start, clients_count=1
+[10:53:46.080] _broadcast 已发送给 [IT]
+[10:53:46.081] _broadcast 结束: type=round_start
+[10:53:46.081] _start_buzz round_start 广播完毕
+[10:53:46.081] _broadcast 开始: type=question, clients_count=1
+[10:53:46.082] _broadcast 已发送给 [IT]
+[10:53:46.082] _broadcast 结束: type=question
+[10:53:46.082] _start_buzz question 广播完毕
+[10:53:46.082] <<< _start_buzz 释放锁，正常退出
+[10:53:47.492] _process_client_msg: [IT] type=buzz
+[10:53:47.492] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[10:53:47.493] _process_client_msg: [IT] 拿到锁
+[10:53:47.493] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[10:53:50.332] _process_client_msg: [IT] type=extend_time
+[10:53:55.548] _process_client_msg: [IT] type=answer
+[10:53:55.548] _process_client_msg: [IT] 提交答案: B
+[10:53:55.611] _broadcast 开始: type=system, clients_count=1
+[10:53:55.612] _broadcast 已发送给 [IT]
+[10:53:55.612] _broadcast 结束: type=system
+[10:53:57.941] >>> _start_buzz 被调用
+[10:53:57.942] _start_buzz 准备抢锁, clients=['IT']
+[10:53:57.942] _start_buzz 拿到锁
+[10:53:57.942] _start_buzz 开始第 2 轮
+[10:53:57.946] _start_buzz 准备广播 round_start
+[10:53:57.946] _broadcast 开始: type=round_start, clients_count=1
+[10:53:57.946] _broadcast 已发送给 [IT]
+[10:53:57.947] _broadcast 结束: type=round_start
+[10:53:57.947] _start_buzz round_start 广播完毕
+[10:53:57.947] _broadcast 开始: type=question, clients_count=1
+[10:53:57.947] _broadcast 已发送给 [IT]
+[10:53:57.948] _broadcast 结束: type=question
+[10:53:57.948] _start_buzz question 广播完毕
+[10:53:57.948] <<< _start_buzz 释放锁，正常退出
+[10:53:58.636] _process_client_msg: [IT] type=buzz
+[10:53:58.636] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[10:53:58.636] _process_client_msg: [IT] 拿到锁
+[10:53:58.636] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[10:54:13.751] _broadcast 开始: type=system, clients_count=1
+[10:54:13.752] _broadcast 已发送给 [IT]
+[10:54:13.753] _broadcast 结束: type=system
+[10:54:18.090] _broadcast 开始: type=shutdown, clients_count=1
+[10:54:18.090] _broadcast 已发送给 [IT]
+[10:54:18.091] _broadcast 结束: type=shutdown
+[10:54:18.091] _handle_client [IT] 网络异常: [WinError 10038] 在一个非套接字上尝试了一个操作。
+[10:54:18.092] _handle_client [IT] 即将移除
+[10:54:18.092] _remove_client: [IT] 准备抢锁
+[10:54:18.092] _remove_client: [IT] 拿到锁
+[10:54:18.092] _remove_client: [IT] 已从 clients 移除
+[10:54:38.202] _handle_client 新连接: ('10.8.51.7', 56776)
+[10:54:38.202] _handle_client 比赛未开始，拒绝连接: ('10.8.51.7', 56776)
+[10:54:43.925] _handle_client 新连接: ('10.8.51.7', 32703)
+[10:54:43.926] _handle_client 选手名称: IT
+[10:54:43.938] _broadcast 开始: type=system, clients_count=1
+[10:54:43.939] _broadcast 已发送给 [IT]
+[10:54:43.939] _broadcast 结束: type=system
+[10:54:56.341] >>> _start_buzz 被调用
+[10:54:56.342] _start_buzz 准备抢锁, clients=['IT']
+[10:54:56.342] _start_buzz 拿到锁
+[10:54:56.342] _start_buzz 开始第 1 轮
+[10:54:56.360] _start_buzz 准备广播 round_start
+[10:54:56.361] _broadcast 开始: type=round_start, clients_count=1
+[10:54:56.362] _broadcast 已发送给 [IT]
+[10:54:56.362] _broadcast 结束: type=round_start
+[10:54:56.363] _start_buzz round_start 广播完毕
+[10:54:56.363] _broadcast 开始: type=question, clients_count=1
+[10:54:56.363] _broadcast 已发送给 [IT]
+[10:54:56.364] _broadcast 结束: type=question
+[10:54:56.364] _start_buzz question 广播完毕
+[10:54:56.365] <<< _start_buzz 释放锁，正常退出
+[10:54:57.549] _process_client_msg: [IT] type=buzz
+[10:54:57.550] _process_client_msg: [IT] 尝试抢答，准备抢锁
+[10:54:57.550] _process_client_msg: [IT] 拿到锁
+[10:54:57.551] _process_client_msg: [IT] 抢答成功！first_buzzer 设为 IT
+[10:55:00.317] _process_client_msg: [IT] type=extend_time
+[10:55:27.852] _broadcast 开始: type=system, clients_count=1
+[10:55:27.852] _broadcast 已发送给 [IT]
+[10:55:27.853] _broadcast 结束: type=system
