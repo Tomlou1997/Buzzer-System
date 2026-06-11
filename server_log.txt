@@ -1,17 +1,8 @@
-INFO:     Started server process [19440]
+INFO:     Started server process [13028]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8888 (Press CTRL+C to quit)
-INFO:     127.0.0.1:23149 - "WebSocket /ws/admin" [accepted]
+INFO:     127.0.0.1:37920 - "WebSocket /ws/admin" [accepted]
 INFO:     connection open
-🚀 抢答系统已启动
-   管理端: http://localhost:8888
-   客户端: http://<你的IP>:8888
-   按 Ctrl+C 停止
-INFO:     10.8.51.7:56866 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:56866 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:56866 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:56866 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:34500 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:34500 - "GET /server HTTP/1.1" 200 OK
-INFO:     10.8.51.7:57842 - "GET /server HTTP/1.1" 200 OK
+INFO:     10.8.51.7:17435 - "WebSocket /ws/player?name=IT" [accepted]
+INFO:     connection open
