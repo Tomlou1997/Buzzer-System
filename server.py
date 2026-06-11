@@ -1680,16 +1680,10 @@ class QuizServer:
             debug_log(f"_handle_client 选手名称: {name}")
             with self.lock:
                 if name in self.clients:
-                    # 同名选手重连：踢掉旧连接，接受新连接
-                    debug_log(f"_handle_client 名称重复: {name}，踢掉旧连接")
-                    try:
-                        self.clients[name]["socket"].send(json.dumps({"type": "shutdown", "msg": "你的账号在别处登录"}).encode())
-                        self.clients[name]["socket"].close()
-                    except:
-                        pass
-                    del self.clients[name]
-                    if name in self.extend_limits:
-                        del self.extend_limits[name]
+                    c.send(json.dumps({"type": "error", "msg": "该名称已被使用"}).encode())
+                    c.close()
+                    debug_log(f"_handle_client 名称重复: {name}，已拒绝")
+                    return
                 self.clients[name] = {"socket": c, "address": addr, "score": 0, "banned": False, "connected": True}
                 # 选手连接时初始化延长次数（整个比赛期间用尽即止）
                 self.extend_limits[name] = self.extend_max
@@ -1736,7 +1730,7 @@ class QuizServer:
             pass
         finally:
             debug_log(f"_handle_client [{name}] 即将移除")
-            self._remove_client(name, c)
+            self._remove_client(name)
 
     def _process_client_msg(self, name, msg):
         msg_type = msg.get("type")
@@ -1836,19 +1830,15 @@ class QuizServer:
                 self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！答题时间延长{self.extend_seconds}秒等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
                 self._send_to_player_nolock(name, {"type": "extend_result", "success": True, "msg": f"🎉 啦啦队增加了{self.extend_seconds}秒，剩余{remaining-1}次", "remaining": remaining - 1, "time_remaining": self._timer_remaining})
 
-    def _remove_client(self, name, old_socket=None):
+    def _remove_client(self, name):
         debug_log(f"_remove_client: [{name}] 准备抢锁")
         with self.lock:
             debug_log(f"_remove_client: [{name}] 拿到锁")
             if name in self.clients:
-                # 如果传了 old_socket，检查是否还是同一个 socket（防止重连后被误删）
-                if old_socket is not None and self.clients[name]["socket"] is not old_socket:
-                    debug_log(f"_remove_client: [{name}] socket 已变更（重连），跳过删除")
-                else:
-                    del self.clients[name]
-                    debug_log(f"_remove_client: [{name}] 已从 clients 移除")
-                    if name in self.extend_limits:
-                        del self.extend_limits[name]
+                del self.clients[name]
+                debug_log(f"_remove_client: [{name}] 已从 clients 移除")
+                if name in self.extend_limits:
+                    del self.extend_limits[name]
         self._update_player_list()
         self._log(f"❌ 选手 [{name}] 已断开")
         self._broadcast({"type": "system", "msg": f"选手 [{name}] 离开了比赛"})
