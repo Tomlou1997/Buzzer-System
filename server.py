@@ -1531,6 +1531,31 @@ class QuizServer:
         tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（勾选后已用题目可以再次抢答）",
                        font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
 
+        # 管理按钮
+        mgmt_frame = tk.LabelFrame(win, text="管理控制", font=("微软雅黑", 10))
+        mgmt_frame.pack(fill=tk.X, padx=15, pady=5)
+
+        show_mgmt_var = tk.BooleanVar(value=False)
+        def toggle_mgmt_buttons():
+            if show_mgmt_var.get():
+                mgmt_restart_btn.pack(side=tk.LEFT, padx=5, pady=5)
+                mgmt_end_btn.pack(side=tk.LEFT, padx=5, pady=5)
+            else:
+                mgmt_restart_btn.pack_forget()
+                mgmt_end_btn.pack_forget()
+
+        tk.Checkbutton(mgmt_frame, text="🔧 显示比赛管理按钮（重赛/结束比赛）",
+                       font=("微软雅黑", 10), variable=show_mgmt_var,
+                       command=toggle_mgmt_buttons).pack(anchor=tk.W, padx=10, pady=5)
+
+        mgmt_btn_row = tk.Frame(mgmt_frame)
+        mgmt_btn_row.pack(fill=tk.X, padx=10, pady=(0, 5))
+        mgmt_restart_btn = tk.Button(mgmt_btn_row, text="🔄 重赛", font=("微软雅黑", 9),
+                                      bg="#FF9800", fg="white", width=10, command=lambda: [win.destroy(), self._restart_game()])
+        mgmt_end_btn = tk.Button(mgmt_btn_row, text="🏁 结束比赛", font=("微软雅黑", 9),
+                                  bg="#f44336", fg="white", width=10, command=lambda: [win.destroy(), self._end_game()])
+        # 默认隐藏
+
         # 按钮
         btn_row = tk.Frame(win)
         btn_row.pack(fill=tk.X, padx=15, pady=5)
