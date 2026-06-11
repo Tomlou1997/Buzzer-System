@@ -64,6 +64,8 @@ class QuizServer:
         self.allow_repeat = False  # 题目是否可重复使用（默认不可重复）
         self.used_questions = set()  # 已使用过的题目索引
 
+        self.show_mgmt_buttons = False  # 是否显示重赛/结束比赛按钮
+
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
         self.game_name = "知识竞赛"       # 比赛名称，默认值
@@ -307,17 +309,18 @@ class QuizServer:
         )
         self.reset_score_btn.pack(side=tk.LEFT, padx=2)
 
+        # 重赛/结束比赛按钮（默认隐藏，通过设置面板显示）
         self.restart_btn = tk.Button(
             ctrl_frame, text="🆕 重赛", font=("微软雅黑", 9),
             bg="#E91E63", fg="white", width=8, command=self._restart_game
         )
-        self.restart_btn.pack(side=tk.LEFT, padx=2)
+        # 默认不 pack
 
         self.end_game_btn = tk.Button(
             ctrl_frame, text="🏁 结束比赛", font=("微软雅黑", 9),
             bg="#9E9E9E", fg="white", width=10, command=self._end_game
         )
-        self.end_game_btn.pack(side=tk.LEFT, padx=2)
+        # 默认不 pack
 
         # === 抢答结果横幅 ===
         banner_frame = tk.Frame(top_frame)
@@ -1532,28 +1535,23 @@ class QuizServer:
                        font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
 
         # 管理按钮
+        # 管理控制
         mgmt_frame = tk.LabelFrame(win, text="管理控制", font=("微软雅黑", 10))
         mgmt_frame.pack(fill=tk.X, padx=15, pady=5)
 
-        show_mgmt_var = tk.BooleanVar(value=False)
+        show_mgmt_var = tk.BooleanVar(value=self.show_mgmt_buttons)
         def toggle_mgmt_buttons():
-            if show_mgmt_var.get():
-                mgmt_restart_btn.pack(side=tk.LEFT, padx=5, pady=5)
-                mgmt_end_btn.pack(side=tk.LEFT, padx=5, pady=5)
+            self.show_mgmt_buttons = show_mgmt_var.get()
+            if self.show_mgmt_buttons:
+                self.restart_btn.pack(side=tk.LEFT, padx=2)
+                self.end_game_btn.pack(side=tk.LEFT, padx=2)
             else:
-                mgmt_restart_btn.pack_forget()
-                mgmt_end_btn.pack_forget()
+                self.restart_btn.pack_forget()
+                self.end_game_btn.pack_forget()
 
         tk.Checkbutton(mgmt_frame, text="🔧 显示比赛管理按钮（重赛/结束比赛）",
                        font=("微软雅黑", 10), variable=show_mgmt_var,
                        command=toggle_mgmt_buttons).pack(anchor=tk.W, padx=10, pady=5)
-
-        mgmt_btn_row = tk.Frame(mgmt_frame)
-        mgmt_btn_row.pack(fill=tk.X, padx=10, pady=(0, 5))
-        mgmt_restart_btn = tk.Button(mgmt_btn_row, text="🔄 重赛", font=("微软雅黑", 9),
-                                      bg="#FF9800", fg="white", width=10, command=lambda: [win.destroy(), self._restart_game()])
-        mgmt_end_btn = tk.Button(mgmt_btn_row, text="🏁 结束比赛", font=("微软雅黑", 9),
-                                  bg="#f44336", fg="white", width=10, command=lambda: [win.destroy(), self._end_game()])
         # 默认隐藏
 
         # 按钮
