@@ -24,14 +24,6 @@ def debug_log(msg):
             f.write(f"[{ts}] {msg}\n")
 
 
-def _show_lala_notice(player_name, seconds):
-    """服务端弹窗提示选手求助了啦啦队"""
-    try:
-        messagebox.showinfo("📣 啦啦队支援", f"[{player_name}] 求助啦啦队！\n答题时间增加 {seconds} 秒！")
-    except Exception:
-        pass
-
-
 class QuizServer:
     def __init__(self, root):
         self.root = root
@@ -1825,10 +1817,8 @@ class QuizServer:
                 self.extend_limits[name] = remaining - 1
                 self._timer_remaining += self.extend_seconds
                 self._log(f"⏱ [{name}] 求助啦啦队，剩余{remaining-1}次，当前剩余{self._timer_remaining}秒")
-                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！📣 啦啦队增加{self.extend_seconds}秒 ⏱ {self._timer_remaining}s 🎉🎉🎉")
                 self._send_to_player_nolock(name, {"type": "extend_result", "success": True, "msg": f"🎉 啦啦队增加了{self.extend_seconds}秒，剩余{remaining-1}次", "remaining": remaining - 1, "time_remaining": self._timer_remaining})
-                # 在服务端弹窗提示
-                self.after(0, lambda n=name, s=self.extend_seconds: _show_lala_notice(n, s))
 
     def _remove_client(self, name):
         debug_log(f"_remove_client: [{name}] 准备抢锁")
