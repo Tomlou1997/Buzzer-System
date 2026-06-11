@@ -620,9 +620,6 @@ class QuizServer:
         self.bank_combo["values"] = names
         if not names:
             self.bank_combo.set("")
-            self.bank_del_btn.config(state=tk.DISABLED)
-        else:
-            self.bank_del_btn.config(state=tk.NORMAL)
 
     def _on_bank_select(self, event):
         """下拉选择题库"""
