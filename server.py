@@ -64,7 +64,8 @@ class QuizServer:
         self.allow_repeat = False  # 题目是否可重复使用（默认不可重复）
         self.used_questions = set()  # 已使用过的题目索引
 
-        self.show_mgmt_buttons = False  # 是否显示重赛/结束比赛按钮
+        self.show_restart_btn = False    # 是否显示重赛按钮
+        self.show_endgame_btn = False    # 是否显示结束比赛按钮
         self.show_answer_ref = False    # 是否显示参考答案
 
         self.host_ip = self._get_local_ip()
@@ -1503,19 +1504,29 @@ class QuizServer:
         mgmt_frame = tk.LabelFrame(win, text="管理控制", font=("微软雅黑", 10))
         mgmt_frame.pack(fill=tk.X, padx=15, pady=5)
 
-        show_mgmt_var = tk.BooleanVar(value=self.show_mgmt_buttons)
-        def toggle_mgmt_buttons():
-            self.show_mgmt_buttons = show_mgmt_var.get()
-            if self.show_mgmt_buttons:
+        show_restart_var = tk.BooleanVar(value=self.show_restart_btn)
+        def toggle_restart_btn():
+            self.show_restart_btn = show_restart_var.get()
+            if self.show_restart_btn:
                 self.restart_btn.pack(side=tk.LEFT, padx=2)
-                self.end_game_btn.pack(side=tk.LEFT, padx=2)
             else:
                 self.restart_btn.pack_forget()
+
+        tk.Checkbutton(mgmt_frame, text="🔄 显示重赛按钮",
+                       font=("微软雅黑", 10), variable=show_restart_var,
+                       command=toggle_restart_btn).pack(anchor=tk.W, padx=10, pady=(5, 2))
+
+        show_endgame_var = tk.BooleanVar(value=self.show_endgame_btn)
+        def toggle_endgame_btn():
+            self.show_endgame_btn = show_endgame_var.get()
+            if self.show_endgame_btn:
+                self.end_game_btn.pack(side=tk.LEFT, padx=2)
+            else:
                 self.end_game_btn.pack_forget()
 
-        tk.Checkbutton(mgmt_frame, text="🔧 显示比赛管理按钮（重赛/结束比赛）",
-                       font=("微软雅黑", 10), variable=show_mgmt_var,
-                       command=toggle_mgmt_buttons).pack(anchor=tk.W, padx=10, pady=5)
+        tk.Checkbutton(mgmt_frame, text="🏁 显示结束比赛按钮",
+                       font=("微软雅黑", 10), variable=show_endgame_var,
+                       command=toggle_endgame_btn).pack(anchor=tk.W, padx=10, pady=2)
 
         show_ans_var = tk.BooleanVar(value=self.show_answer_ref)
         def toggle_answer_ref():
