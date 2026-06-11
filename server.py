@@ -528,7 +528,6 @@ class QuizServer:
         if not self.question_banks:
             self.bank_listbox.insert(tk.END, "(暂无题库，点击下方「导入题库」添加)")
             self.bank_del_list_btn.config(state=tk.DISABLED)
-            self.bank_use_btn.config(state=tk.DISABLED)
             return
         for name, questions in self.question_banks.items():
             active = " ✅ 使用中" if name == self.active_bank_name else ""
