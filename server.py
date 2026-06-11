@@ -856,9 +856,6 @@ class QuizServer:
 
         return questions
 
-    def _update_question_list(self):
-        self.record_tree.delete(*self.record_tree.get_children())
-
     def _update_progress(self):
         total = len(self.questions)
         answered = len(self.used_questions)
@@ -869,10 +866,6 @@ class QuizServer:
             self.points_label.config(text=f"分值: {pts} 分")
         else:
             self.points_label.config(text="分值: --")
-
-    def _get_question_type(self, q):
-        """获取题型，直接从导入数据中读取"""
-        return q.get("type", "")
 
     def _show_question(self, index):
         self.current_question_index = index
@@ -1136,9 +1129,7 @@ class QuizServer:
                 except:
                     pass
         # 等客户端收到消息后再关闭 socket，避免10054冲突
-        import threading
         def _delayed_close():
-            import time
             time.sleep(0.5)
             with self.lock:
                 for name in list(self.clients.keys()):
