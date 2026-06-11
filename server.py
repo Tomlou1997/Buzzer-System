@@ -1386,7 +1386,7 @@ class QuizServer:
                 return
             # 更新横幅倒计时
             if self._has_extended:
-                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！答题时间延长{self.extend_seconds}秒等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
             else:
                 self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 抢答成功！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
             self._timer_id = self.root.after(1000, tick)
@@ -1827,7 +1827,7 @@ class QuizServer:
                 self._timer_remaining += self.extend_seconds
                 self._has_extended = True
                 self._log(f"⏱ [{name}] 求助啦啦队，剩余{remaining-1}次，当前剩余{self._timer_remaining}秒")
-                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
+                self.buzz_banner.config(text=f"🎉🎉🎉 [{name}] 求助啦啦队！答题时间延长{self.extend_seconds}秒等待 [{name}] 输入答案 ⏱ {self._timer_remaining}s 🎉🎉🎉")
                 self._send_to_player_nolock(name, {"type": "extend_result", "success": True, "msg": f"🎉 啦啦队增加了{self.extend_seconds}秒，剩余{remaining-1}次", "remaining": remaining - 1, "time_remaining": self._timer_remaining})
 
     def _remove_client(self, name):
