@@ -507,13 +507,14 @@ class QuizServer:
 
     def _switch_to_bank(self):
         """切换到题库管理页面"""
-        self._log(f"🔍 切换到题库管理页面, bank_page_frame={self.bank_page_frame.winfo_children()}")
-        # 先隐藏所有主页面
-        self.home_frame.pack_forget()
-        self.game_frame.pack_forget()
+        # 隐藏所有其他页面
+        for f in (self.home_frame, self.game_frame):
+            f.pack_forget()
         self._update_bank_listbox()
+        # 先 pack_forget 再 pack 确保重新布局
+        self.bank_page_frame.pack_forget()
         self.bank_page_frame.pack(fill=tk.BOTH, expand=True)
-        self.bank_page_frame.lift()
+        self.root.update_idletasks()
         self._log("📚 进入题库管理")
 
     def _switch_to_home_from_bank(self):
