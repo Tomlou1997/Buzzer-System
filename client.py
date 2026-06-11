@@ -595,6 +595,7 @@ class QuizClient:
             self._log(f"⏰ {msg.get('msg', '')}")
 
         elif msg_type == "ban_status":
+            banned = msg.get("banned", False)
             if banned:
                 self._log("🚫 你已被管理员禁赛")
                 self.buzz_btn.config(state=tk.DISABLED, bg="#333333", text="🚫 已禁赛")
