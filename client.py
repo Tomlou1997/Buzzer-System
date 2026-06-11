@@ -469,7 +469,8 @@ class QuizClient:
                 self.root.after(0, self._handle_message, msg)
             except socket.timeout:
                 continue
-            except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError):
+            except (json.JSONDecodeError, ConnectionResetError, ConnectionAbortedError, OSError) as e:
+                self._log(f"❌ 接收消息异常: {type(e).__name__}: {e}")
                 break
 
         self.connected = False
@@ -717,8 +718,8 @@ class QuizClient:
             self.socket.send(json.dumps({"type": "buzz"}).encode())
             self._log("🔔 已发送抢答信号...")
             self.buzz_btn.config(state=tk.DISABLED, bg="#9E9E9E", text="⏳ 等待结果...")
-        except:
-            self._log("❌ 发送抢答信号失败")
+        except Exception as e:
+            self._log(f"❌ 发送抢答信号失败: {e}")
             self._on_disconnect()
 
     def _submit_answer(self):
@@ -739,8 +740,8 @@ class QuizClient:
                 btn.config(state=tk.DISABLED)
             self.submit_answer_btn.config(state=tk.DISABLED, text="已提交 ✅")
             self.answering = False
-        except:
-            self._log("❌ 提交答案失败")
+        except Exception as e:
+            self._log(f"❌ 提交答案失败: {e}")
             self._on_disconnect()
 
     def _on_key_return(self, event):
