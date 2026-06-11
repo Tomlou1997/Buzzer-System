@@ -347,11 +347,6 @@ class QuizServer:
         )
         self.bank_combo.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
         self.bank_combo.bind("<<ComboboxSelected>>", self._on_bank_select)
-        self.bank_del_btn = tk.Button(
-            bank_frame, text="✕", font=("微软雅黑", 8),
-            width=2, command=self._remove_bank
-        )
-        self.bank_del_btn.pack(side=tk.RIGHT)
 
         progress_frame = tk.Frame(question_frame)
         progress_frame.pack(fill=tk.X, padx=5, pady=3)
@@ -648,32 +643,6 @@ class QuizServer:
         )
         self.buzz_banner.config(text=f"⏳ 题库已就绪：{name}（{len(self.questions)} 题），等待开始...", bg="#FF9800")
         self._show_welcome()
-
-    def _remove_bank(self):
-        """删除当前题库"""
-        name = self.bank_combo.get()
-        if not name or name not in self.question_banks:
-            return
-        if not messagebox.askyesno("确认删除", f"确定要从内存中删除题库「{name}」吗？\n（不会删除源文件）"):
-            return
-        del self.question_banks[name]
-        self._update_bank_combo()
-        if self.question_banks:
-            first = list(self.question_banks.keys())[0]
-            self.bank_combo.set(first)
-            self._activate_bank(first)
-        else:
-            self.bank_combo.set("")
-            self.questions = []
-            self.current_question_index = -1
-            self.active_bank_name = None
-            self.used_questions.clear()
-            self.buzz_banner.config(text="⚠️ 请先导入题库", bg="#FF9800")
-            self.status_label.config(text=f"IP: {self.host_ip} | 端口: 8888 | 题库: 无")
-            self._show_welcome()
-        self._log(f"🗑 已删除题库: {name}")
-        self._update_bank_listbox()
-        self._save_banks()
 
     # =============== 题库持久化 ===============
 
