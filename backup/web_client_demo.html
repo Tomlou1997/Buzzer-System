@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 抢答系统 · 客户端</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    background: #0f0f1a;
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ========== 顶部 ========== */
+  .top-bar {
+    height: 52px;
+    background: #1a1a2e;
+    border-bottom: 1px solid #2a2a3e;
+    display: flex; align-items: center;
+    padding: 0 24px;
+    gap: 12px;
+  }
+  .top-bar .logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #FF5722, #FF9800);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .top-bar .title { font-size: 15px; font-weight: 600; }
+  .top-bar .game-name {
+    font-size: 12px; color: #888;
+    background: #252538; padding: 3px 10px; border-radius: 5px;
+  }
+  .top-bar .status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px;
+  }
+  .top-bar .status .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .top-bar .status .dot.green { background: #4CAF50; box-shadow: 0 0 8px rgba(76,175,80,0.5); }
+  .top-bar .status .dot.red { background: #f44336; }
+
+  /* ========== 连接配置栏 ========== */
+  .connect-bar {
+    background: #1a1a2e;
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid #2a2a3e;
+    flex-wrap: wrap;
+  }
+  .connect-bar .field {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .connect-bar .field label { font-size: 12px; color: #888; }
+  .connect-bar .field input {
+    background: #252538; border: 1px solid #333;
+    border-radius: 6px; padding: 6px 10px;
+    color: #fff; font-size: 13px; width: 120px;
+    outline: none;
+  }
+  .connect-bar .field input:focus { border-color: #FF5722; }
+  .connect-bar .field input:disabled { opacity: 0.5; }
+  .connect-bar .player-name input { width: 100px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 18px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-connect { background: #4CAF50; color: #fff; }
+  .btn-connect:hover { background: #66BB6A; }
+  .btn-disconnect { background: #f44336; color: #fff; }
+  .btn-disconnect:hover { background: #ef5350; }
+  .btn-buzz {
+    background: linear-gradient(135deg, #FF5722, #FF9800);
+    color: #fff; font-size: 18px; padding: 20px 40px;
+    border-radius: 16px; box-shadow: 0 8px 30px rgba(255,87,34,0.3);
+  }
+  .btn-buzz:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,87,34,0.4); }
+  .btn-buzz:active { transform: scale(0.96); }
+  .btn-buzz:disabled {
+    background: #333; color: #666;
+    box-shadow: none; transform: none; cursor: not-allowed;
+  }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  /* ========== 主体 ========== */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 20px;
+    min-height: 0;
+  }
+
+  /* ---- 等待状态 ---- */
+  .waiting {
+    text-align: center;
+  }
+  .waiting .icon { font-size: 48px; margin-bottom: 12px; }
+  .waiting .text { font-size: 16px; color: #888; }
+  .waiting .sub { font-size: 13px; color: #666; margin-top: 8px; }
+
+  /* ---- 抢答按钮 ---- */
+  .buzz-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* ---- 题目展示 ---- */
+  .question-box {
+    width: 100%;
+    max-width: 600px;
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .question-box.show { display: flex; }
+  .question-box .q-type { font-size: 12px; color: #FF9800; font-weight: 600; }
+  .question-box .q-text {
+    font-size: 16px; line-height: 1.8;
+    padding: 12px; background: #1e1e2e; border-radius: 8px;
+  }
+
+  /* ---- 答题区 ---- */
+  .answer-box {
+    width: 100%;
+    max-width: 600px;
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .answer-box.show { display: flex; }
+  .answer-box .timer {
+    text-align: center;
+    font-size: 32px; font-weight: bold;
+    padding: 10px;
+  }
+  .answer-box .timer.urgent { color: #f44336; animation: blink 0.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .answer-box .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .answer-box .options .opt {
+    padding: 14px; text-align: center;
+    background: #252538; border: 2px solid #333;
+    border-radius: 10px; cursor: pointer;
+    font-size: 15px; transition: all 0.2s;
+  }
+  .answer-box .options .opt:hover { border-color: #FF5722; background: #2a2a3e; }
+  .answer-box .options .opt.selected { border-color: #FF5722; background: #3a2a1e; color: #FF9800; }
+  .answer-box .options .opt:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .answer-box .actions {
+    display: flex; gap: 8px; justify-content: center;
+  }
+
+  /* ---- 求助啦啦队 ---- */
+  .cheer-btn {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #E91E63, #FF5722);
+    color: #fff; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cheer-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(233,30,99,0.3); }
+  .cheer-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ---- 结果展示 ---- */
+  .result-banner {
+    width: 100%; max-width: 600px;
+    padding: 16px; border-radius: 12px;
+    text-align: center; font-size: 18px; font-weight: bold;
+    display: none;
+  }
+  .result-banner.show { display: block; }
+  .result-banner.correct { background: linear-gradient(135deg, #4CAF50, #66BB6A); }
+  .result-banner.wrong { background: linear-gradient(135deg, #f44336, #ef5350); }
+  .result-banner.timeout { background: linear-gradient(135deg, #FF9800, #FFB74D); }
+
+  /* ---- 分数 ---- */
+  .score-box {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 10px 24px;
+    display: none;
+    align-items: center; gap: 12px;
+  }
+  .score-box.show { display: flex; }
+  .score-box .label { font-size: 13px; color: #888; }
+  .score-box .value { font-size: 22px; font-weight: bold; color: #4CAF50; }
+
+  /* ---- 排名 ---- */
+  .rank-box {
+    width: 100%; max-width: 600px;
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rank-box.show { display: flex; }
+  .rank-box .rank-title { text-align: center; font-size: 16px; font-weight: bold; color: #FFD700; }
+  .rank-box .rank-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: #252538;
+    border-radius: 8px;
+  }
+  .rank-box .rank-item .pos { font-size: 16px; }
+  .rank-box .rank-item .name { flex: 1; font-size: 14px; font-weight: 500; }
+  .rank-box .rank-item .rscore { font-size: 14px; font-weight: bold; color: #4CAF50; }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部栏 ========== -->
+<div class="top-bar">
+  <div class="logo">🎯</div>
+  <span class="title">抢答系统 · 客户端</span>
+  <span class="game-name">知识竞赛 2026</span>
+  <div class="status">
+    <div class="dot green" id="statusDot"></div>
+    <span id="statusText">未连接</span>
+  </div>
+</div>
+
+<!-- ========== 连接栏 ========== -->
+<div class="connect-bar">
+  <div class="field">
+    <label>服务器</label>
+    <input type="text" value="10.8.51.7" id="ipInput">
+  </div>
+  <div class="field">
+    <label>端口</label>
+    <input type="text" value="8888" id="portInput">
+  </div>
+  <div class="field player-name">
+    <label>选手名</label>
+    <input type="text" value="IT" id="nameInput">
+  </div>
+  <button class="btn btn-connect" id="connectBtn">🔗 连接</button>
+  <button class="btn btn-disconnect" id="disconnectBtn" style="display:none;">🔌 断开</button>
+</div>
+
+<!-- ========== 主体 ========== -->
+<div class="content">
+  <!-- 等待状态 -->
+  <div class="waiting" id="waitingState">
+    <div class="icon">🎯</div>
+    <div class="text">等待连接服务器...</div>
+    <div class="sub">输入选手名称后点击「连接」</div>
+  </div>
+
+  <!-- 分数 -->
+  <div class="score-box" id="scoreBox">
+    <span class="label">当前分数</span>
+    <span class="value" id="scoreValue">0</span>
+  </div>
+
+  <!-- 抢答按钮区 -->
+  <div class="buzz-section" id="buzzSection" style="display:none;">
+    <button class="btn btn-buzz" id="buzzBtn" disabled>🚀 抢 答 🚀</button>
+    <div style="font-size:12px;color:#666;">按 空格键 或 回车键 抢答</div>
+  </div>
+
+  <!-- 题目展示 -->
+  <div class="question-box" id="questionBox">
+    <div class="q-type" id="qType">📝 选择题</div>
+    <div class="q-text" id="qText">
+      Python 中哪个关键字用于定义函数？<br>
+      A. define  B. def  C. function  D. func
+    </div>
+  </div>
+
+  <!-- 答题区 -->
+  <div class="answer-box" id="answerBox">
+    <div class="timer" id="answerTimer">⏱ 15s</div>
+    <div class="options" id="optionsContainer">
+      <div class="opt" data-value="A">A</div>
+      <div class="opt" data-value="B">B</div>
+      <div class="opt" data-value="C">C</div>
+      <div class="opt" data-value="D">D</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-success btn-sm" id="submitBtn" disabled>✅ 提交答案</button>
+      <button class="cheer-btn" id="cheerBtn" disabled>📣 求助啦啦队 (余3次)</button>
+    </div>
+  </div>
+
+  <!-- 结果展示 -->
+  <div class="result-banner" id="resultBanner"></div>
+
+  <!-- 排名 -->
+  <div class="rank-box" id="rankBox">
+    <div class="rank-title">🏆 比赛排名</div>
+    <div class="rank-item">
+      <span class="pos">🥇</span>
+      <span class="name">IT</span>
+      <span class="rscore">120分</span>
+    </div>
+    <div class="rank-item">
+      <span class="pos">🥈</span>
+      <span class="name">张三</span>
+      <span class="rscore">85分</span>
+    </div>
+    <div class="rank-item">
+      <span class="pos">🥉</span>
+      <span class="name">李四</span>
+      <span class="rscore">60分</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 演示交互：点击选项
+  document.querySelectorAll('.opt').forEach(el => {
+    el.addEventListener('click', function() {
+      document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+      document.getElementById('submitBtn').disabled = false;
+    });
+  });
+
+  // 演示：连接按钮
+  let connected = false;
+  document.getElementById('connectBtn').addEventListener('click', function() {
+    if (!connected) {
+      connected = true;
+      document.getElementById('statusDot').className = 'dot green';
+      document.getElementById('statusText').textContent = '已连接 🟢';
+      this.textContent = '✅ 已连接';
+      this.style.background = '#333';
+      this.style.cursor = 'default';
+      document.getElementById('disconnectBtn').style.display = '';
+      document.getElementById('ipInput').disabled = true;
+      document.getElementById('portInput').disabled = true;
+      document.getElementById('nameInput').disabled = true;
+      document.getElementById('waitingState').querySelector('.text').textContent = '等待管理员开始抢答...';
+      document.getElementById('waitingState').querySelector('.sub').textContent = '';
+      document.getElementById('scoreBox').classList.add('show');
+      document.getElementById('buzzSection').style.display = 'flex';
+    }
+  });
+
+  document.getElementById('disconnectBtn').addEventListener('click', function() {
+    connected = false;
+    document.getElementById('statusDot').className = 'dot red';
+    document.getElementById('statusText').textContent = '已断开 🔴';
+    document.getElementById('connectBtn').textContent = '🔗 连接';
+    document.getElementById('connectBtn').style.background = '';
+    document.getElementById('connectBtn').style.cursor = '';
+    this.style.display = 'none';
+    document.getElementById('ipInput').disabled = false;
+    document.getElementById('portInput').disabled = false;
+    document.getElementById('nameInput').disabled = false;
+    document.getElementById('waitingState').querySelector('.text').textContent = '等待连接服务器...';
+    document.getElementById('waitingState').querySelector('.sub').textContent = '输入选手名称后点击「连接」';
+    document.getElementById('scoreBox').classList.remove('show');
+    document.getElementById('buzzSection').style.display = 'none';
+    document.getElementById('questionBox').classList.remove('show');
+    document.getElementById('answerBox').classList.remove('show');
+    document.getElementById('resultBanner').classList.remove('show');
+  });
+</script>
+
+</body>
+</html>

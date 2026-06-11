@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🎯 抢答器 · 客户端</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:#0f0f1a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+
+.container{width:100%;max-width:480px;padding:16px;}
+
+/* 登录页 */
+.login-box{background:#1a1a2e;border-radius:16px;padding:28px 24px;text-align:center;border:1px solid #2a2a3e;}
+.login-box .logo{font-size:48px;margin-bottom:10px;}
+.login-box h1{font-size:22px;font-weight:700;background:linear-gradient(135deg,#0078d4,#00bcd4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.login-box p{color:#888;font-size:13px;margin-bottom:20px;}
+.login-box .field{margin-bottom:12px;text-align:left;}
+.login-box .field label{display:block;font-size:11px;color:#888;margin-bottom:4px;}
+.login-box .field input{width:100%;padding:10px 14px;background:#252538;border:1px solid #333;border-radius:8px;color:#fff;font-size:16px;outline:none;transition:.2s;}
+.login-box .field input:focus{border-color:#0078d4;box-shadow:0 0 0 3px rgba(0,120,212,0.15);}
+.login-btn{width:100%;padding:12px;background:linear-gradient(135deg,#0078d4,#005a9e);border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:.2s;margin-top:8px;}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,120,212,0.3);}
+.login-btn:active{transform:scale(.97);}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.error-msg{color:#f44336;font-size:12px;margin-top:8px;min-height:18px;}
+
+/* 主界面 - 等待中 */
+.game-box{display:none;flex-direction:column;gap:10px;}
+.game-box.show{display:flex;}
+
+/* 状态栏 */
+.status-bar{background:#1a1a2e;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.status-bar .left{display:flex;align-items:center;gap:8px;}
+.status-bar .dot{width:8px;height:8px;border-radius:50%;}
+.status-bar .dot.green{background:#4CAF50;box-shadow:0 0 12px rgba(76,175,80,0.5);animation:pulse 2s infinite;}
+.status-bar .dot.yellow{background:#FF9800;box-shadow:0 0 12px rgba(255,152,0,0.5);animation:pulse 1s infinite;}
+.status-bar .dot.purple{background:#9C27B0;}
+.status-bar .dot.red{background:#f44336;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.status-bar .name{font-size:14px;font-weight:600;}
+.status-bar .score{font-size:18px;font-weight:bold;color:#0078d4;}
+
+/* 排名小条 */
+.rank-bar{display:none;background:linear-gradient(135deg,#FFD700,#FFB300);border-radius:10px;padding:10px 16px;text-align:center;font-size:15px;font-weight:700;color:#1a1a2e;animation:slideIn .3s ease;}
+.rank-bar.show{display:block;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+
+/* 选手列表 */
+.player-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.player-chip{background:#252538;border-radius:6px;padding:6px 10px;font-size:12px;display:flex;align-items:center;gap:4px;}
+.player-chip .rank-badge{font-size:10px;}
+.player-chip .chip-score{color:#0078d4;font-weight:600;}
+
+/* 题目卡片 */
+.question-card{display:none;background:#1a1a2e;border-radius:14px;padding:20px;border:1px solid #2a2a3e;flex-direction:column;gap:14px;}
+.question-card.show{display:flex;}
+.question-card .qtype{font-size:11px;color:#0078d4;font-weight:600;}
+.question-card .qtext{font-size:16px;line-height:1.7;min-height:60px;}
+.question-card .options{display:flex;flex-direction:column;gap:6px;}
+.opt-btn{display:block;width:100%;padding:10px 14px;background:#252538;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;text-align:left;transition:.2s;}
+.opt-btn:hover{background:#2a2a3e;border-color:#555;}
+.opt-btn.selected{border-color:#0078d4;background:rgba(0,120,212,0.15);}
+.opt-btn.correct{border-color:#4CAF50;background:rgba(76,175,80,0.15);}
+.opt-btn.wrong{border-color:#f44336;background:rgba(244,67,54,0.15);}
+.opt-btn:disabled{cursor:not-allowed;opacity:.7;}
+
+/* 抢答按钮 */
+.buzzer-wrap{display:none;justify-content:center;margin:8px 0;}
+.buzzer-wrap.show{display:flex;}
+.buzzer{width:140px;height:140px;border-radius:50%;border:none;background:linear-gradient(135deg,#f44336,#d32f2f);color:#fff;font-size:22px;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 8px 32px rgba(244,67,54,0.4);position:relative;overflow:hidden;}
+.buzzer::after{content:'';position:absolute;top:-30%;left:-30%;width:160%;height:160%;background:radial-gradient(circle,rgba(255,255,255,0.15) 0%,transparent 70%);}
+.buzzer:active{transform:scale(.92);box-shadow:0 4px 16px rgba(244,67,54,0.3);}
+.buzzer:disabled{opacity:.5;transform:scale(.95);cursor:not-allowed;}
+.buzzer .sub{display:block;font-size:12px;font-weight:400;opacity:.8;margin-top:4px;}
+
+/* 抢答结果 */
+.buzzer-result{display:none;text-align:center;padding:16px;border-radius:12px;font-size:15px;font-weight:600;}
+.buzzer-result.show{display:block;}
+.buzzer-result.success{background:linear-gradient(135deg,rgba(76,175,80,0.2),rgba(76,175,80,0.1));border:1px solid rgba(76,175,80,0.3);color:#4CAF50;}
+.buzzer-result.fail{background:linear-gradient(135deg,rgba(244,67,54,0.2),rgba(244,67,54,0.1));border:1px solid rgba(244,67,54,0.3);color:#f44336;}
+.buzzer-result.too-late{background:linear-gradient(135deg,rgba(255,152,0,0.2),rgba(255,152,0,0.1));border:1px solid rgba(255,152,0,0.3);color:#FF9800;}
+
+/* 答案输入 */
+.answer-box{display:none;flex-direction:column;gap:8px;}
+.answer-box.show{display:flex;}
+.answer-box textarea{width:100%;padding:10px 14px;background:#252538;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;resize:none;height:60px;outline:none;font-family:inherit;}
+.answer-box textarea:focus{border-color:#0078d4;}
+.answer-box .actions{display:flex;gap:6px;}
+.answer-box .actions .btn{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+
+/* 啦啦队 */
+.extend-bar{display:none;justify-content:center;margin-top:4px;}
+.extend-bar.show{display:flex;}
+.extend-btn{padding:10px 24px;background:linear-gradient(135deg,#FF9800,#F57C00);border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;}
+.extend-btn:disabled{opacity:.4;cursor:not-allowed;}
+.extend-btn:not(:disabled):active{transform:scale(.95);}
+
+.cheer-bar{display:none;justify-content:center;margin-top:4px;}
+.cheer-bar.show{display:flex;}
+.cheer-btn{padding:10px 24px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;}
+.cheer-btn:disabled{opacity:.4;cursor:not-allowed;}
+.cheer-btn:not(:disabled):active{transform:scale(.95);}
+
+/* 比赛结果 */
+.result-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;}
+.result-overlay.show{display:flex;}
+.result-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:380px;width:90%;border:1px solid #333;}
+.result-box .trophy{font-size:64px;margin-bottom:8px;}
+.result-box h2{font-size:22px;margin-bottom:12px;}
+.result-box .podium{display:flex;gap:12px;justify-content:center;padding:16px 0;}
+.result-box .podium-item{background:#252538;border-radius:12px;padding:12px;flex:1;text-align:center;}
+.result-box .podium-item .medal{font-size:28px;margin-bottom:4px;}
+.result-box .podium-item .pname{font-size:13px;font-weight:600;}
+.result-box .podium-item .pscore{font-size:12px;color:#888;}
+
+/* 底部状态 */
+.footer-info{text-align:center;color:#555;font-size:11px;margin-top:16px;}
+
+/* 手机端触摸优化 */
+@media(max-width:400px){
+  .buzzer{width:120px;height:120px;font-size:18px;}
+  .container{padding:10px;}
+}
+
+/* 闪烁提示 */
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 登录页 -->
+  <div class="login-box" id="loginBox">
+    <div class="logo">🎯</div>
+    <h1>抢答系统</h1>
+    <p>输入昵称加入比赛</p>
+    <div class="field">
+      <label>👤 昵称</label>
+      <input type="text" id="nameInput" maxlength="12" placeholder="输入你的名字" autocomplete="off">
+    </div>
+    <div class="error-msg" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">🔔 加入比赛</button>
+  </div>
+
+  <!-- 比赛界面 -->
+  <div class="game-box" id="gameBox">
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <div class="left">
+        <div class="dot green" id="statusDot"></div>
+        <span class="name" id="myName">--</span>
+      </div>
+      <span class="score" id="myScore">0</span>
+    </div>
+
+    <!-- 排名 -->
+    <div class="rank-bar" id="rankBar">
+      🏆 <span id="rankText">第 1 名</span>
+    </div>
+
+    <!-- 选手列表 -->
+    <div class="player-grid" id="playerGrid"></div>
+
+    <!-- 题目 -->
+    <div class="question-card" id="questionCard">
+      <div class="qtype" id="qType">📝 题目</div>
+      <div class="qtext" id="qText">等待管理员开始比赛...</div>
+      <div class="options" id="optionsDiv"></div>
+    </div>
+
+    <!-- 抢答按钮 -->
+    <div class="buzzer-wrap" id="buzzerWrap">
+      <button class="buzzer" id="buzzerBtn" onclick="buzz()">
+        🔔
+        <span class="sub">抢答</span>
+      </button>
+    </div>
+
+    <!-- 抢答结果 -->
+    <div class="buzzer-result" id="buzzerResult"></div>
+
+    <!-- 答案输入 -->
+    <div class="answer-box" id="answerBox">
+      <textarea id="answerInput" placeholder="输入你的答案..." maxlength="200"></textarea>
+      <div class="actions">
+        <button class="btn btn-submit" style="background:#4CAF50;color:#fff;" onclick="submitAnswer()">✅ 提交答案</button>
+        <button class="btn btn-extra" style="background:#f44336;color:#fff;" onclick="submitWrong()">❌ 答错了</button>
+      </div>
+    </div>
+
+    <!-- 啦啦队 -->
+    <div class="extend-bar" id="extendBar">
+      <button class="extend-btn" id="extendBtn" onclick="useExtend()">⏱ 争取时间 (+15s)</button>
+    </div>
+    <div class="cheer-bar" id="cheerBar">
+      <button class="cheer-btn" id="cheerBtn" onclick="cheer()">📣 啦啦队</button>
+    </div>
+  </div>
+
+  <!-- 比赛结果 -->
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-box">
+      <div class="trophy">🏆</div>
+      <h2>比赛结束</h2>
+      <div class="podium" id="podiumDiv"></div>
+      <button class="login-btn" onclick="location.reload()" style="margin-top:12px;">🔄 重新加入</button>
+    </div>
+  </div>
+
+  <div class="footer-info">🎯 抢答系统 v2.0</div>
+</div>
+
+<script>
+let ws = null;
+let myName = '';
+let myScore = 0;
+let clientState = null;
+let isBuzzing = false;
+let hasBuzzed = false;
+let answerTimeout = null;
+
+// ========== 连接 ==========
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws/player?name=${encodeURIComponent(myName)}`);
+
+  ws.onmessage = function(e) {
+    const msg = JSON.parse(e.data);
+    handleMsg(msg);
+  };
+
+  ws.onclose = function(e) {
+    setStatus('red', '已断开', 'red');
+    showBuzzerResult('fail', '⚠️ 与服务器断开连接...');
+    setTimeout(() => {
+      if (myName) connect();
+    }, 3000);
+  };
+}
+
+function send(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+// ========== 消息处理 ==========
+function handleMsg(msg) {
+  console.log('收到消息:', msg);
+
+  switch (msg.type) {
+    case 'error':
+      document.getElementById('loginError').textContent = msg.msg;
+      break;
+
+    case 'login_ok':
+      myName = msg.name;
+      myScore = msg.score || 0;
+      document.getElementById('myName').textContent = myName;
+      document.getElementById('myScore').textContent = myScore;
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('gameBox').classList.add('show');
+      setStatus('green', '已连接', 'green');
+      break;
+
+    case 'client_state':
+      clientState = msg;
+      renderClientState(msg);
+      break;
+
+    case 'buzz_result':
+      if (msg.success) {
+        showBuzzerResult('success', '🎉 抢答成功！请回答');
+        document.getElementById('answerBox').classList.add('show');
+        isBuzzing = true;
+        startAnswerTimer(msg.timeout || 15);
+      } else {
+        showBuzzerResult('fail', '⏱ 被抢答了，下次加油！');
+        isBuzzing = false;
+      }
+      break;
+
+    case 'buzz_too_late':
+      showBuzzerResult('too_late', '⌛ 本轮无人抢答');
+      isBuzzing = false;
+      break;
+
+    case 'answer_result':
+      isBuzzing = false;
+      clearTimeout(answerTimeout);
+      document.getElementById('answerBox').classList.remove('show');
+      if (msg.correct) {
+        showBuzzerResult('success', '✅ 回答正确！+' + msg.points + '分');
+        myScore = msg.new_score;
+        document.getElementById('myScore').textContent = myScore;
+      } else {
+        showBuzzerResult('fail', '❌ ' + (msg.msg || '回答错误'));
+        myScore = msg.new_score;
+        document.getElementById('myScore').textContent = myScore;
+      }
+      break;
+
+    case 'round_cleared':
+      // 本轮结束，重置状态
+      isBuzzing = false;
+      hasBuzzed = false;
+      document.getElementById('answerBox').classList.remove('show');
+      document.getElementById('buzzerWrap').classList.remove('show');
+      document.getElementById('questionCard').classList.remove('show');
+      break;
+
+    case 'game_over':
+      showResult(msg);
+      break;
+
+    case 'restart_game':
+      isBuzzing = false;
+      hasBuzzed = false;
+      myScore = 0;
+      document.getElementById('myScore').textContent = 0;
+      document.getElementById('answerBox').classList.remove('show');
+      document.getElementById('buzzerResult').classList.remove('show');
+      document.getElementById('buzzerWrap').classList.remove('show');
+      document.getElementById('questionCard').classList.remove('show');
+      document.getElementById('resultOverlay').classList.remove('show');
+      document.getElementById('rankBar').classList.remove('show');
+      setStatus('green', '已连接 — 等待开始', 'green');
+      break;
+  }
+}
+
+// ========== 渲染客户端状态 ==========
+function renderClientState(s) {
+  // 分数
+  myScore = s.my_score;
+  document.getElementById('myScore').textContent = myScore;
+
+  // 状态指示
+  if (s.game_over) {
+    setStatus('purple', '比赛已结束', 'purple');
+    showResult(s);
+    return;
+  }
+
+  if (!s.game_started) {
+    setStatus('green', '等待管理员开始比赛...', 'green');
+    document.getElementById('buzzerWrap').classList.remove('show');
+    document.getElementById('questionCard').classList.remove('show');
+    return;
+  }
+
+  // 选手列表
+  renderPlayers(s.players, s.ranked_players);
+
+  // 排名
+  if (s.my_rank && s.my_rank <= 3) {
+    const rankEmoji = {1:'🥇',2:'🥈',3:'🥉'};
+    document.getElementById('rankBar').classList.add('show');
+    document.getElementById('rankText').textContent = `${rankEmoji[s.my_rank]||''} 第 ${s.my_rank} 名`;
+  } else {
+    document.getElementById('rankBar').classList.remove('show');
+  }
+
+  // 题目
+  if (s.current_question) {
+    const q = s.current_question;
+    document.getElementById('questionCard').classList.add('show');
+    document.getElementById('qType').textContent = '📝 ' + (q.type || '题目');
+    document.getElementById('qText').innerHTML = q.question;
+
+    // 选项（选择题）
+    const optsDiv = document.getElementById('optionsDiv');
+    if (q.options && q.options.length) {
+      optsDiv.style.display = 'flex';
+      optsDiv.innerHTML = q.options.map((opt, i) =>
+        `<button class="opt-btn" onclick="selectOption(this, ${i})">${opt}</button>`
+      ).join('');
+    } else {
+      optsDiv.style.display = 'none';
+    }
+  } else {
+    document.getElementById('questionCard').classList.remove('show');
+  }
+
+  // 抢答按钮
+  if (s.can_buzz && !s.game_over) {
+    document.getElementById('buzzerWrap').classList.add('show');
+    document.getElementById('buzzerBtn').disabled = false;
+    document.getElementById('buzzerBtn').innerHTML = '🔔<span class="sub">抢答</span>';
+    setStatus('yellow', '🟢 可抢答!', 'yellow');
+  } else if (s.round_active && !s.can_buzz) {
+    if (!hasBuzzed) {
+      document.getElementById('buzzerWrap').classList.add('show');
+      document.getElementById('buzzerBtn').disabled = true;
+      document.getElementById('buzzerBtn').innerHTML = '⏳<span class="sub">等待...</span>';
+      setStatus('yellow', '⏳ 等待抢答', 'yellow');
+    }
+  } else if (!s.round_active && s.game_started && !s.game_over) {
+    document.getElementById('buzzerWrap').classList.remove('show');
+    setStatus('green', '等待下一轮...', 'green');
+  }
+
+  // 啦啦队
+  if (s.can_extend) {
+    document.getElementById('extendBar').classList.add('show');
+    document.getElementById('extendBtn').disabled = false;
+    document.getElementById('extendBtn').textContent = `⏱ 争取时间 (剩余${s.extend_remaining})`;
+  } else {
+    document.getElementById('extendBar').classList.remove('show');
+  }
+
+  // 啦啦队次数
+  if (s.can_cheer) {
+    document.getElementById('cheerBar').classList.add('show');
+    document.getElementById('cheerBtn').disabled = false;
+    document.getElementById('cheerBtn').textContent = `📣 啦啦队 (剩余${s.cheer_remaining})`;
+  } else {
+    document.getElementById('cheerBar').classList.remove('show');
+  }
+}
+
+function renderPlayers(players, ranked) {
+  const el = document.getElementById('playerGrid');
+  const names = Object.keys(players);
+  if (!names.length) {
+    el.innerHTML = '';
+    return;
+  }
+
+  const rankMap = {};
+  for (const r of ranked) rankMap[r.name] = r;
+
+  const sorted = names.sort((a, b) => {
+    const ra = rankMap[a] ? rankMap[a].rank : 999;
+    const rb = rankMap[b] ? rankMap[b].rank : 999;
+    if (ra !== rb) return ra - rb;
+    return (players[b].score || 0) - (players[a].score || 0);
+  });
+
+  const medals = {1:'🥇',2:'🥈',3:'🥉'};
+  el.innerHTML = sorted.map(n => {
+    const r = rankMap[n];
+    const badge = r && medals[r.rank] ? `<span class="rank-badge">${medals[r.rank]}</span>` : '';
+    return `<div class="player-chip ${n === myName ? 'me' : ''}" style="${n === myName ? 'border:1px solid #0078d4;' : ''}">
+      ${badge}
+      <span>${n}${n === myName ? ' (你)' : ''}:</span>
+      <span class="chip-score">${players[n].score}分</span>
+      ${players[n].banned ? '🚫' : ''}
+    </div>`;
+  }).join('');
+}
+
+// ========== 操作 ==========
+function doLogin() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) {
+    document.getElementById('loginError').textContent = '请输入昵称';
+    return;
+  }
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginBtn').textContent = '⏳ 连接中...';
+  myName = name;
+  connect();
+}
+
+function buzz() {
+  if (hasBuzzed) return;
+  hasBuzzed = true;
+  document.getElementById('buzzerBtn').disabled = true;
+  document.getElementById('buzzerBtn').innerHTML = '✨<span class="sub">已按下!</span>';
+  send({type: 'buzz'});
+}
+
+function submitAnswer() {
+  const answer = document.getElementById('answerInput').value.trim();
+  if (!answer) {
+    alert('请输入答案');
+    return;
+  }
+  clearTimeout(answerTimeout);
+  document.getElementById('answerInput').disabled = true;
+  send({type: 'answer', answer: answer});
+}
+
+function submitWrong() {
+  clearTimeout(answerTimeout);
+  send({type: 'answer', answer: ''});
+}
+
+function selectOption(el, idx) {
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  // 对于选择题，直接提交选项索引
+  send({type: 'answer', answer: String(idx)});
+}
+
+function useExtend() {
+  send({type: 'extend'});
+  document.getElementById('extendBtn').disabled = true;
+  document.getElementById('extendBtn').textContent = '⏱ 已使用';
+}
+
+function cheer() {
+  send({type: 'cheer'});
+  document.getElementById('cheerBtn').disabled = true;
+  document.getElementById('cheerBtn').textContent = '📣 已发送';
+}
+
+function startAnswerTimer(seconds) {
+  clearTimeout(answerTimeout);
+  const btn = document.getElementById('answerBox').querySelector('.btn-submit');
+  btn.textContent = `✅ 提交答案 (${seconds}s)`;
+  answerTimeout = setTimeout(() => {
+    if (isBuzzing) {
+      isBuzzing = false;
+      send({type: 'answer', answer: ''});
+      document.getElementById('answerBox').classList.remove('show');
+      showBuzzerResult('fail', '⌛ 答题超时');
+    }
+  }, seconds * 1000);
+
+  // 倒计时
+  let remaining = seconds;
+  const timer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timer);
+    }
+    btn.textContent = `✅ 提交答案 (${remaining}s)`;
+  }, 1000);
+}
+
+// ========== UI 辅助 ==========
+function setStatus(dotClass, text, textClass) {
+  document.getElementById('statusDot').className = 'dot ' + dotClass;
+  document.getElementById('myName').textContent = myName + (textClass ? ' · ' + text : '');
+}
+
+function showBuzzerResult(cls, text) {
+  const el = document.getElementById('buzzerResult');
+  el.className = 'buzzer-result show ' + cls;
+  el.textContent = text;
+}
+
+function showResult(s) {
+  document.getElementById('resultOverlay').classList.add('show');
+  const podium = document.getElementById('podiumDiv');
+  const medals = {1:'🥇',2:'🥈',3:'🥉'};
+  const ranked = s.ranked_players || [];
+
+  podium.innerHTML = ranked.slice(0, 3).map(r => `
+    <div class="podium-item">
+      <div class="medal">${medals[r.rank] || ''}</div>
+      <div class="pname">${r.name}</div>
+      <div class="pscore">${r.score}分</div>
+    </div>
+  `).join('');
+}
+
+// Enter 键登录
+document.getElementById('nameInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

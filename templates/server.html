@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抢答系统 · 管理端</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    background: #0f0f1a; color: #fff; height: 100vh; display: flex; overflow: hidden;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  .sidebar { width: 64px; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; padding: 16px 0; border-right: 1px solid #2a2a3e; }
+  .sidebar .logo { width: 36px; height: 36px; background: linear-gradient(135deg,#0078d4,#00bcd4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 20px; }
+  .sidebar .nav-item { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all .2s; color: #666; margin-bottom: 4px; }
+  .sidebar .nav-item:hover { background: #2a2a3e; color: #fff; }
+  .sidebar .nav-item.active { background: linear-gradient(135deg,#0078d4,#005a9e); color: #fff; box-shadow: 0 4px 12px rgba(0,120,212,.3); }
+
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .top-bar { height: 52px; background: #1a1a2e; border-bottom: 1px solid #2a2a3e; display: flex; align-items: center; padding: 0 20px; gap: 12px; }
+  .top-bar .title { font-size: 15px; font-weight: 600; background: linear-gradient(135deg,#0078d4,#00bcd4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .top-bar .game-name { font-size: 12px; color: #888; background: #252538; padding: 3px 10px; border-radius: 5px; }
+  .top-bar .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #aaa; }
+  .top-bar .status .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .top-bar .status .dot.green { background: #4CAF50; box-shadow: 0 0 8px rgba(76,175,80,.5); }
+  .top-bar .status .dot.red { background: #f44336; }
+
+  .content { flex: 1; display: flex; padding: 16px; gap: 16px; min-height: 0; }
+
+  .left-panel { width: 240px; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
+  .left-panel .section { background: #1a1a2e; border-radius: 10px; padding: 12px; }
+  .left-panel .section-title { font-size: 12px; font-weight: 600; color: #0078d4; margin-bottom: 8px; }
+
+  .player-card { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #252538; border-radius: 6px; margin-bottom: 4px; cursor: pointer; transition: all .2s; border: 1px solid transparent; }
+  .player-card:hover { border-color: #0078d4; background: #2a2a3e; }
+  .player-card .rank-icon { font-size: 12px; width: 20px; text-align: center; }
+  .player-card .pname { flex: 1; font-size: 13px; }
+  .player-card .pscore { font-size: 13px; font-weight: bold; color: #4CAF50; }
+  .player-card .pban { font-size: 11px; color: #f44336; }
+
+  .context-menu { display: none; position: fixed; background: #252538; border: 1px solid #333; border-radius: 8px; padding: 4px; z-index: 1000; min-width: 120px; }
+  .context-menu .item { padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 4px; }
+  .context-menu .item:hover { background: #0078d4; }
+
+  .right-area { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  .info-bar { display: flex; gap: 10px; }
+  .info-item { flex: 1; background: #1a1a2e; border-radius: 8px; padding: 10px; text-align: center; }
+  .info-item .ilabel { font-size: 11px; color: #888; }
+  .info-item .ivalue { font-size: 16px; font-weight: bold; margin-top: 2px; }
+
+  .banner { padding: 12px 16px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 600; display: none; }
+
+  .question-card { flex: 1; background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .question-card .q-type { font-size: 12px; color: #FF9800; font-weight: 600; }
+  .question-card .q-text { flex: 1; background: #1e1e2e; border-radius: 6px; padding: 12px; font-size: 14px; line-height: 1.7; overflow-y: auto; min-height: 60px; }
+  .question-card .q-answer { display: none; background: #252538; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #4CAF50; }
+  .question-card .q-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .question-card .q-actions .spacer { flex: 1; }
+
+  .btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .btn:active { transform: scale(.96); }
+  .btn-primary { background: #0078d4; color: #fff; }
+  .btn-primary:hover { background: #1a8ae8; }
+  .btn-success { background: #4CAF50; color: #fff; }
+  .btn-success:hover { background: #66BB6A; }
+  .btn-danger { background: #f44336; color: #fff; }
+  .btn-danger:hover { background: #ef5350; }
+  .btn-warning { background: #FF9800; color: #fff; }
+  .btn-warning:hover { background: #FFB74D; }
+  .btn-ghost { background: #2a2a3e; color: #ccc; }
+  .btn-ghost:hover { background: #333350; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); padding: 10px 24px; border-radius: 8px; font-size: 13px; z-index: 2000; display: none; background: #333; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+  .toast.show { display: block; animation: fadeInOut 2.5s; }
+  @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(10px)} 15%{opacity:1;transform:translateX(-50%) translateY(0)} 85%{opacity:1} 100%{opacity:0} }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #1a1a2e; border-radius: 14px; padding: 24px; width: 440px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .modal h2 { font-size: 15px; margin-bottom: 14px; }
+  .modal .form-group { margin-bottom: 10px; }
+  .modal .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 3px; }
+  .modal .form-group input, .modal .form-group select { width: 100%; padding: 7px 10px; background: #252538; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 13px; outline: none; }
+  .modal .form-group input:focus { border-color: #0078d4; }
+  .modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+  .bank-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #252538; border-radius: 6px; margin-bottom: 4px; }
+  .bank-item .bname { flex: 1; font-size: 13px; }
+  .bank-item .bcount { font-size: 11px; color: #888; }
+  .bank-item .bactive { color: #4CAF50; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">🎯</div>
+  <div class="nav-item active" data-page="game">🎮</div>
+  <div class="nav-item" data-page="bank">📚</div>
+  <div class="nav-item" data-page="settings">⚙</div>
+</div>
+
+<div class="main">
+  <div class="top-bar">
+    <span class="title">抢答系统 · 管理端</span>
+    <span class="game-name" id="gameNameDisplay">未开始</span>
+    <div class="status">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">未连接</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="left-panel">
+      <div class="section">
+        <div class="section-title">👥 选手管理</div>
+        <div id="playerList"></div>
+      </div>
+      <div class="section" style="margin-top:auto;">
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:4px;" onclick="showSettings()">⚙ 设置</button>
+        <button class="btn btn-warning btn-sm" style="width:100%;margin-bottom:4px;display:none;" id="restartBtn" onclick="restartGame()">🔄 重赛</button>
+        <button class="btn btn-danger btn-sm" style="width:100%;display:none;" id="endGameBtn" onclick="endGame()">🏁 结束比赛</button>
+      </div>
+    </div>
+
+    <div class="right-area" id="gamePage">
+      <div class="info-bar">
+        <div class="info-item"><div class="ilabel">📚 题库</div><div class="ivalue" id="infoBank">-</div></div>
+        <div class="info-item"><div class="ilabel">🎯 轮次</div><div class="ivalue" id="infoRound">0</div></div>
+        <div class="info-item"><div class="ilabel">✅ 进度</div><div class="ivalue" id="infoProgress">0/0</div></div>
+        <div class="info-item"><div class="ilabel">⏱ 倒计时</div><div class="ivalue" id="infoTimer">-</div></div>
+      </div>
+      <div class="banner" id="banner"></div>
+      <div class="question-card" id="questionCard">
+        <div class="q-type" id="qType">📝 请先导入题库</div>
+        <div class="q-text" id="qText">点击左侧 📚 进入题库管理，上传 xlsx 文件导入题目</div>
+        <div class="q-answer" id="qAnswer">✅ 参考答案: </div>
+        <div class="q-actions">
+          <button class="btn btn-primary" id="startGameBtn" onclick="startGame()">🎮 开始比赛</button>
+          <button class="btn btn-ghost btn-sm" id="prevBtn" onclick="switchQuestion(-1)" disabled>◀ 上一题</button>
+          <button class="btn btn-ghost btn-sm" id="nextBtn" onclick="switchQuestion(1)" disabled>▶ 下一题</button>
+          <div class="spacer"></div>
+          <button class="btn btn-success" id="startRoundBtn" onclick="startRound()" disabled>🚀 开始抢答</button>
+          <button class="btn btn-danger" id="stopRoundBtn" onclick="stopRound()" disabled>■ 结束抢答</button>
+          <button class="btn btn-primary btn-sm" id="showAnsBtn" onclick="toggleAnswer()" style="display:none;">👁 显示答案</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-area" id="bankPage" style="display:none;">
+      <div class="section" style="background:#1a1a2e;border-radius:10px;padding:16px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">📚 题库管理</div>
+        <div style="border:2px dashed #333;border-radius:10px;padding:30px;text-align:center;margin-bottom:16px;cursor:pointer;" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:28px;margin-bottom:8px;">📤</div>
+          <div style="color:#888;font-size:13px;">点击或拖拽 xlsx 文件到此处上传</div>
+          <input type="file" id="fileInput" accept=".xlsx" style="display:none;" onchange="uploadBank(this)">
+        </div>
+        <div id="bankList"></div>
+      </div>
+    </div>
+
+    <div class="right-area" id="settingsPage" style="display:none;">
+      <div class="section" style="background:#1a1a2e;border-radius:10px;padding:16px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">⚙ 设置</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label>答对加分</label><input type="number" id="sCorrect" value="10"></div>
+          <div class="form-group"><label>答错扣分</label><input type="number" id="sWrong" value="5"></div>
+          <div class="form-group"><label>答题倒计时(秒)</label><input type="number" id="sTimeout" value="15"></div>
+          <div class="form-group"><label>获胜积分</label><input type="number" id="sWinScore" value="20"></div>
+          <div class="form-group"><label>决出前几名</label><input type="number" id="sWinRank" value="3"></div>
+          <div class="form-group"><label>求助啦啦队次数</label><input type="number" id="sExtendMax" value="1"></div>
+          <div class="form-group"><label>每次增加秒数</label><input type="number" id="sExtendSec" value="15"></div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:18px;">
+            <input type="checkbox" id="sRepeat" style="width:16px;"><label style="display:inline;margin:0;">允许重复答题</label>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+          <button class="btn btn-ghost" onclick="showPage('game')">返回</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="context-menu" id="contextMenu"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+let ws = null;
+let state = {
+  game_started: false, game_over: false, game_name: "",
+  players: [], rankings: [], banks: [], bank_counts: {},
+  current_index: -1, questions_count: 0, show_answer: false, active_bank: ""
+};
+
+// ========== WebSocket ==========
+function connect() {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${protocol}//${location.host}/ws/admin`);
+
+  ws.onopen = () => {
+    document.getElementById('statusDot').className = 'dot green';
+    document.getElementById('statusText').textContent = '已连接 🟢';
+    ws.send(JSON.stringify({action: "get_state"}));
+  };
+
+  ws.onclose = () => {
+    document.getElementById('statusDot').className = 'dot red';
+    document.getElementById('statusText').textContent = '已断开';
+    setTimeout(connect, 2000);
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    handleMessage(msg);
+  };
+}
+
+function send(action, data = {}) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({action, ...data}));
+  }
+}
+
+// ========== 消息处理 ==========
+function handleMessage(msg) {
+  switch (msg.type) {
+    case "full_state":
+      state = {...state, ...msg};
+      applyState();
+      break;
+    case "toast":
+    case "error":
+      showToast(msg.msg, msg.type === "error");
+      break;
+    case "show_welcome":
+      showWelcome();
+      break;
+    case "show_question":
+      displayQuestion(msg);
+      break;
+    case "game_resumed":
+      showToast("🎮 继续比赛");
+      state.game_started = true;
+      applyState();
+      break;
+    case "round_started":
+      document.getElementById('startRoundBtn').disabled = true;
+      document.getElementById('stopRoundBtn').disabled = false;
+      showBanner("🟢 第 " + msg.round + " 轮抢答进行中...", "#4CAF50");
+      break;
+    case "round_ended":
+      document.getElementById('startRoundBtn').disabled = false;
+      document.getElementById('stopRoundBtn').disabled = true;
+      hideBanner();
+      break;
+    case "player_joined":
+    case "player_left":
+      state.players = msg.players || state.players;
+      updatePlayerList();
+      break;
+    case "player_buzzed":
+      showBanner("🎉🎉🎉 [" + msg.name + "] 抢答成功！", "#4CAF50");
+      break;
+    case "player_extended":
+      showBanner("🎉🎉🎉 [" + msg.name + "] 求助啦啦队！答题时间延长" + msg.seconds + "秒", "#4CAF50");
+      break;
+    case "timer_start":
+      document.getElementById('infoTimer').textContent = msg.remaining + "s";
+      document.getElementById('infoTimer').style.color = '#FF9800';
+      break;
+    case "timer_tick":
+      document.getElementById('infoTimer').textContent = msg.remaining + "s";
+      break;
+    case "judge_result":
+      if (msg.result === "correct") showBanner("✅ [" + msg.name + "] 答对了！", "#4CAF50");
+      else if (msg.result === "wrong") showBanner("❌ [" + msg.name + "] 答错了！正确答案: " + msg.correct, "#f44336");
+      else if (msg.result === "timeout") showBanner("⏰ [" + msg.name + "] 答题超时！", "#FF9800");
+      state.players = msg.players || state.players;
+      updatePlayerList();
+      document.getElementById('startRoundBtn').disabled = false;
+      document.getElementById('stopRoundBtn').disabled = true;
+      break;
+    case "rankings":
+      state.rankings = msg.rankings || [];
+      state.players = msg.players || state.players;
+      updatePlayerList();
+      break;
+    case "scores_reset":
+      state.players = msg.players || state.players;
+      updatePlayerList();
+      showToast("🔄 分数已重置");
+      break;
+    case "game_restarted":
+      state.players = msg.players || state.players;
+      state.game_over = false;
+      applyState();
+      showToast("🔄 重赛成功");
+      break;
+    case "game_ended":
+      state.game_started = false;
+      state.game_over = true;
+      applyState();
+      resetGameDisplay();
+      showToast("🏁 比赛已结束");
+      break;
+    case "player_banned":
+    case "player_unbanned":
+      state.players = msg.players || state.players;
+      updatePlayerList();
+      break;
+    default:
+      console.log("未处理消息:", msg);
+  }
+}
+
+// ========== UI 更新 ==========
+function applyState() {
+  document.getElementById('gameNameDisplay').textContent = state.game_name || "未开始";
+  updatePlayerList();
+  document.getElementById('infoBank').textContent = state.active_bank || '-';
+  document.getElementById('infoRound').textContent = '0';
+
+  const startGameBtn = document.getElementById('startGameBtn');
+  const startRoundBtn = document.getElementById('startRoundBtn');
+  const stopRoundBtn = document.getElementById('stopRoundBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const showAnsBtn = document.getElementById('showAnsBtn');
+
+  if (state.game_over || !state.game_started) {
+    startGameBtn.style.display = '';
+    startGameBtn.textContent = state.game_over ? '🎮 开始比赛' : '🎮 开始比赛';
+    startRoundBtn.disabled = true;
+    stopRoundBtn.disabled = true;
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+  } else {
+    startGameBtn.style.display = 'none';
+    startRoundBtn.disabled = false;
+    prevBtn.disabled = state.current_index <= 0;
+    nextBtn.disabled = state.current_index >= state.questions_count - 1;
+  }
+
+  showAnsBtn.style.display = state.show_answer ? '' : 'none';
+
+  document.getElementById('restartBtn').style.display = state.game_started ? '' : 'none';
+  document.getElementById('endGameBtn').style.display = state.game_started ? '' : 'none';
+
+  updateProgress();
+}
+
+function updatePlayerList() {
+  const list = document.getElementById('playerList');
+  list.innerHTML = '';
+  const players = state.players || [];
+  if (players.length === 0) {
+    list.innerHTML = '<div style="color:#666;font-size:12px;text-align:center;padding:20px 0;">暂无选手连接</div>';
+    return;
+  }
+  const rankings = state.rankings || [];
+  players.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'player-card';
+    div.oncontextmenu = (e) => showContextMenu(e, p.name);
+    const rankInfo = rankings.find(r => r.name === p.name);
+    let rankIcon = '';
+    if (rankInfo && rankInfo.rank === 1) rankIcon = '🥇';
+    else if (rankInfo && rankInfo.rank === 2) rankIcon = '🥈';
+    else if (rankInfo && rankInfo.rank === 3) rankIcon = '🥉';
+    div.innerHTML = `
+      <span class="rank-icon">${rankIcon}</span>
+      <span class="pname">${p.name}</span>
+      <span class="pscore">${p.score}分</span>
+      ${p.banned ? '<span class="pban">🚫</span>' : ''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function updateProgress() {
+  const total = state.questions_count || 0;
+  document.getElementById('infoProgress').textContent = `0/${total}`;
+}
+
+function showWelcome() {
+  document.getElementById('qText').innerHTML = '✅ 题库已加载，点击「▶ 下一题」开始浏览题目<br>🚀 点击「开始抢答」发起抢答';
+  document.getElementById('qType').textContent = '📝 题库已就绪';
+  document.getElementById('qAnswer').style.display = 'none';
+  document.getElementById('prevBtn').disabled = true;
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('startRoundBtn').disabled = false;
+}
+
+function displayQuestion(data) {
+  const qText = document.getElementById('qText');
+  qText.innerHTML = data.question || data.msg || '';
+  document.getElementById('qType').textContent = (data.type ? '📝 ' + data.type : '📝 题目');
+  document.getElementById('qAnswer').innerHTML = '✅ 参考答案: ' + (data.answer || '');
+  document.getElementById('qAnswer').style.display = state.show_answer ? 'block' : 'none';
+  document.getElementById('prevBtn').disabled = data.index <= 0;
+  document.getElementById('nextBtn').disabled = data.index >= data.total - 1;
+  updateProgress();
+  hideBanner();
+}
+
+function showBanner(text, color) {
+  const banner = document.getElementById('banner');
+  banner.textContent = text;
+  banner.style.background = color || '#4CAF50';
+  banner.style.display = 'block';
+}
+
+function hideBanner() {
+  document.getElementById('banner').style.display = 'none';
+}
+
+function resetGameDisplay() {
+  document.getElementById('qType').textContent = '📝 比赛已结束';
+  document.getElementById('qText').innerHTML = '🏁 比赛已结束，感谢参与！';
+  document.getElementById('qAnswer').style.display = 'none';
+  hideBanner();
+}
+
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? '#f44336' : '#333';
+  el.className = 'toast show';
+  setTimeout(() => el.className = 'toast', 2500);
+}
+
+// ========== 操作 ==========
+function startGame() {
+  const name = prompt('输入比赛名称:', '知识竞赛');
+  if (name === null) return;
+  send("start_game", {name: name || '知识竞赛'});
+}
+
+function switchQuestion(delta) {
+  let idx = state.current_index + delta;
+  if (idx < 0) idx = 0;
+  if (idx >= state.questions_count) idx = state.questions_count - 1;
+  state.current_index = idx;
+  send("switch_question", {index: idx});
+}
+
+function startRound() {
+  send("start_round");
+}
+
+function stopRound() {
+  send("stop_round");
+}
+
+function toggleAnswer() {
+  const el = document.getElementById('qAnswer');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function restartGame() {
+  if (!confirm('确定要重赛吗？所有分数将被清零')) return;
+  send("restart_game");
+}
+
+function endGame() {
+  if (!confirm('确定要结束比赛吗？')) return;
+  send("end_game");
+}
+
+// ========== 右键菜单 ==========
+function showContextMenu(e, name) {
+  e.preventDefault();
+  const menu = document.getElementById('contextMenu');
+  const p = state.players.find(p => p.name === name);
+  const banned = p ? p.banned : false;
+
+  menu.innerHTML = `
+    <div class="item" onclick="doAction('${name}','ban')">${banned ? '🟢 恢复参赛' : '🚫 禁赛'}</div>
+    <div class="item" onclick="doAction('${name}','penalty')">⚠️ 违规扣5分</div>
+    <div class="item" onclick="doAction('${name}','setScore')">🎯 设置分数</div>
+  `;
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('contextMenu').style.display = 'none';
+});
+
+function doAction(name, action) {
+  document.getElementById('contextMenu').style.display = 'none';
+  if (action === 'ban') {
+    const p = state.players.find(p => p.name === name);
+    send("ban_player", {name, ban: !(p && p.banned)});
+  } else if (action === 'penalty') {
+    const p = state.players.find(p => p.name === name);
+    if (p) send("set_score", {name, score: Math.max(0, p.score - 5)});
+  } else if (action === 'setScore') {
+    const score = prompt('设置分数:', '0');
+    if (score !== null) {
+      send("set_score", {name, score: parseInt(score) || 0});
+    }
+  }
+}
+
+// ========== 题库管理 ==========
+function uploadBank(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  fetch('/upload_bank', {method: 'POST', body: formData})
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.msg);
+        state.banks = data.banks || [];
+        state.bank_counts = data.bank_counts || {};
+        renderBankList();
+      } else {
+        showToast(data.msg, true);
+      }
+    })
+    .catch(e => showToast('上传失败: ' + e, true));
+  input.value = '';
+}
+
+function renderBankList() {
+  const list = document.getElementById('bankList');
+  list.innerHTML = '';
+  const banks = state.banks || [];
+  if (banks.length === 0) {
+    list.innerHTML = '<div style="color:#666;font-size:12px;text-align:center;padding:20px;">暂无题库</div>';
+    return;
+  }
+  banks.forEach(name => {
+    const count = state.bank_counts[name] || 0;
+    const isActive = name === state.active_bank;
+    const div = document.createElement('div');
+    div.className = 'bank-item';
+    div.innerHTML = `
+      <span class="bname">${name}</span>
+      <span class="bcount">${count}题</span>
+      ${isActive ? '<span class="bactive">✔ 使用中</span>' : ''}
+      <button class="btn btn-primary btn-sm" onclick="activateBank('${name}')" ${isActive ? 'disabled' : ''}>使用</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteBank('${name}')">删除</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function activateBank(name) {
+  send("activate_bank", {name});
+}
+
+function deleteBank(name) {
+  if (!confirm('确定删除题库「' + name + '」吗？')) return;
+  send("delete_bank", {name});
+}
+
+// ========== 设置 ==========
+function showSettings() {
+  showPage('settings');
+  document.getElementById('sCorrect').value = state.settings?.correct_points || 10;
+  document.getElementById('sWrong').value = state.settings?.wrong_points || 5;
+  document.getElementById('sTimeout').value = state.settings?.answer_timeout || 15;
+  document.getElementById('sWinScore').value = state.settings?.win_score || 20;
+  document.getElementById('sWinRank').value = state.settings?.win_rank_count || 3;
+  document.getElementById('sExtendMax').value = state.settings?.extend_max || 1;
+  document.getElementById('sExtendSec').value = state.settings?.extend_seconds || 15;
+  document.getElementById('sRepeat').checked = state.settings?.allow_repeat || false;
+}
+
+function saveSettings() {
+  send("update_settings", {
+    correct_points: parseInt(document.getElementById('sCorrect').value) || 10,
+    wrong_points: parseInt(document.getElementById('sWrong').value) || 5,
+    answer_timeout: parseInt(document.getElementById('sTimeout').value) || 15,
+    win_score: parseInt(document.getElementById('sWinScore').value) || 20,
+    win_rank_count: parseInt(document.getElementById('sWinRank').value) || 3,
+    extend_max: parseInt(document.getElementById('sExtendMax').value) || 1,
+    extend_seconds: parseInt(document.getElementById('sExtendSec').value) || 15,
+    allow_repeat: document.getElementById('sRepeat').checked,
+  });
+}
+
+// ========== 页面切换 ==========
+function showPage(page) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('gamePage').style.display = page === 'game' ? '' : 'none';
+  document.getElementById('bankPage').style.display = page === 'bank' ? '' : 'none';
+  document.getElementById('settingsPage').style.display = page === 'settings' ? '' : 'none';
+  if (page === 'bank') renderBankList();
+}
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => showPage(el.dataset.page));
+});
+
+// ========== 初始化 ==========
+connect();
+</script>
+</body>
+</html>
