@@ -65,6 +65,7 @@ class QuizServer:
         self.used_questions = set()  # 已使用过的题目索引
 
         self.show_mgmt_buttons = False  # 是否显示重赛/结束比赛按钮
+        self.show_answer_ref = False    # 是否显示参考答案
 
         self.host_ip = self._get_local_ip()
         self.heartbeat_interval = 5  # 心跳间隔（秒）
@@ -362,16 +363,19 @@ class QuizServer:
         )
         self.question_display.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
-        ans_frame = tk.Frame(question_frame)
-        ans_frame.pack(fill=tk.X, padx=5, pady=2)
-        tk.Label(ans_frame, text="参考答案:", font=("微软雅黑", 9, "bold")).pack(side=tk.LEFT)
-        self.answer_label = tk.Label(ans_frame, text="--", font=("微软雅黑", 10), fg="#1565C0")
+        # === 参考答案（默认隐藏，通过设置显示） ===
+        self.ans_frame = tk.Frame(question_frame)
+        tk.Label(self.ans_frame, text="参考答案:", font=("微软雅黑", 9, "bold")).pack(side=tk.LEFT)
+        self.answer_label = tk.Label(self.ans_frame, text="--", font=("微软雅黑", 10), fg="#1565C0")
         self.answer_label.pack(side=tk.LEFT, padx=10)
         self.show_answer_btn = tk.Button(
-            ans_frame, text="显示答案 👁", font=("微软雅黑", 9), command=self._toggle_answer
+            self.ans_frame, text="显示答案 👁", font=("微软雅黑", 9), command=self._toggle_answer
         )
         self.show_answer_btn.pack(side=tk.RIGHT)
         self.answer_visible = False
+        # 默认不 pack
+
+        # === 抢答记录按钮（点击展开） ===
 
         # === 抢答记录按钮（点击展开） ===
         self.record_btn = tk.Button(
@@ -1495,7 +1499,6 @@ class QuizServer:
         tk.Checkbutton(reuse_row, text="♻️ 题目可重复使用（勾选后已用题目可以再次抢答）",
                        font=("微软雅黑", 10), variable=reuse_var).pack(side=tk.LEFT)
 
-        # 管理按钮
         # 管理控制
         mgmt_frame = tk.LabelFrame(win, text="管理控制", font=("微软雅黑", 10))
         mgmt_frame.pack(fill=tk.X, padx=15, pady=5)
@@ -1513,7 +1516,18 @@ class QuizServer:
         tk.Checkbutton(mgmt_frame, text="🔧 显示比赛管理按钮（重赛/结束比赛）",
                        font=("微软雅黑", 10), variable=show_mgmt_var,
                        command=toggle_mgmt_buttons).pack(anchor=tk.W, padx=10, pady=5)
-        # 默认隐藏
+
+        show_ans_var = tk.BooleanVar(value=self.show_answer_ref)
+        def toggle_answer_ref():
+            self.show_answer_ref = show_ans_var.get()
+            if self.show_answer_ref:
+                self.ans_frame.pack(fill=tk.X, padx=5, pady=2)
+            else:
+                self.ans_frame.pack_forget()
+
+        tk.Checkbutton(mgmt_frame, text="👁 显示参考答案",
+                       font=("微软雅黑", 10), variable=show_ans_var,
+                       command=toggle_answer_ref).pack(anchor=tk.W, padx=10, pady=(0, 5))
 
         # 按钮
         btn_row = tk.Frame(win)
