@@ -143,6 +143,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .scoreboard .sb-bronze{color:#CD7F32;}
 .scoreboard .sb-normal{color:#aaa;}
 
+/* 全屏积分榜 */
+.scoreboard-full{background:#0f0f1a;width:90vw;max-width:800px;max-height:90vh;border-radius:20px;padding:32px;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.8);}
+.scoreboard-full h2{color:#FFD700;margin:0;}
+.scoreboard-full .sbf-row{display:flex;align-items:center;padding:14px 12px;border-bottom:1px solid #1a1a2e;font-size:20px;}
+.scoreboard-full .sbf-rank{width:50px;text-align:center;font-size:26px;}
+.scoreboard-full .sbf-name{flex:1;font-weight:600;}
+.scoreboard-full .sbf-score{font-weight:700;font-size:24px;min-width:80px;text-align:right;}
+.scoreboard-full .sbf-gold{color:#FFD700;}
+.scoreboard-full .sbf-silver{color:#C0C0C0;}
+.scoreboard-full .sbf-bronze{color:#CD7F32;}
+
 /* 滚动条 */
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -179,6 +190,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     <!-- 选手面板（仅比赛页面） -->
     <div class="players-panel" id="playersPanel">
       <div class="panel-title">👥 选手 <span class="count" id="psCount">0</span></div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px;" onclick="openScoreboard()">🏆 积分榜</button>
       <div class="scoreboard" id="scoreboard"></div>
       <div id="playerList"></div>
       <div class="panel-actions">
@@ -283,6 +295,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
       <button class="btn btn-ghost btn-sm" onclick="closeScoreModal()">取消</button>
       <button class="btn btn-primary btn-sm" onclick="confirmSetScore()">确定</button>
     </div>
+  </div>
+</div>
+
+<!-- 全屏积分榜 -->
+<div class="modal-overlay" id="scoreboardOverlay" onclick="closeScoreboard()">
+  <div class="scoreboard-full" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="font-size:28px;">🏆 积分榜</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeScoreboard()" style="font-size:18px;">✕ 关闭</button>
+    </div>
+    <div id="scoreboardFullContent"></div>
   </div>
 </div>
 
@@ -722,6 +745,58 @@ function confirmSetScore() {
   addLog(`📝 [${ctxPlayer}] 分数设为 ${val}`);
   closeScoreModal();
 }
+
+// ========== 全屏积分榜 ==========
+function openScoreboard() {
+  document.getElementById('scoreboardOverlay').classList.add('show');
+  refreshScoreboardFull();
+}
+
+function closeScoreboard() {
+  document.getElementById('scoreboardOverlay').classList.remove('show');
+}
+
+function refreshScoreboardFull() {
+  const s = adminState;
+  if (!s) return;
+  const players = s.players || {};
+  const ranked = s.ranked_players || [];
+
+  const rankMap = {};
+  for (const r of ranked) rankMap[r.name] = r;
+
+  const names = Object.keys(players).sort((a, b) => {
+    const ra = rankMap[a] ? rankMap[a].rank : 999;
+    const rb = rankMap[b] ? rankMap[b].rank : 999;
+    if (ra !== rb) return ra - rb;
+    return (players[b].score || 0) - (players[a].score || 0);
+  });
+
+  const el = document.getElementById('scoreboardFullContent');
+  if (!names.length) {
+    el.innerHTML = '<div style="text-align:center;color:#666;padding:60px;font-size:24px;">暂无选手</div>';
+    return;
+  }
+
+  el.innerHTML = names.map((name, i) => {
+    const p = players[name];
+    const cls = i === 0 ? 'sbf-gold' : i === 1 ? 'sbf-silver' : i === 2 ? 'sbf-bronze' : '';
+    const icon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+    const conn = p.connected ? '' : ' ⚫';
+    return `<div class="sbf-row">
+      <span class="sbf-rank ${cls}">${icon}</span>
+      <span class="sbf-name">${name}${conn}</span>
+      <span class="sbf-score ${cls}">${p.score}分</span>
+    </div>`;
+  }).join('');
+}
+
+// 打开时每秒刷新
+setInterval(() => {
+  if (document.getElementById('scoreboardOverlay')?.classList.contains('show')) {
+    refreshScoreboardFull();
+  }
+}, 1000);
 
 // ========== 设置 ==========
 function saveSettings() {
