@@ -582,6 +582,19 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
             del game.players[name]
             await broadcast_to_admin({"type": "player_left", "name": name})
             await send_admin_state()
+    
+    elif msg_type == "reset_all_scores":
+        """重置所有选手积分为零"""
+        for p in game.players.values():
+            p.score = 0
+            p.ranked = False
+            p.rank = 0
+        game.ranked_players = []
+        await broadcast_to_players({
+            "type": "scores_reset",
+            "msg": "🔄 管理员已重置所有积分"
+        })
+        await send_admin_state()
 
 
 async def activate_bank(name: str):

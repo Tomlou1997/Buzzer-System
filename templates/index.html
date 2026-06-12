@@ -179,6 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
       <button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px;" onclick="openScoreboard()">🏆 积分榜</button>
       <div id="playerList"></div>
       <div class="panel-actions">
+        <button class="btn btn-warning btn-block btn-sm" onclick="resetAllScores()" style="margin-bottom:4px;">🔄 重置积分</button>
         <button class="btn btn-warning btn-block btn-sm" id="restartBtn" style="display:none;" onclick="restartGame()">🔄 重赛</button>
         <button class="btn btn-danger btn-block btn-sm" id="endGameBtn" style="display:none;" onclick="endGame()">🏁 结束比赛</button>
       </div>
@@ -649,6 +650,14 @@ function endGame() {
   if (confirm('确定要结束比赛吗？')) {
     send({type: 'end_game'});
     addLog('🏁 结束比赛');
+  }
+}
+
+// ========== 重置积分 ==========
+function resetAllScores() {
+  if (confirm('确定要把所有选手积分重置为零吗？')) {
+    send({type: 'reset_all_scores'});
+    addLog('🔄 所有选手积分已重置为零');
   }
 }
 
