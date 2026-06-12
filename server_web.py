@@ -316,11 +316,19 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
         if game.current_question_index < len(game.questions) - 1:
             game.current_question_index += 1
             await send_admin_state()
+            # 如果比赛已开始，同步新题目给所有选手
+            if game.game_started:
+                for name in list(game.players.keys()):
+                    await send_client_state(name)
     
     elif msg_type == "prev_question":
         if game.current_question_index > 0:
             game.current_question_index -= 1
             await send_admin_state()
+            # 如果比赛已开始，同步新题目给所有选手
+            if game.game_started:
+                for name in list(game.players.keys()):
+                    await send_client_state(name)
     
     elif msg_type == "start_round":
         """开始一轮抢答"""

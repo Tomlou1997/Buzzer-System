@@ -1214,3 +1214,5 @@
 [10:58:59.512] _broadcast 结束: type=shutdown
 [10:59:18.655] _broadcast 开始: type=shutdown, clients_count=0
 [10:59:18.656] _broadcast 结束: type=shutdown
+[16:25:45.691] _broadcast 开始: type=shutdown, clients_count=0
+[16:25:45.692] _broadcast 结束: type=shutdown
