@@ -217,6 +217,7 @@ let isBuzzing = false;
 let hasBuzzed = false;
 let answerTimeout = null;
 let answerTimerInterval = null;
+let currentQuestionId = null;
 
 // ========== 连接 ==========
 function connect() {
@@ -337,6 +338,7 @@ function handleMsg(msg) {
     case 'restart_game':
       isBuzzing = false;
       hasBuzzed = false;
+      currentQuestionId = null;
       myScore = 0;
       document.getElementById('myScore').textContent = 0;
       document.getElementById('scoreCard').classList.remove('show');
@@ -391,6 +393,11 @@ function renderClientState(s) {
   // 题目
   if (s.current_question) {
     const q = s.current_question;
+    // 新题目出现时清除上一题的答题结果
+    if (currentQuestionId !== q.question) {
+      document.getElementById('buzzerResult').classList.remove('show', 'success', 'fail', 'too_late');
+    }
+    currentQuestionId = q.question;
     document.getElementById('questionCard').classList.add('show');
     document.getElementById('qType').textContent = '📝 ' + (q.type || '题目');
     document.getElementById('qText').innerHTML = q.question;
