@@ -681,16 +681,20 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
             player_name = None
             return
         
-        # 检查重名 — 只要选手清单里存在就拒绝
+        # 检查重名：在线拒绝，离线允许重连
         if player_name in game.players:
-            await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
-            await websocket.close()
-            player_name = None  # 防止 finally 污染老选手
-            return
-        
-        # 创建选手
-        player = Player(player_name, websocket)
-        game.players[player_name] = player
+            if game.players[player_name].connected:
+                await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
+                await websocket.close()
+                player_name = None
+                return
+            # 离线，重用旧数据
+            game.players[player_name].ws = websocket
+            game.players[player_name].connected = True
+            player = game.players[player_name]
+        else:
+            player = Player(player_name, websocket)
+            game.players[player_name] = player
         
         # 发送登录成功
         await send_to_player(player_name, {
