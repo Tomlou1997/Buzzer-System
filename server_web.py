@@ -675,12 +675,14 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
         if not player_name:
             await websocket.send_text(json.dumps({"type": "error", "msg": "请输入选手名称"}))
             await websocket.close()
+            player_name = None
             return
         
         # 检查重名 — 只要选手清单里存在就拒绝
         if player_name in game.players:
             await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
             await websocket.close()
+            player_name = None  # 防止 finally 污染老选手
             return
         
         # 创建选手
