@@ -131,9 +131,45 @@ async def root():
     </body></html>
     """)
 
+LOCKED_PAGE = """
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理端已锁定</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;background:#0f0f1a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.box{text-align:center;max-width:400px;padding:40px;}
+.box .icon{font-size:72px;margin-bottom:16px;}
+.box h1{font-size:24px;color:#f44336;margin-bottom:12px;}
+.box p{color:#888;font-size:16px;line-height:1.8;margin-bottom:24px;}
+.box .btn{padding:12px 32px;background:#252538;border:1px solid #333;border-radius:8px;color:#aaa;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;}
+.box .btn:hover{background:#333;color:#fff;}
+@keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+.box .dot{display:inline-block;width:8px;height:8px;background:#f44336;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite;}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="icon">🔒</div>
+  <h1>⚠️ 已有管理端连接</h1>
+  <p>当前已有管理员在线操作中，<br>请稍后再试或联系管理员。</p>
+  <a class="btn" href="/server"><span class="dot"></span>刷新重试</a>
+</div>
+</body>
+</html>
+"""
+
 @app.get("/server")
 async def get_admin():
     """管理端页面"""
+    # 已有管理端在线时返回锁定页
+    active = await get_active_admin_count()
+    if active > 0:
+        return HTMLResponse(LOCKED_PAGE)
+    
     html_path = os.path.join("templates", "index.html")
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
@@ -155,11 +191,8 @@ async def get_client():
 # ==================== WebSocket 管理端 ====================
 admin_connections: set[WebSocket] = set()
 
-@app.websocket("/ws/admin")
-async def admin_websocket(websocket: WebSocket):
-    await websocket.accept()
-    
-    # 清理已断开的连接，只保留活跃的
+async def get_active_admin_count() -> int:
+    """返回当前活跃的管理端数量"""
     dead = set()
     for w in admin_connections:
         try:
@@ -167,9 +200,16 @@ async def admin_websocket(websocket: WebSocket):
         except:
             dead.add(w)
     admin_connections.difference_update(dead)
+    return len(admin_connections)
+
+@app.websocket("/ws/admin")
+async def admin_websocket(websocket: WebSocket):
+    await websocket.accept()
     
-    # 只允许一个管理端
-    if admin_connections:
+    # 清理已断开的连接
+    active = await get_active_admin_count()
+    
+    if active > 0:
         await websocket.send_text(json.dumps({"type": "error", "msg": "已有管理端连接"}))
         await websocket.close()
         return
