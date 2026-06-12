@@ -661,18 +661,28 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
             await websocket.close()
             return
         
-        # 检查重名
-        if player_name in game.players and game.players[player_name].connected:
-            await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
-            await websocket.close()
-            return
-        
-        # 创建或重连选手
+        # 检查重名 — 先确认旧连接是否真的断开
         if player_name in game.players:
-            # 旧连接断开，重用
-            game.players[player_name].ws = websocket
-            game.players[player_name].connected = True
-            player = game.players[player_name]
+            old = game.players[player_name]
+            if old.connected:
+                # 尝试 ping 旧连接确认是否还活着
+                try:
+                    await asyncio.wait_for(old.ws.send_text(json.dumps({"type": "ping"})), timeout=2)
+                    # 旧连接还活着，拒绝
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
+                    await websocket.close()
+                    return
+                except:
+                    # 旧连接已死，标记断开
+                    old.connected = False
+            # 旧连接已断开，允许重用
+            if player_name in game.players:
+                game.players[player_name].ws = websocket
+                game.players[player_name].connected = True
+                player = game.players[player_name]
+            else:
+                player = Player(player_name, websocket)
+                game.players[player_name] = player
         else:
             player = Player(player_name, websocket)
             game.players[player_name] = player
