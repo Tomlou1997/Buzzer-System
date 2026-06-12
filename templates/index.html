@@ -314,12 +314,8 @@ function connect() {
       addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
     } else if (msg.type === 'cheer_used') {
       addLog(`📣 [${msg.name}] 使用了啦啦队 +${msg.added}秒，剩余 ${msg.remaining}秒`);
-      // 横幅显示啦啦队信息，不锁定让timer继续刷新
-      const banner = document.getElementById('banner');
-      banner.style.display = 'block';
-      banner.style.background = 'linear-gradient(135deg,#2a1a4a,#3a2a6a)';
-      banner.style.color = '#FF9800';
-      banner.innerHTML = `📣 <b>${msg.name}</b> 使用啦啦队 +${msg.added}秒`;
+      window._lastCheer = {name: msg.name, added: msg.added};
+      setTimeout(() => { window._lastCheer = null; }, 3000);
     } else if (msg.type === 'player_joined') {
       addLog(`✅ 选手 [${msg.name}] 加入`);
     } else if (msg.type === 'player_left') {
@@ -414,11 +410,14 @@ function render() {
   }
   window._lastQuestionIdx = s.current_question_index;
   if (banner.dataset.locked !== '1') {
+    const cheer = window._lastCheer;
     if (s.round_active) {
       if (s.first_buzzer) {
         banner.style.display = 'block';
-        banner.style.background = 'linear-gradient(135deg,#4CAF50,#66BB6A)';
-        banner.textContent = `🎉🎉🎉 [${s.first_buzzer}] 抢答成功！等待输入答案 ⏱ ${s.timer_remaining}s 🎉🎉🎉`;
+        banner.style.background = cheer ? 'linear-gradient(135deg,#FF9800,#9C27B0)' : 'linear-gradient(135deg,#4CAF50,#66BB6A)';
+        banner.textContent = cheer 
+          ? `📣 [${s.first_buzzer}] 使用啦啦队 +${cheer.added}秒 ⏱ 剩余 ${s.timer_remaining}s`
+          : `🎉🎉🎉 [${s.first_buzzer}] 抢答成功！等待输入答案 ⏱ ${s.timer_remaining}s 🎉🎉🎉`;
       } else {
         banner.style.display = 'block';
         banner.style.background = 'linear-gradient(135deg,#FF9800,#FFB74D)';
