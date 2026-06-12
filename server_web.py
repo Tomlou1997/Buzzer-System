@@ -814,13 +814,18 @@ async def handle_answer(name: str, answer: str):
         points_change = 0
         if is_correct:
             points_change = game.correct_points
-        elif not is_timeout and not is_correct:
+        elif is_timeout:
             points_change = -game.wrong_points
+        elif not is_correct:
+            points_change = -game.wrong_points
+        
+        # 超时时用特殊文字
+        admin_answer = "答题超时" if is_timeout else display_answer
         
         await broadcast_to_admin({
             "type": "answer_received",
             "name": name,
-            "answer": display_answer,
+            "answer": admin_answer,
             "correct": correct,
             "is_correct": is_correct,
             "points": points_change,
@@ -856,13 +861,15 @@ async def handle_answer(name: str, answer: str):
                     p.score = p.score - game.wrong_points
             # 通知抢答者
             if is_timeout:
+                if not p.ranked:
+                    p.score = p.score - game.wrong_points
                 await send_to_player(name, {
                     "type": "answer_result",
                     "correct": False,
-                    "points": 0,
+                    "points": -game.wrong_points,
                     "new_score": p.score,
-                    "msg": "⌛ 回答超时",
-                    "answer": display_answer,
+                    "msg": f"答题超时 -{game.wrong_points}分",
+                    "answer": "答题超时",
                     "correct_answer": correct,
                 })
             else:
