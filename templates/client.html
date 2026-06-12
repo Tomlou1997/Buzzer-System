@@ -252,6 +252,7 @@ function connect() {
   ws.onclose = function(e) {
     setStatus('red', '已断开', 'red');
     showBuzzerResult('fail', '⚠️ 与服务器断开连接...');
+    if (window._stopReconnect) return;
     setTimeout(() => {
       if (myName) connect();
     }, 3000);
@@ -271,9 +272,16 @@ function handleMsg(msg) {
   switch (msg.type) {
     case 'error':
       document.getElementById('loginError').textContent = msg.msg;
+      // 重名等错误，返回登录页，停止重连
+      document.getElementById('loginBtn').disabled = false;
+      document.getElementById('loginBtn').textContent = '🔔 加入比赛';
+      myName = '';
+      window._stopReconnect = true;
+      if (ws) { ws.close(); }
       break;
 
     case 'login_ok':
+      window._stopReconnect = false;
       myName = msg.name;
       myScore = msg.score || 0;
       document.getElementById('myName').textContent = myName;
