@@ -472,7 +472,13 @@ function render() {
       banner.style.display = 'block';
       banner.style.background = 'linear-gradient(135deg,#9C27B0,#7B1FA2)';
       banner.textContent = '🏁 比赛已结束';
+      // 自动弹出全屏积分榜
+      if (!window._scoreboardShown) {
+        window._scoreboardShown = true;
+        openScoreboard();
+      }
     } else {
+      window._scoreboardShown = false;
       banner.style.display = 'none';
     }
   }
