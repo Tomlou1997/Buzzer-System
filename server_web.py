@@ -963,7 +963,7 @@ async def answer_timer(name: str):
             await broadcast_to_admin({
                 "type": "answer_received",
                 "name": name,
-                "answer": f"⏰ 答题超时",
+                "answer": "答题超时",
                 "correct": correct,
                 "is_correct": False,
                 "points": -game.wrong_points,
