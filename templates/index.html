@@ -312,10 +312,11 @@ function connect() {
       }
       banner.dataset.locked = '1';
       addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
+      window._lastCheer = null;  // 答题结束，清除啦啦队状态
     } else if (msg.type === 'cheer_used') {
       addLog(`📣 [${msg.name}] 使用了啦啦队 +${msg.added}秒，剩余 ${msg.remaining}秒`);
       window._lastCheer = {name: msg.name, added: msg.added};
-      setTimeout(() => { window._lastCheer = null; }, 3000);
+      window._lastCheer = {name: msg.name, added: msg.added};
     } else if (msg.type === 'player_joined') {
       addLog(`✅ 选手 [${msg.name}] 加入`);
     } else if (msg.type === 'player_left') {
