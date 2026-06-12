@@ -379,10 +379,14 @@ function render() {
     document.getElementById('answerText').textContent = q.answer;
   }
 
+  // 显示答案按钮（由设置控制是否可见）
+  const sShowAnsChecked = document.getElementById('sShowAns')?.checked ?? false;
+  const showAnsBtn = document.getElementById('showAnswerBtn');
+  showAnsBtn.style.display = sShowAnsChecked ? 'inline-block' : 'none';
+
   // 显示答案（仅在初始时应用设置，之后由用户手动切换）
   if (!window._ansInitDone) {
-    const showAns = document.getElementById('sShowAns')?.checked ?? false;
-    document.getElementById('qAnswer').style.display = showAns ? 'block' : 'none';
+    document.getElementById('qAnswer').style.display = sShowAnsChecked ? 'block' : 'none';
     window._ansInitDone = true;
   }
 
