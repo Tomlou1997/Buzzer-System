@@ -128,6 +128,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 /* 闪烁提示 */
 .blink{animation:blink 1s step-end infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* 个人获胜遮罩 */
+.won-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,10,20,.92);backdrop-filter:blur(12px);z-index:90;align-items:center;justify-content:center;}
+.won-overlay.show{display:flex;}
+.won-box{text-align:center;max-width:340px;width:90%;}
+.won-box .won-icon{font-size:80px;margin-bottom:8px;}
+.won-box .won-rank{font-size:52px;font-weight:900;background:linear-gradient(135deg,#FFD700,#FFA000);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.won-box .won-score{font-size:20px;color:#aaa;margin-bottom:16px;}
+.won-box .won-hint{font-size:16px;color:#4CAF50;padding:12px 0;border-top:1px solid #333;}
 </style>
 </head>
 <body>
@@ -205,6 +214,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     </div>
   </div>
 
+  <!-- 个人获胜提示（覆盖在比赛界面上） -->
+  <div class="won-overlay" id="wonOverlay">
+    <div class="won-box">
+      <div class="won-icon">🏆</div>
+      <div class="won-rank" id="wonRank">第 1 名</div>
+      <div class="won-score" id="wonScore">0 分</div>
+      <div class="won-hint">🎉 恭喜！比赛继续...</div>
+    </div>
+  </div>
+
   <div class="footer-info">🎯 抢答系统 v2.0</div>
 </div>
 
@@ -212,6 +231,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 let ws = null;
 let myName = '';
 let myScore = 0;
+let myRank = 0;
+let myRanked = false;
 let clientState = null;
 let isBuzzing = false;
 let hasBuzzed = false;
@@ -335,6 +356,14 @@ function handleMsg(msg) {
       showResult(msg);
       break;
 
+    case 'rank_locked':
+      if (msg.name === myName) {
+        myRank = msg.rank;
+        myRanked = true;
+        showWonOverlay(msg.rank);
+      }
+      break;
+
     case 'restart_game':
       isBuzzing = false;
       hasBuzzed = false;
@@ -347,6 +376,7 @@ function handleMsg(msg) {
       document.getElementById('buzzerWrap').classList.remove('show');
       document.getElementById('questionCard').classList.remove('show');
       document.getElementById('resultOverlay').classList.remove('show');
+      document.getElementById('wonOverlay').classList.remove('show');
       document.getElementById('rankBar').classList.remove('show');
       setStatus('green', '已连接 — 等待开始', 'green');
       break;
@@ -357,7 +387,25 @@ function handleMsg(msg) {
 function renderClientState(s) {
   // 只显示自己的分数
   myScore = s.my_score || 0;
+  myRank = s.my_rank || 0;
+  myRanked = s.my_ranked || false;
   document.getElementById('myScore').textContent = myScore;
+
+  // 已获得排名：显示获胜遮罩，隐藏正常UI
+  if (myRanked && !s.game_over) {
+    document.getElementById('wonOverlay').classList.add('show');
+    document.getElementById('wonRank').textContent = `第 ${myRank} 名`;
+    document.getElementById('wonScore').textContent = `${myScore} 分`;
+    document.getElementById('buzzerWrap').classList.remove('show');
+    document.getElementById('questionCard').classList.remove('show');
+    document.getElementById('cheerBar').classList.remove('show');
+    document.getElementById('buzzerResult').classList.remove('show');
+    document.getElementById('submitAnsBtn').style.display = 'none';
+    clearInterval(answerTimerInterval);
+    clearTimeout(answerTimeout);
+    setStatus('purple', `🏆 已获得第${myRank}名`, 'purple');
+    return;
+  }
 
   // 积分框：比赛开始后才显示
   const scoreCard = document.getElementById('scoreCard');
@@ -569,6 +617,22 @@ function showResult(s) {
       <div class="pscore">${r.score}分</div>
     </div>
   `).join('');
+}
+
+function showWonOverlay(rank) {
+  document.getElementById('wonOverlay').classList.add('show');
+  document.getElementById('wonRank').textContent = `第 ${rank} 名`;
+  document.getElementById('wonScore').textContent = `${myScore} 分`;
+  // 隐藏正常游戏UI
+  document.getElementById('buzzerWrap').classList.remove('show');
+  document.getElementById('questionCard').classList.remove('show');
+  document.getElementById('cheerBar').classList.remove('show');
+  document.getElementById('buzzerResult').classList.remove('show');
+  document.getElementById('submitAnsBtn').style.display = 'none';
+  clearInterval(answerTimerInterval);
+  clearTimeout(answerTimeout);
+  isBuzzing = false;
+  hasBuzzed = false;
 }
 
 // Enter 键登录

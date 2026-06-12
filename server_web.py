@@ -681,6 +681,7 @@ async def send_client_state(name: str):
         "type": "client_state",
         "my_score": p.score,
         "my_rank": p.rank if p.ranked else 0,
+        "my_ranked": p.ranked,
         "game_started": game.game_started,
         "round_active": game.round_active,
         "game_over": game.game_over,
