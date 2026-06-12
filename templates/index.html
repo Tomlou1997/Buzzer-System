@@ -131,18 +131,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .modal .field input:focus{border-color:#0078d4;}
 .modal .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
 
-/* 积分榜 */
-.scoreboard{display:none;padding:6px 0;border-bottom:1px solid #1a1a2e;margin-bottom:4px;}
-.scoreboard.show{display:block;}
-.scoreboard .sb-row{display:flex;align-items:center;padding:3px 0;font-size:13px;}
-.scoreboard .sb-rank{width:28px;text-align:center;font-weight:700;}
-.scoreboard .sb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.scoreboard .sb-score{font-weight:700;min-width:40px;text-align:right;}
-.scoreboard .sb-gold{color:#FFD700;}
-.scoreboard .sb-silver{color:#C0C0C0;}
-.scoreboard .sb-bronze{color:#CD7F32;}
-.scoreboard .sb-normal{color:#aaa;}
-
 /* 全屏积分榜 */
 .scoreboard-full{background:#0f0f1a;width:90vw;max-width:800px;max-height:90vh;border-radius:20px;padding:32px;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.8);}
 .scoreboard-full h2{color:#FFD700;margin:0;}
@@ -191,7 +179,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     <div class="players-panel" id="playersPanel">
       <div class="panel-title">👥 选手 <span class="count" id="psCount">0</span></div>
       <button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px;" onclick="openScoreboard()">🏆 积分榜</button>
-      <div class="scoreboard" id="scoreboard"></div>
       <div id="playerList"></div>
       <div class="panel-actions">
         <button class="btn btn-warning btn-block btn-sm" id="restartBtn" style="display:none;" onclick="restartGame()">🔄 重赛</button>
@@ -401,7 +388,6 @@ function render() {
 
   // 选手列表
   renderPlayers(s.players, s.ranked_players);
-  renderScoreboard(s.players, s.ranked_players, s.game_started);
 
   // 信息栏
   const connected = Object.values(s.players).filter(p => p.connected).length;
@@ -573,41 +559,6 @@ function renderPlayers(players, ranked) {
       ${rl}${banned}
     </div>`;
   }).join('');
-}
-
-function renderScoreboard(players, ranked, gameStarted) {
-  const el = document.getElementById('scoreboard');
-  if (!gameStarted) {
-    el.classList.remove('show');
-    return;
-  }
-  el.classList.add('show');
-
-  // 构建排名映射
-  const rankMap = {};
-  for (const r of ranked) {
-    rankMap[r.name] = r;
-  }
-
-  const names = Object.keys(players).filter(n => players[n].connected);
-  const sorted = names.sort((a, b) => {
-    const ra = rankMap[a] ? rankMap[a].rank : 999;
-    const rb = rankMap[b] ? rankMap[b].rank : 999;
-    if (ra !== rb) return ra - rb;
-    return (players[b].score || 0) - (players[a].score || 0);
-  });
-
-  el.innerHTML = '<div style="font-weight:700;font-size:12px;color:#888;padding:2px 0 4px;">🏆 积分榜</div>' +
-    sorted.map((name, i) => {
-      const p = players[name];
-      const cls = i === 0 ? 'sb-gold' : i === 1 ? 'sb-silver' : i === 2 ? 'sb-bronze' : 'sb-normal';
-      const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-      return `<div class="sb-row">
-        <span class="sb-rank ${cls}">${rankIcon}</span>
-        <span class="sb-name">${name}</span>
-        <span class="sb-score ${cls}">${p.score}分</span>
-      </div>`;
-    }).join('');
 }
 
 function renderBanks(banks, active) {
