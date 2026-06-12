@@ -270,6 +270,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
   <div class="item" onclick="ctxAction('unban')">🟢 恢复参赛</div>
   <div class="item" onclick="ctxAction('penalty')">⚠️ 违规扣5分</div>
   <div class="item" onclick="ctxAction('setScore')">📝 设置分数</div>
+  <div class="item" onclick="ctxAction('remove')">🗑 移除选手</div>
 </div>
 
 <!-- 分数设置弹窗 -->
@@ -697,6 +698,10 @@ function ctxAction(action) {
     document.getElementById('scoreName').value = ctxPlayer;
     document.getElementById('scoreInput').value = adminState?.players?.[ctxPlayer]?.score || 0;
     document.getElementById('scoreModal').classList.add('show');
+  } else if (action === 'remove') {
+    if (confirm(`确定要移除选手 [${ctxPlayer}] 吗？`)) {
+      send({type: 'remove_player', name: ctxPlayer});
+    }
   }
 }
 

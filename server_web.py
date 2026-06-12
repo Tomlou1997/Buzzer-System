@@ -563,6 +563,22 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
         game.show_end_btn = s.get("show_end_btn", game.show_end_btn)
         game.auto_judge = s.get("auto_judge", game.auto_judge)
         await send_admin_state()
+    
+    elif msg_type == "remove_player":
+        """移除选手"""
+        name = msg.get("name", "")
+        if name in game.players:
+            p = game.players[name]
+            try:
+                await p.ws.send_text(json.dumps({"type": "kicked", "msg": "你已被管理员移除"}))
+                await p.ws.close()
+            except:
+                pass
+            # 从排名列表中移除
+            game.ranked_players = [r for r in game.ranked_players if r[0] != name]
+            del game.players[name]
+            await broadcast_to_admin({"type": "player_left", "name": name})
+            await send_admin_state()
 
 
 async def activate_bank(name: str):
@@ -661,31 +677,15 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
             await websocket.close()
             return
         
-        # 检查重名 — 先确认旧连接是否真的断开
+        # 检查重名 — 只要选手清单里存在就拒绝
         if player_name in game.players:
-            old = game.players[player_name]
-            if old.connected:
-                # 尝试 ping 旧连接确认是否还活着
-                try:
-                    await asyncio.wait_for(old.ws.send_text(json.dumps({"type": "ping"})), timeout=2)
-                    # 旧连接还活着，拒绝
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
-                    await websocket.close()
-                    return
-                except:
-                    # 旧连接已死，标记断开
-                    old.connected = False
-            # 旧连接已断开，允许重用
-            if player_name in game.players:
-                game.players[player_name].ws = websocket
-                game.players[player_name].connected = True
-                player = game.players[player_name]
-            else:
-                player = Player(player_name, websocket)
-                game.players[player_name] = player
-        else:
-            player = Player(player_name, websocket)
-            game.players[player_name] = player
+            await websocket.send_text(json.dumps({"type": "error", "msg": "该名称已被使用"}))
+            await websocket.close()
+            return
+        
+        # 创建选手
+        player = Player(player_name, websocket)
+        game.players[player_name] = player
         
         # 发送登录成功
         await send_to_player(player_name, {
