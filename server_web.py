@@ -954,10 +954,20 @@ async def answer_timer(name: str):
         if game.current_answerer == name:
             p = game.players.get(name)
             if p and not p.ranked:
-                p.score = max(0, p.score - game.wrong_points)
+                p.score = p.score - game.wrong_points
             
             idx = game.current_question_index
             correct = game.questions[idx].answer if 0 <= idx < len(game.questions) else ""
+
+            # 通知管理端
+            await broadcast_to_admin({
+                "type": "answer_received",
+                "name": name,
+                "answer": "(超时)",
+                "correct": correct,
+                "is_correct": False,
+                "points": -game.wrong_points,
+            })
             
             # 通知答题者
             await send_to_player(name, {
