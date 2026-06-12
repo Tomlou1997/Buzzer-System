@@ -47,7 +47,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .player-card .score.gray{color:#888;}
 .player-card .rl{font-size:14px;color:#FFD700;}
 .player-card .banned-badge{font-size:13px;color:#f44336;background:#3a1a1a;padding:2px 8px;border-radius:5px;}
-.panel-actions{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid #2a2a3e;}
+.panel-actions{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid #2a2a3e;}
+.panel-actions .btn{padding:12px 16px;font-size:15px;}
 
 /* 右侧 */
 .right-area{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
@@ -70,7 +71,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .q-card .qact .timer-text{font-size:18px;font-weight:bold;color:#FF9800;padding:0 10px;}
 
 /* 按钮 */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;}
 .btn:active{transform:scale(.96);}
 .btn-primary{background:#0078d4;color:#fff;}
 .btn-primary:hover{background:#1a8ae8;}
@@ -82,7 +83,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .btn-warning:hover{background:#FFB74D;}
 .btn-ghost{background:#2a2a3e;color:#ccc;}
 .btn-ghost:hover{background:#333350;color:#fff;}
-.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-sm{padding:10px 22px;font-size:15px;}
 .btn-block{width:100%;justify-content:center;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 
@@ -168,7 +169,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
       <div class="panel-title">👥 选手 <span class="count" id="psCount">0</span></div>
       <div id="playerList"></div>
       <div class="panel-actions">
-        <button class="btn btn-ghost btn-block btn-sm" onclick="showSettingsPage()">⚙ 设置</button>
         <button class="btn btn-warning btn-block btn-sm" id="restartBtn" style="display:none;" onclick="restartGame()">🔄 重赛</button>
         <button class="btn btn-danger btn-block btn-sm" id="endGameBtn" style="display:none;" onclick="endGame()">🏁 结束比赛</button>
       </div>
@@ -181,10 +181,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
       <div class="page active" id="pageGame">
         <div class="info-bar">
           <div class="info-item"><div class="lbl">📚 题库</div><div class="val blue" id="infoBank">--</div></div>
-          <div class="info-item"><div class="lbl">🎯 轮次</div><div class="val orange" id="infoRound">0</div></div>
-          <div class="info-item"><div class="lbl">✅ 进度</div><div class="val green" id="infoProgress">0/0</div></div>
+          <div class="info-item"><div class="lbl">📊 共几题</div><div class="val green" id="infoTotal">0</div></div>
+          <div class="info-item"><div class="lbl">✅ 已答</div><div class="val blue" id="infoAnswered">0</div></div>
+          <div class="info-item"><div class="lbl">⏳ 未答</div><div class="val orange" id="infoUnanswered">0</div></div>
           <div class="info-item"><div class="lbl">⏱ 倒计时</div><div class="val orange" id="infoTimer">--</div></div>
-          <div class="info-item"><div class="lbl">📊 已答</div><div class="val blue" id="infoAnswered">0</div></div>
         </div>
 
         <div class="banner" id="banner"></div>
@@ -220,11 +220,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 
       <!-- 设置页面 -->
       <div class="page" id="pageSettings">
-        <div class="page-title">⚙ 设置</div>
+        <div class="page-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>⚙ 设置</span>
+          <span id="uptimeDisplay" style="font-size:14px;font-weight:400;color:#aaa;">⏱ 服务已运行: --:--:--</span>
+        </div>
         <div class="settings-grid" style="max-width:500px;">
           <div class="field"><label>答对得分</label><input type="number" id="sCorrect" value="2"></div>
           <div class="field"><label>答错扣分</label><input type="number" id="sWrong" value="1"></div>
           <div class="field"><label>答题倒计时(秒)</label><input type="number" id="sTimeout" value="15"></div>
+          <div class="field"><label>抢答等待秒数</label><input type="number" id="sBuzzTimeout" value="15"></div>
           <div class="field"><label>获胜积分</label><input type="number" id="sWinScore" value="20"></div>
           <div class="field"><label>决出前几名</label><input type="number" id="sWinRank" value="3"></div>
           <div class="field"><label>啦啦队次数</label><input type="number" id="sExtend" value="1"></div>
@@ -235,6 +239,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
           <div class="field checkbox"><input type="checkbox" id="sEndBtn" checked><label>显示结束比赛按钮</label></div>
         </div>
         <div style="margin-top:12px;"><button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button></div>
+        <div style="margin-top:12px;"><button class="btn btn-danger" onclick="restartServer()" style="width:100%;">🔄 重启服务</button></div>
+        <div style="margin-top:12px;"><button class="btn btn-danger" onclick="stopServer()" style="width:100%;">⏹ 关闭服务</button></div>
       </div>
 
       <!-- 日志 -->
@@ -281,11 +287,26 @@ function connect() {
     const msg = JSON.parse(e.data);
     if (msg.type === 'admin_state') {
       adminState = msg;
+      if (msg.uptime) {
+        serverUptime = msg.uptime;
+        const el = document.getElementById('uptimeDisplay');
+        if (el) el.textContent = `⏱ 服务已运行: ${formatUptime(serverUptime)}`;
+      }
       render();
     } else if (msg.type === 'error') {
       addLog('⚠️ ' + msg.msg);
     } else if (msg.type === 'answer_received') {
-      addLog(`💬 [${msg.name}] 答案: ${msg.answer} | 正确: ${msg.correct}`);
+      const icon = msg.is_correct ? '✅' : '❌';
+      const pts = msg.points || 0;
+      const ptsText = pts > 0 ? `+${pts}分` : pts < 0 ? `${pts}分` : '';
+      // 在横幅区显示答题记录，并标记不被覆盖
+      const banner = document.getElementById('banner');
+      banner.style.display = 'block';
+      banner.style.background = msg.is_correct ? 'linear-gradient(135deg,#1a4a1a,#2a6a2a)' : 'linear-gradient(135deg,#4a1a1a,#6a2a2a)';
+      banner.style.color = msg.is_correct ? '#4CAF50' : '#f44336';
+      banner.innerHTML = `${icon} <b>${msg.name}</b> 答案: ${msg.answer} | 正确答案: <b>${msg.correct}</b> ${ptsText ? '(' + ptsText + ')' : ''}`;
+      banner.dataset.locked = '1';
+      addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
     } else if (msg.type === 'player_joined') {
       addLog(`✅ 选手 [${msg.name}] 加入`);
     } else if (msg.type === 'player_left') {
@@ -313,6 +334,20 @@ function addLog(text) {
   el.innerHTML = logLines.map(l => `<div class="log-item">${l}</div>`).join('');
 }
 
+// ========== 运行时间 ==========
+let serverUptime = 0;
+function formatUptime(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+setInterval(() => {
+  serverUptime++;
+  const el = document.getElementById('uptimeDisplay');
+  if (el) el.textContent = `⏱ 服务已运行: ${formatUptime(serverUptime)}`;
+}, 1000);
+
 // ========== 渲染 ==========
 function render() {
   const s = adminState;
@@ -322,12 +357,13 @@ function render() {
   renderPlayers(s.players, s.ranked_players);
 
   // 信息栏
-  document.getElementById('playerCount').textContent = Object.keys(s.players).length + ' 名选手';
-  document.getElementById('psCount').textContent = Object.keys(s.players).length;
+  const connected = Object.values(s.players).filter(p => p.connected).length;
+  document.getElementById('playerCount').textContent = connected + ' 名选手';
+  document.getElementById('psCount').textContent = connected;
   document.getElementById('infoBank').textContent = s.active_bank_name || '--';
-  document.getElementById('infoRound').textContent = s.round_num;
-  document.getElementById('infoProgress').textContent = s.used_count + '/' + s.total_questions;
+  document.getElementById('infoTotal').textContent = s.total_questions;
   document.getElementById('infoAnswered').textContent = s.used_count;
+  document.getElementById('infoUnanswered').textContent = s.total_questions - s.used_count;
 
   if (s.timer_remaining > 0) {
     document.getElementById('infoTimer').textContent = s.timer_remaining + 's';
@@ -347,29 +383,39 @@ function render() {
   const showAns = document.getElementById('sShowAns').checked;
   document.getElementById('qAnswer').style.display = showAns ? 'block' : 'none';
 
-  // 横幅
+  // 横幅（如果显示了答题记录则保留，不覆盖）
   const banner = document.getElementById('banner');
-  if (s.round_active) {
-    if (s.first_buzzer) {
-      banner.style.display = 'block';
-      banner.style.background = 'linear-gradient(135deg,#4CAF50,#66BB6A)';
-      banner.textContent = `🎉🎉🎉 [${s.first_buzzer}] 抢答成功！等待输入答案 ⏱ ${s.timer_remaining}s 🎉🎉🎉`;
-    } else {
-      banner.style.display = 'block';
-      banner.style.background = 'linear-gradient(135deg,#FF9800,#FFB74D)';
-      banner.textContent = `🟢 第 ${s.round_num} 轮抢答进行中...`;
+  if (banner.dataset.locked === '1') {
+    // 题目变化时才解锁（切换到下一题了）
+    if (typeof window._lastQuestionIdx === 'undefined') window._lastQuestionIdx = -1;
+    if (s.current_question_index !== window._lastQuestionIdx) {
+      banner.dataset.locked = '0';
     }
-  } else if (s.game_started && !s.game_over) {
-    banner.style.display = 'block';
-    banner.style.background = '#2a2a3e';
-    banner.style.color = '#888';
-    banner.textContent = '⏳ 等待开始抢答';
-  } else if (s.game_over) {
-    banner.style.display = 'block';
-    banner.style.background = 'linear-gradient(135deg,#9C27B0,#7B1FA2)';
-    banner.textContent = '🏁 比赛已结束';
-  } else {
-    banner.style.display = 'none';
+  }
+  window._lastQuestionIdx = s.current_question_index;
+  if (banner.dataset.locked !== '1') {
+    if (s.round_active) {
+      if (s.first_buzzer) {
+        banner.style.display = 'block';
+        banner.style.background = 'linear-gradient(135deg,#4CAF50,#66BB6A)';
+        banner.textContent = `🎉🎉🎉 [${s.first_buzzer}] 抢答成功！等待输入答案 ⏱ ${s.timer_remaining}s 🎉🎉🎉`;
+      } else {
+        banner.style.display = 'block';
+        banner.style.background = 'linear-gradient(135deg,#FF9800,#FFB74D)';
+        banner.textContent = `🟢 第 ${s.round_num} 轮抢答进行中...`;
+      }
+    } else if (s.game_started && !s.game_over) {
+      banner.style.display = 'block';
+      banner.style.background = '#2a2a3e';
+      banner.style.color = '#888';
+      banner.textContent = '⏳ 等待开始抢答';
+    } else if (s.game_over) {
+      banner.style.display = 'block';
+      banner.style.background = 'linear-gradient(135deg,#9C27B0,#7B1FA2)';
+      banner.textContent = '🏁 比赛已结束';
+    } else {
+      banner.style.display = 'none';
+    }
   }
 
   // 按钮状态
@@ -422,8 +468,8 @@ function render() {
     document.getElementById('sExtend').value = s.settings.extend_max;
     document.getElementById('sExtendSec').value = s.settings.extend_seconds;
     document.getElementById('sRepeat').checked = s.settings.allow_repeat;
-    document.getElementById('sRestartBtn').checked = true;
-    document.getElementById('sEndBtn').checked = true;
+    document.getElementById('sRestartBtn').checked = s.settings.show_restart_btn;
+    document.getElementById('sEndBtn').checked = s.settings.show_end_btn;
   }
 
   // 题库列表
@@ -432,7 +478,9 @@ function render() {
 
 function renderPlayers(players, ranked) {
   const el = document.getElementById('playerList');
-  const names = Object.keys(players);
+
+  // 只显示已连接的选手
+  const names = Object.keys(players).filter(n => players[n].connected);
   if (!names.length) {
     el.innerHTML = '<div style="color:#666;font-size:12px;padding:8px;text-align:center;">暂无选手连接</div>';
     return;
@@ -614,14 +662,41 @@ function saveSettings() {
       correct_points: parseInt(document.getElementById('sCorrect').value) || 10,
       wrong_points: parseInt(document.getElementById('sWrong').value) || 5,
       answer_timeout: parseInt(document.getElementById('sTimeout').value) || 15,
+      buzz_timeout: parseInt(document.getElementById('sBuzzTimeout').value) || 15,
       win_score: parseInt(document.getElementById('sWinScore').value) || 20,
       win_rank_count: parseInt(document.getElementById('sWinRank').value) || 3,
       allow_repeat: document.getElementById('sRepeat').checked,
       extend_max: parseInt(document.getElementById('sExtend').value) || 1,
       extend_seconds: parseInt(document.getElementById('sExtendSec').value) || 15,
+      show_restart_btn: document.getElementById('sRestartBtn').checked,
+      show_end_btn: document.getElementById('sEndBtn').checked,
     }
   });
   addLog('⚙ 设置已保存');
+}
+
+// ========== 重启服务 ==========
+function restartServer() {
+  if (!confirm('确定要重启服务吗？正在进行的比赛会被中断。')) return;
+  fetch('/api/restart', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      addLog('🔄 ' + (data.msg || '服务重启中...'));
+      if (ws) ws.close();
+    })
+    .catch(err => addLog('❌ 重启失败: ' + err));
+}
+
+// ========== 关闭服务 ==========
+function stopServer() {
+  if (!confirm('确定要关闭服务吗？所有连接会立即断开。')) return;
+  fetch('/api/stop', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      addLog('⏹ ' + (data.msg || '服务已关闭'));
+      if (ws) ws.close();
+    })
+    .catch(err => addLog('❌ 关闭失败: ' + err));
 }
 
 // ========== 页面切换 ==========

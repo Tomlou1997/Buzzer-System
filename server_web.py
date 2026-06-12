@@ -4,6 +4,7 @@
 import asyncio
 import json
 import os
+import sys
 import time
 import uuid
 from datetime import datetime
@@ -12,6 +13,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import subprocess
 from openpyxl import load_workbook
 
 def get_local_ip() -> str:
@@ -30,7 +32,7 @@ def get_local_ip() -> str:
 class Player:
     def __init__(self, name: str, websocket: WebSocket):
         self.name = name
-        self.ws = websocket
+        self.ws: WebSocket = websocket
         self.score = 0
         self.banned = False
         self.connected = True
@@ -76,9 +78,13 @@ class GameState:
         self.allow_repeat = False
         self.extend_max = 1
         self.extend_seconds = 15
+        self.buzz_timeout = 15  # 抢答等待秒数
+        self.show_restart_btn = False
+        self.show_end_btn = True
         self.auto_judge = True
         self.server_port = 8888
         self.server_host = get_local_ip()  # 自动获取本机局域网IP
+        self.start_time = time.time()  # 服务启动时间戳
         
         # 当前抢答者正在答题
         self.current_answerer: Optional[str] = None
@@ -171,6 +177,7 @@ async def send_admin_state(ws: Optional[WebSocket] = None):
     state = {
         "type": "admin_state",
         "players": {n: {"name": n, "score": p.score, "banned": p.banned, 
+                        "connected": p.connected,
                         "ranked": p.ranked, "rank": p.rank}
                     for n, p in game.players.items()},
         "game_started": game.game_started,
@@ -197,7 +204,10 @@ async def send_admin_state(ws: Optional[WebSocket] = None):
             "extend_max": game.extend_max,
             "extend_seconds": game.extend_seconds,
             "auto_judge": game.auto_judge,
-        }
+            "show_restart_btn": game.show_restart_btn,
+            "show_end_btn": game.show_end_btn,
+        },
+        "uptime": int(time.time() - game.start_time),  # 运行秒数
     }
     # 当前题目
     if 0 <= game.current_question_index < len(game.questions):
@@ -350,7 +360,7 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
         await send_admin_state()
         
         # 启动抢答等待超时（5秒无人抢答则结束本轮）
-        game.timer_remaining = 5  # 5秒抢答等待期
+        game.timer_remaining = game.buzz_timeout
         game.timer_task = asyncio.create_task(buzz_wait_timer())
     
     elif msg_type == "stop_round":
@@ -484,6 +494,9 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
         game.allow_repeat = s.get("allow_repeat", game.allow_repeat)
         game.extend_max = s.get("extend_max", game.extend_max)
         game.extend_seconds = s.get("extend_seconds", game.extend_seconds)
+        game.buzz_timeout = s.get("buzz_timeout", game.buzz_timeout)
+        game.show_restart_btn = s.get("show_restart_btn", game.show_restart_btn)
+        game.show_end_btn = s.get("show_end_btn", game.show_end_btn)
         game.auto_judge = s.get("auto_judge", game.auto_judge)
         await send_admin_state()
 
@@ -664,9 +677,7 @@ async def send_client_state(name: str):
         "round_active": game.round_active,
         "game_over": game.game_over,
         "can_buzz": game.round_active and game.first_buzzer is None and not p.banned and not p.ranked,
-        "can_extend": (game.current_answerer == name and p.extend_remaining > 0),
         "can_cheer": (game.current_answerer == name and p.extend_remaining > 0),
-        "extend_remaining": p.extend_remaining,
         "cheer_remaining": p.extend_remaining,
         "round_num": game.round_num,
         "players": {n: {"name": n, "score": pl.score, "banned": pl.banned}
@@ -745,6 +756,7 @@ async def handle_buzz(name: str):
     game.timer_remaining = game.answer_timeout
     game.timer_task = asyncio.create_task(answer_timer(name))
     
+    await send_client_state(name)
     await send_admin_state()
 
 
@@ -758,13 +770,54 @@ async def handle_answer(name: str, answer: str):
     # 自动判题
     idx = game.current_question_index
     correct = ""
+    options = []
     if 0 <= idx < len(game.questions):
-        correct = game.questions[idx].answer
+        q = game.questions[idx]
+        correct = q.answer
+        options = q.options or []
     
-    is_correct = (answer.upper() == correct.upper()) if answer else False
+    # 将选项索引转换为选项文本进行比对
+    display_answer = answer
+    if options and answer:
+        # 把 "0,1,2,3" 转成 "A,B,C,D" 或选项文本
+        try:
+            indices = [int(i.strip()) for i in answer.split(',') if i.strip().isdigit()]
+            option_texts = [options[i] for i in indices if 0 <= i < len(options)]
+            # 从选项文本中提取字母前缀（如 "A. xxx" -> "A"）
+            letters = []
+            for t in option_texts:
+                t = t.strip()
+                if t and (t[0].isalpha() and (len(t) == 1 or t[1] in '. )）')):
+                    letters.append(t[0].upper())
+            if letters:
+                display_answer = ''.join(letters)
+            else:
+                display_answer = ','.join(option_texts)
+        except (ValueError, IndexError):
+            display_answer = answer
+    
+    is_correct = (display_answer.upper() == correct.upper()) if display_answer else False
+    is_timeout = not answer  # 提前定义，后面多个地方使用
     
     if game.auto_judge:
         p = game.players[name]
+
+        # 通知管理端答题记录
+        points_change = 0
+        if is_correct:
+            points_change = game.correct_points
+        elif not is_timeout and not is_correct:
+            points_change = -game.wrong_points
+        
+        await broadcast_to_admin({
+            "type": "answer_received",
+            "name": name,
+            "answer": display_answer,
+            "correct": correct,
+            "is_correct": is_correct,
+            "points": points_change,
+        })
+
         if is_correct:
             if not p.ranked:
                 p.score += game.correct_points
@@ -774,7 +827,7 @@ async def handle_answer(name: str, answer: str):
                 "correct": True,
                 "points": game.correct_points,
                 "new_score": p.score,
-                "answer": answer,
+                "answer": display_answer,
                 "correct_answer": correct,
             })
             # 通知其他选手
@@ -784,23 +837,36 @@ async def handle_answer(name: str, answer: str):
                 "result": "correct",
                 "score": p.score,
                 "msg": f"✅ [{name}] 答对 +{game.correct_points}分",
-                "answer": answer,
+                "answer": display_answer,
                 "correct": correct,
             }, exclude=[name])
             await check_winner(name)
         else:
+            # 区分超时和答错（is_timeout 已在前面定义）
             if not p.ranked:
-                p.score = max(0, p.score - game.wrong_points)
+                if not is_timeout:
+                    p.score = p.score - game.wrong_points
             # 通知抢答者
-            await send_to_player(name, {
-                "type": "answer_result",
-                "correct": False,
-                "points": -game.wrong_points,
-                "new_score": p.score,
-                "msg": f"回答错误 -{game.wrong_points}分",
-                "answer": answer,
-                "correct_answer": correct,
-            })
+            if is_timeout:
+                await send_to_player(name, {
+                    "type": "answer_result",
+                    "correct": False,
+                    "points": 0,
+                    "new_score": p.score,
+                    "msg": "⌛ 回答超时",
+                    "answer": display_answer,
+                    "correct_answer": correct,
+                })
+            else:
+                await send_to_player(name, {
+                    "type": "answer_result",
+                    "correct": False,
+                    "points": -game.wrong_points,
+                    "new_score": p.score,
+                    "msg": f"回答错误 -{game.wrong_points}分",
+                    "answer": display_answer,
+                    "correct_answer": correct,
+                })
             # 通知其他选手
             await broadcast_to_players({
                 "type": "result",
@@ -808,7 +874,7 @@ async def handle_answer(name: str, answer: str):
                 "result": "wrong",
                 "score": p.score,
                 "msg": f"❌ [{name}] 答错 -{game.wrong_points}分",
-                "answer": answer,
+                "answer": display_answer,
                 "correct": correct,
             }, exclude=[name])
         
@@ -870,13 +936,11 @@ async def answer_timer(name: str):
             await asyncio.sleep(1)
             game.timer_remaining -= 1
             
-            # 每5秒广播剩余时间
-            if game.timer_remaining % 5 == 0 or game.timer_remaining <= 3:
-                await send_to_player(name, {
-                    "type": "timer_tick",
-                    "remaining": game.timer_remaining
-                })
-                await send_admin_state()
+            await send_to_player(name, {
+                "type": "timer_tick",
+                "remaining": game.timer_remaining
+            })
+            await send_admin_state()
         
         # 超时
         if game.current_answerer == name:
@@ -935,6 +999,24 @@ async def buzz_wait_timer():
 # ==================== 题库上传 ====================
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.post("/api/restart")
+async def restart_server():
+    """重启服务"""
+    await broadcast_to_admin({"type": "restarting", "msg": "服务正在重启..."})
+    await broadcast_to_players({"type": "restarting", "msg": "服务正在重启，请稍后重新连接..."})
+    await asyncio.sleep(0.5)
+    python = sys.executable
+    script = os.path.abspath(__file__)
+    subprocess.Popen([python, script], cwd=os.path.dirname(script))
+    os._exit(0)
+
+@app.post("/api/stop")
+async def stop_server():
+    """关闭服务"""
+    await broadcast_to_admin({"type": "restarting", "msg": "服务已关闭"})
+    await asyncio.sleep(0.3)
+    os._exit(0)
 
 @app.post("/api/upload")
 async def upload_bank(file: UploadFile = File(...)):
