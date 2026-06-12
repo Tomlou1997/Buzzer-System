@@ -314,12 +314,12 @@ function connect() {
       addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
     } else if (msg.type === 'cheer_used') {
       addLog(`📣 [${msg.name}] 使用了啦啦队 +${msg.added}秒，剩余 ${msg.remaining}秒`);
+      // 横幅显示啦啦队信息，不锁定让timer继续刷新
       const banner = document.getElementById('banner');
       banner.style.display = 'block';
       banner.style.background = 'linear-gradient(135deg,#2a1a4a,#3a2a6a)';
       banner.style.color = '#FF9800';
-      banner.innerHTML = `📣 <b>${msg.name}</b> 使用啦啦队 +${msg.added}秒，剩余 ${msg.remaining}秒`;
-      banner.dataset.locked = '1';
+      banner.innerHTML = `📣 <b>${msg.name}</b> 使用啦啦队 +${msg.added}秒`;
     } else if (msg.type === 'player_joined') {
       addLog(`✅ 选手 [${msg.name}] 加入`);
     } else if (msg.type === 'player_left') {
