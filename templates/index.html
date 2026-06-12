@@ -765,7 +765,7 @@ function refreshScoreboardFull() {
   const rankMap = {};
   for (const r of ranked) rankMap[r.name] = r;
 
-  const names = Object.keys(players).sort((a, b) => {
+  const names = Object.keys(players).filter(n => players[n].connected).sort((a, b) => {
     const ra = rankMap[a] ? rankMap[a].rank : 999;
     const rb = rankMap[b] ? rankMap[b].rank : 999;
     if (ra !== rb) return ra - rb;
