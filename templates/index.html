@@ -304,11 +304,13 @@ let logLines = [];
 
 function connect() {
   // 使用当前页面 host 连接 WebSocket
+  window._stopReconnect = false;
   ws = new WebSocket(`ws://${location.host}/ws/admin`);
 
   ws.onmessage = function(e) {
     const msg = JSON.parse(e.data);
     if (msg.type === 'admin_state') {
+      window._stopReconnect = false;
       adminState = msg;
       if (msg.uptime) {
         serverUptime = msg.uptime;
@@ -318,6 +320,17 @@ function connect() {
       render();
     } else if (msg.type === 'error') {
       addLog('⚠️ ' + msg.msg);
+      // 显示在横幅上
+      const banner = document.getElementById('banner');
+      banner.style.display = 'block';
+      banner.style.background = '#4a1a1a';
+      banner.style.color = '#f44336';
+      banner.textContent = '⚠️ ' + msg.msg;
+      banner.dataset.locked = '0';
+      // 管理端已满，不重连
+      if (msg.msg && msg.msg.includes('已有管理端')) {
+        window._stopReconnect = true;
+      }
     } else if (msg.type === 'answer_received') {
       const icon = msg.is_correct ? '✅' : '❌';
       const pts = msg.points || 0;
@@ -350,7 +363,9 @@ function connect() {
   ws.onclose = function() {
     document.getElementById('serverDot').className = 'dot red';
     document.getElementById('serverStatus').textContent = '已断开';
-    setTimeout(connect, 2000);
+    if (!window._stopReconnect) {
+      setTimeout(connect, 2000);
+    }
   };
 }
 
