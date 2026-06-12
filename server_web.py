@@ -495,6 +495,9 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
                 "score": game.players[name].score,
                 "msg": f"📝 [{name}] 分数已设置为 {game.players[name].score}"
             })
+            # 检查是否达到获胜积分
+            if game.game_started:
+                await check_winner(name)
             await send_admin_state()
     
     elif msg_type == "toggle_ban":
