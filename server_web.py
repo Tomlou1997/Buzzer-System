@@ -927,6 +927,14 @@ async def handle_extend(name: str):
     p.extend_remaining -= 1
     game.timer_remaining += game.extend_seconds
     
+    # 通知管理端
+    await broadcast_to_admin({
+        "type": "cheer_used",
+        "name": name,
+        "added": game.extend_seconds,
+        "remaining": game.timer_remaining,
+    })
+    
     await broadcast_to_players({
         "type": "extend_broadcast",
         "name": name,

@@ -312,6 +312,8 @@ function connect() {
       }
       banner.dataset.locked = '1';
       addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
+    } else if (msg.type === 'cheer_used') {
+      addLog(`📣 [${msg.name}] 使用了啦啦队 +${msg.added}秒，剩余 ${msg.remaining}秒`);
     } else if (msg.type === 'player_joined') {
       addLog(`✅ 选手 [${msg.name}] 加入`);
     } else if (msg.type === 'player_left') {
