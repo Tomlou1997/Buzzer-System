@@ -299,12 +299,17 @@ function connect() {
       const icon = msg.is_correct ? '✅' : '❌';
       const pts = msg.points || 0;
       const ptsText = pts > 0 ? `+${pts}分` : pts < 0 ? `${pts}分` : '';
+      const isTimeout = msg.answer && msg.answer.includes('超时');
       // 在横幅区显示答题记录，并标记不被覆盖
       const banner = document.getElementById('banner');
       banner.style.display = 'block';
       banner.style.background = msg.is_correct ? 'linear-gradient(135deg,#1a4a1a,#2a6a2a)' : 'linear-gradient(135deg,#4a1a1a,#6a2a2a)';
       banner.style.color = msg.is_correct ? '#4CAF50' : '#f44336';
-      banner.innerHTML = `${icon} <b>${msg.name}</b> 答案: ${msg.answer} | 正确答案: <b>${msg.correct}</b> ${ptsText ? '(' + ptsText + ')' : ''}`;
+      if (isTimeout) {
+        banner.innerHTML = `⏰ <b>${msg.name}</b> ${msg.answer} ${ptsText} | 正确答案: <b>${msg.correct}</b>`;
+      } else {
+        banner.innerHTML = `${icon} <b>${msg.name}</b> 答案: ${msg.answer} | 正确答案: <b>${msg.correct}</b> ${ptsText ? '(' + ptsText + ')' : ''}`;
+      }
       banner.dataset.locked = '1';
       addLog(`${icon} ${msg.name} 答案: ${msg.answer} | 正确答案: ${msg.correct} ${ptsText}`);
     } else if (msg.type === 'player_joined') {
