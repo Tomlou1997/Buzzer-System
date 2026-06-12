@@ -379,9 +379,12 @@ function render() {
     document.getElementById('answerText').textContent = q.answer;
   }
 
-  // 显示答案
-  const showAns = document.getElementById('sShowAns').checked;
-  document.getElementById('qAnswer').style.display = showAns ? 'block' : 'none';
+  // 显示答案（仅在初始时应用设置，之后由用户手动切换）
+  if (!window._ansInitDone) {
+    const showAns = document.getElementById('sShowAns')?.checked ?? false;
+    document.getElementById('qAnswer').style.display = showAns ? 'block' : 'none';
+    window._ansInitDone = true;
+  }
 
   // 横幅（如果显示了答题记录则保留，不覆盖）
   const banner = document.getElementById('banner');
