@@ -158,6 +158,22 @@ admin_connections: set[WebSocket] = set()
 @app.websocket("/ws/admin")
 async def admin_websocket(websocket: WebSocket):
     await websocket.accept()
+    
+    # 清理已断开的连接，只保留活跃的
+    dead = set()
+    for w in admin_connections:
+        try:
+            await asyncio.wait_for(w.send_text(json.dumps({"type": "ping"})), timeout=1)
+        except:
+            dead.add(w)
+    admin_connections.difference_update(dead)
+    
+    # 只允许一个管理端
+    if admin_connections:
+        await websocket.send_text(json.dumps({"type": "error", "msg": "已有管理端连接"}))
+        await websocket.close()
+        return
+    
     admin_connections.add(websocket)
     try:
         # 发送初始状态
