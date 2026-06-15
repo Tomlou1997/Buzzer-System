@@ -434,6 +434,11 @@ function render() {
     document.getElementById('qType').textContent = '📝 ' + (q.type || '题目');
     document.getElementById('qText').innerHTML = q.question + (q.options && q.options.length ? '<br><br>' + q.options.join('<br>') : '');
     document.getElementById('answerText').textContent = q.answer;
+  } else if (s.game_started && !s.game_over) {
+    // 比赛已开始但未切题，显示准备页
+    document.getElementById('qType').textContent = '🏁 比赛准备';
+    document.getElementById('qText').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:64px;margin-bottom:8px;">⚡</div><div style="font-size:28px;color:#FF9800;font-weight:700;">比赛即将开始</div><div style="font-size:16px;color:#666;margin-top:12px;">点击「▶ 下一题」显示第一题</div></div>';
+    document.getElementById('answerText').textContent = '';
   }
 
   // 显示答案按钮（由设置控制是否可见）
@@ -445,6 +450,11 @@ function render() {
   if (!window._ansInitDone) {
     document.getElementById('qAnswer').style.display = sShowAnsChecked ? 'block' : 'none';
     window._ansInitDone = true;
+  }
+  // 准备页时隐藏答案
+  if (!s.current_question && s.game_started && !s.game_over) {
+    document.getElementById('qAnswer').style.display = 'none';
+    document.getElementById('showAnswerBtn').style.display = 'none';
   }
 
   // 横幅（如果显示了答题记录则保留，不覆盖）

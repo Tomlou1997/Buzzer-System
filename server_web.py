@@ -346,7 +346,7 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
         game.game_over = False
         game.round_num = 0
         game.ranked_players = []
-        game.current_question_index = 0  # 从第一题开始
+        game.current_question_index = -1  # 比赛开始时不显示题目，等管理员切题
         for q in game.questions:
             q.used = False
         # 重置选手分数和排名
@@ -370,7 +370,10 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
     
     elif msg_type == "next_question":
         if game.current_question_index < len(game.questions) - 1:
-            game.current_question_index += 1
+            if game.current_question_index < 0:
+                game.current_question_index = 0
+            else:
+                game.current_question_index += 1
             await send_admin_state()
             # 如果比赛已开始，同步新题目给所有选手
             if game.game_started:
