@@ -629,24 +629,8 @@ function showResult(s) {
   const podium = document.getElementById('podiumDiv');
   const medals = {1:'🥇',2:'🥈',3:'🥉'};
 
-  // 合并排名数据和 clientState 里的选手列表，确保不漏人
-  let rankings = s.rankings || s.ranked_players || [];
-  const seen = new Set(rankings.map(r => r.name));
-  // 只添加当前在线的选手
-  if (clientState && clientState.players) {
-    for (const [name, p] of Object.entries(clientState.players)) {
-      if (!seen.has(name) && p.connected !== false) {
-        rankings.push({name: name, score: p.score, rank: 0});
-      }
-    }
-  }
-  // 同时过滤掉 rankings 中断开连接的选手
-  if (clientState && clientState.players) {
-    rankings = rankings.filter(r => {
-      const cp = clientState.players[r.name];
-      return !cp || cp.connected !== false;
-    });
-  }
+  // 直接使用服务端排名数据（已过滤离线选手）
+  const rankings = s.rankings || s.ranked_players || [];
   // 按分数降序排列
   rankings.sort((a, b) => b.score - a.score);
 
