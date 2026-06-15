@@ -628,7 +628,19 @@ function showResult(s) {
   document.getElementById('resultOverlay').classList.add('show');
   const podium = document.getElementById('podiumDiv');
   const medals = {1:'🥇',2:'🥈',3:'🥉'};
-  const rankings = s.rankings || s.ranked_players || [];
+
+  // 合并排名数据和 clientState 里的选手列表，确保不漏人
+  let rankings = s.rankings || s.ranked_players || [];
+  const seen = new Set(rankings.map(r => r.name));
+  if (clientState && clientState.players) {
+    for (const [name, p] of Object.entries(clientState.players)) {
+      if (!seen.has(name)) {
+        rankings.push({name: name, score: p.score, rank: 0});
+      }
+    }
+  }
+  // 按分数降序排列
+  rankings.sort((a, b) => b.score - a.score);
 
   // 领奖台（前三）
   podium.innerHTML = rankings.slice(0, 3).map(r => `

@@ -670,7 +670,6 @@ def get_rankings():
     result = []
     for r in ranked:
         result.append({"name": r[0], "score": r[1], "rank": r[2]})
-    # 未排名选手排在后面
     for u in unranked:
         result.append({"name": u[0], "score": u[1], "rank": 0})
     return result
