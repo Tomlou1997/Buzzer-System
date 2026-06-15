@@ -617,7 +617,7 @@ async def activate_bank(name: str):
         )
         game.questions.append(q)
     if game.questions:
-        game.current_question_index = 0
+        game.current_question_index = -1  # 不自动显示第一题
     await send_admin_state()
 
 async def end_round():

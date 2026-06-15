@@ -439,6 +439,11 @@ function render() {
     document.getElementById('qType').textContent = '🏁 比赛准备';
     document.getElementById('qText').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:64px;margin-bottom:8px;">⚡</div><div style="font-size:28px;color:#FF9800;font-weight:700;">比赛即将开始</div><div style="font-size:16px;color:#666;margin-top:12px;">点击「▶ 下一题」显示第一题</div></div>';
     document.getElementById('answerText').textContent = '';
+  } else if (s.total_questions > 0 && !s.game_started) {
+    // 已导入题库但未开始比赛
+    document.getElementById('qType').textContent = '🏁 准备就绪';
+    document.getElementById('qText').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:64px;margin-bottom:8px;">📋</div><div style="font-size:28px;color:#0078d4;font-weight:700;">题库已加载</div><div style="font-size:16px;color:#666;margin-top:12px;">点击「🏁 开始比赛」进入比赛</div></div>';
+    document.getElementById('answerText').textContent = '';
   }
 
   // 显示答案按钮（由设置控制是否可见）
@@ -452,7 +457,7 @@ function render() {
     window._ansInitDone = true;
   }
   // 准备页时隐藏答案
-  if (!s.current_question && s.game_started && !s.game_over) {
+  if (!s.current_question) {
     document.getElementById('qAnswer').style.display = 'none';
     document.getElementById('showAnswerBtn').style.display = 'none';
   }
