@@ -663,9 +663,9 @@ async def check_winner(name: str):
     await send_admin_state()
 
 def get_rankings():
-    """获取排名列表"""
+    """获取排名列表（仅包含在线选手）"""
     ranked = [(r[0], r[1], r[2]) for r in game.ranked_players]
-    unranked = [(n, p.score) for n, p in game.players.items() if not p.ranked]
+    unranked = [(n, p.score) for n, p in game.players.items() if not p.ranked and p.connected]
     unranked.sort(key=lambda x: x[1], reverse=True)
     result = []
     for r in ranked:
