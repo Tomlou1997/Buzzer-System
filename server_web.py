@@ -113,6 +113,11 @@ app = FastAPI(title="抢答系统")
 # 静态文件
 os.makedirs("templates", exist_ok=True)
 
+@app.get("/ping")
+async def ping():
+    """极简测试端点"""
+    return HTMLResponse("pong")
+
 @app.get("/")
 async def root():
     """根路径重定向"""
