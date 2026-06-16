@@ -140,7 +140,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .scoreboard-full .sbf-row{display:flex;align-items:center;padding:18px 16px;border-bottom:1px solid #1a1a2e;font-size:28px;}
 .scoreboard-full .sbf-rank{width:60px;text-align:center;font-size:34px;}
 .scoreboard-full .sbf-name{flex:1;font-weight:600;font-size:30px;}
-.scoreboard-full .sbf-status{font-size:28px;margin-right:16px;}
 .scoreboard-full .sbf-score{font-weight:700;font-size:32px;min-width:100px;text-align:right;}
 .scoreboard-full .sbf-gold{color:#FFD700;}
 .scoreboard-full .sbf-silver{color:#C0C0C0;}
@@ -806,11 +805,9 @@ function refreshScoreboardFull() {
     const p = players[name];
     const cls = i === 0 ? 'sbf-gold' : i === 1 ? 'sbf-silver' : i === 2 ? 'sbf-bronze' : '';
     const icon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-    const status = p.connected ? '🟢' : '⚫';
     return `<div class="sbf-row" style="${p.connected?'':'opacity:.5;'}">
       <span class="sbf-rank ${cls}">${icon}</span>
       <span class="sbf-name">${name}</span>
-      <span class="sbf-status">${status}</span>
       <span class="sbf-score ${cls}">${p.score}分</span>
     </div>`;
   }).join('');
