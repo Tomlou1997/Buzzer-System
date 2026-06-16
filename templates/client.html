@@ -96,6 +96,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .countdown-label{font-size:13px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
 .countdown-num{font-size:96px;font-weight:900;color:#FF9800;line-height:1;font-variant-numeric:tabular-nums;}
 .countdown-box.urgent .countdown-num{color:#f44336;}
+.countdown-cheer{display:block;width:100%;margin-top:20px;padding:8px 12px;background:rgba(255,152,0,.15);border:1px solid rgba(255,152,0,.3);border-radius:8px;color:#FF9800;font-size:14px;cursor:pointer;transition:.2s;}
+.countdown-cheer:hover{background:rgba(255,152,0,.25);}
+.countdown-cheer:disabled{opacity:.4;cursor:not-allowed;}
 @keyframes countdownBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 
 /* 答案输入 */
@@ -222,6 +225,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     <div class="countdown-box" id="countdownBox">
       <div class="countdown-label">答题倒计时</div>
       <div class="countdown-num" id="countdownNum">15</div>
+      <button class="countdown-cheer" id="cheerBtn2" onclick="useCheer()">📣 啦啦队 (+15s)</button>
     </div>
 
     <!-- 啦啦队 -->
@@ -380,6 +384,8 @@ function handleMsg(msg) {
         startAnswerTimer(msg.time_remaining);
         document.getElementById('cheerBtn').disabled = true;
         document.getElementById('cheerBtn').textContent = '📣 已使用';
+        document.getElementById('cheerBtn2').disabled = true;
+        document.getElementById('cheerBtn2').textContent = '📣 已使用';
       } else {
         showBuzzerResult('fail', msg.msg);
       }
@@ -606,6 +612,9 @@ function useCheer() {
   send({type: 'cheer'});
   document.getElementById('cheerBtn').disabled = true;
   document.getElementById('cheerBtn').textContent = '📣 已发送';
+  const cb2 = document.getElementById('cheerBtn2');
+  cb2.disabled = true;
+  cb2.textContent = '📣 已发送';
 }
 
 function startAnswerTimer(seconds) {
