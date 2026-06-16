@@ -82,7 +82,7 @@ class GameState:
         self.show_restart_btn = False
         self.show_end_btn = True
         self.auto_judge = True
-        self.server_port = 8888
+        self.server_port = 6323
         self.server_host = get_local_ip()  # 自动获取本机局域网IP
         self.start_time = time.time()  # 服务启动时间戳
         
