@@ -1,8 +1,0 @@
-# 抢答软件 - 抢答题目的临时文件
-__pycache__/
-*.pyc
-*.pyo
-.DS_Store
-Thumbs.db
-.idea/
-~$*.xlsx
