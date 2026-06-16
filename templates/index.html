@@ -788,11 +788,8 @@ function refreshScoreboardFull() {
   const rankMap = {};
   for (const r of ranked) rankMap[r.name] = r;
 
-  // 显示所有选手，在线排前面，再按排名和分数
+  // 按排名和分数排序，不区分在线离线
   const allNames = Object.keys(players).sort((a, b) => {
-    const ca = players[a].connected ? 1 : 0;
-    const cb = players[b].connected ? 1 : 0;
-    if (ca !== cb) return cb - ca;
     const ra = rankMap[a] ? rankMap[a].rank : 999;
     const rb = rankMap[b] ? rankMap[b].rank : 999;
     if (ra !== rb) return ra - rb;
