@@ -463,7 +463,10 @@ function renderClientState(s) {
   // 状态指示
   if (s.game_over) {
     setStatus('purple', '比赛已结束', 'purple');
-    showResult(s);
+    // 只在首次时显示结果（game_over消息已触发过）
+    if (!document.getElementById('resultOverlay').classList.contains('show')) {
+      showResult(s);
+    }
     return;
   }
 
@@ -669,13 +672,12 @@ function showResult(s) {
   const podium = document.getElementById('podiumDiv');
   const medals = {1:'🥇',2:'🥈',3:'🥉'};
 
-  // 直接使用服务端排名数据（已过滤离线选手）
+  // 直接使用服务端排名数据，保持和积分榜一致
   const rankings = s.rankings || s.ranked_players || [];
-  // 按分数降序排列
-  rankings.sort((a, b) => b.score - a.score);
 
-  // 领奖台（前三）
-  podium.innerHTML = rankings.slice(0, 3).map(r => `
+  // 领奖台（前三名）
+  const top3 = rankings.filter(r => r.rank >= 1 && r.rank <= 3).sort((a, b) => a.rank - b.rank);
+  podium.innerHTML = top3.map(r => `
     <div class="podium-item">
       <div class="medal">${medals[r.rank] || r.rank}</div>
       <div class="pname">${r.name}</div>
@@ -683,13 +685,15 @@ function showResult(s) {
     </div>
   `).join('');
 
-  // 完整排名表
+  // 完整排名表（保持服务端顺序）
   const table = document.getElementById('resultTable');
   table.innerHTML = rankings.map((r, i) => {
-    const cls = i === 0 ? 'rt-gold' : i === 1 ? 'rt-silver' : i === 2 ? 'rt-bronze' : '';
+    const isTop3 = r.rank >= 1 && r.rank <= 3;
+    const cls = r.rank === 1 ? 'rt-gold' : r.rank === 2 ? 'rt-silver' : r.rank === 3 ? 'rt-bronze' : '';
     const me = r.name === myName ? ' rt-me' : '';
+    const rankIcon = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : (i+1);
     return `<div class="rt-row${me}">
-      <span class="rt-rank ${cls}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</span>
+      <span class="rt-rank ${cls}">${rankIcon}</span>
       <span class="rt-name">${r.name}</span>
       <span class="rt-score ${cls}">${r.score}分</span>
     </div>`;
