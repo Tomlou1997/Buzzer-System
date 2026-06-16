@@ -588,7 +588,8 @@ function renderPlayers(players, ranked) {
   // 显示所有选手（含离线）
   const allNames = Object.keys(players);
   const onlineCount = allNames.filter(n => players[n].connected).length;
-  document.getElementById('psCount').textContent = onlineCount + '/' + allNames.length;
+  const offlineCount = allNames.length - onlineCount;
+  document.getElementById('psCount').innerHTML = '<span style="color:#4CAF50;">🟢' + onlineCount + '</span> <span style="color:#666;">⚫' + offlineCount + '</span>';
 
   if (!allNames.length) {
     el.innerHTML = '<div style="color:#666;font-size:12px;padding:8px;text-align:center;">暂无选手连接</div>';
@@ -601,11 +602,8 @@ function renderPlayers(players, ranked) {
     rankMap[r.name] = r;
   }
 
-  // 排序：在线优先，已排名按名次，其余按分数
+  // 排序：纯按排名和分数
   const sorted = allNames.sort((a, b) => {
-    const ca = players[a].connected ? 1 : 0;
-    const cb = players[b].connected ? 1 : 0;
-    if (ca !== cb) return cb - ca;  // 在线排前面
     const ra = rankMap[a] ? rankMap[a].rank : 999;
     const rb = rankMap[b] ? rankMap[b].rank : 999;
     if (ra !== rb) return ra - rb;
