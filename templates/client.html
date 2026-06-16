@@ -389,6 +389,15 @@ function handleMsg(msg) {
       showResult(msg);
       break;
 
+    case 'scores_reset':
+      myScore = 0;
+      myRank = 0;
+      myRanked = false;
+      document.getElementById('myScore').textContent = 0;
+      document.getElementById('wonOverlay').classList.remove('show');
+      setStatus('green', '已连接', 'green');
+      break;
+
     case 'rank_locked':
       if (msg.name === myName) {
         myRank = msg.rank;
