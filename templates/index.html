@@ -805,7 +805,7 @@ function refreshScoreboardFull() {
     const p = players[name];
     const cls = i === 0 ? 'sbf-gold' : i === 1 ? 'sbf-silver' : i === 2 ? 'sbf-bronze' : '';
     const icon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-    return `<div class="sbf-row" style="${p.connected?'':'opacity:.5;'}">
+    return `<div class="sbf-row">
       <span class="sbf-rank ${cls}">${icon}</span>
       <span class="sbf-name">${name}</span>
       <span class="sbf-score ${cls}">${p.score}分</span>
