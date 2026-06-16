@@ -110,13 +110,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .answer-box .actions{display:flex;gap:6px;}
 .answer-box .actions .btn{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
 
-/* 啦啦队 */
-.cheer-bar{display:none;justify-content:center;margin-top:4px;}
-.cheer-bar.show{display:flex;}
-.cheer-btn{padding:10px 24px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;}
-.cheer-btn:disabled{opacity:.4;cursor:not-allowed;}
-.cheer-btn:not(:disabled):active{transform:scale(.95);}
-
 /* 比赛结果 */
 .result-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;}
 .result-overlay.show{display:flex;}
@@ -228,12 +221,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
       <div class="countdown-num" id="countdownNum">15</div>
     </div>
     <!-- 啦啦队按钮（倒计时框下方） -->
-    <button class="countdown-cheer" id="cheerBtn2" onclick="useCheer()">📣 啦啦队 (+15s)</button>
-
-    <!-- 啦啦队 -->
-    <div class="cheer-bar" id="cheerBar">
-      <button class="cheer-btn" id="cheerBtn" onclick="useCheer()">📣 啦啦队 (+15s)</button>
-    </div>
+    <button class="countdown-cheer" id="cheerBtn" onclick="useCheer()">📣 啦啦队 (+15s)</button>
   </div>
 
   <!-- 比赛结果 -->
@@ -354,7 +342,7 @@ function handleMsg(msg) {
       clearTimeout(answerTimeout);
       clearInterval(answerTimerInterval);
       document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
       document.getElementById('submitAnsBtn').style.display = 'none';
       if (msg.correct) {
         showBuzzerResult('success', '✅ 回答正确！+' + msg.points + '分');
@@ -376,10 +364,9 @@ function handleMsg(msg) {
       clearInterval(answerTimerInterval);
       document.getElementById('submitAnsBtn').style.display = 'none';
       document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
       document.getElementById('buzzerWrap').classList.remove('show');
       document.getElementById('questionCard').classList.remove('show');
-      document.getElementById('cheerBar').classList.remove('show');
       break;
 
     case 'extend_result':
@@ -388,8 +375,6 @@ function handleMsg(msg) {
         startAnswerTimer(msg.time_remaining);
         document.getElementById('cheerBtn').disabled = true;
         document.getElementById('cheerBtn').textContent = '📣 已使用';
-        document.getElementById('cheerBtn2').disabled = true;
-        document.getElementById('cheerBtn2').textContent = '📣 已使用';
       } else {
         showBuzzerResult('fail', msg.msg);
       }
@@ -420,7 +405,7 @@ function handleMsg(msg) {
       document.getElementById('scoreCard').classList.remove('show');
       document.getElementById('submitAnsBtn').style.display = 'none';
       document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
       document.getElementById('buzzerResult').classList.remove('show');
       document.getElementById('buzzerWrap').classList.remove('show');
       document.getElementById('questionCard').classList.remove('show');
@@ -447,10 +432,9 @@ function renderClientState(s) {
     document.getElementById('wonScore').textContent = `${myScore} 分`;
     document.getElementById('buzzerWrap').classList.remove('show');
     document.getElementById('questionCard').classList.remove('show');
-    document.getElementById('cheerBar').classList.remove('show');
     document.getElementById('buzzerResult').classList.remove('show');
     document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
     document.getElementById('submitAnsBtn').style.display = 'none';
     clearInterval(answerTimerInterval);
     clearTimeout(answerTimeout);
@@ -496,7 +480,7 @@ function renderClientState(s) {
     if (currentQuestionId !== q.question) {
       document.getElementById('buzzerResult').classList.remove('show', 'success', 'fail', 'too_late');
       document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
     }
     currentQuestionId = q.question;
     document.getElementById('questionCard').classList.add('show');
@@ -526,7 +510,7 @@ function renderClientState(s) {
   if (s.can_buzz && !s.game_over) {
     document.getElementById('buzzerResult').classList.remove('show', 'success', 'fail', 'too_late');
     document.getElementById('countdownBox').className = 'countdown-box';
-      document.getElementById('cheerBtn2').className = 'countdown-cheer';
+      document.getElementById('cheerBtn').className = 'countdown-cheer';
     document.getElementById('buzzerWrap').classList.add('show');
     document.getElementById('buzzerBtn').disabled = false;
     document.getElementById('buzzerBtn').innerHTML = '🔔<span class="sub">抢答</span>';
@@ -548,11 +532,9 @@ function renderClientState(s) {
 
   // 啦啦队（延长时间）
   if (s.can_cheer && s.cheer_remaining > 0) {
-    document.getElementById('cheerBar').classList.add('show');
     document.getElementById('cheerBtn').disabled = false;
     document.getElementById('cheerBtn').textContent = `📣 啦啦队 (剩余${s.cheer_remaining}次)`;
   } else {
-    document.getElementById('cheerBar').classList.remove('show');
   }
 }
 
@@ -620,9 +602,6 @@ function useCheer() {
   send({type: 'cheer'});
   document.getElementById('cheerBtn').disabled = true;
   document.getElementById('cheerBtn').textContent = '📣 已发送';
-  const cb2 = document.getElementById('cheerBtn2');
-  cb2.disabled = true;
-  cb2.textContent = '📣 已发送';
 }
 
 function startAnswerTimer(seconds) {
@@ -631,7 +610,7 @@ function startAnswerTimer(seconds) {
   const btn = document.getElementById('submitAnsBtn');
   const cd = document.getElementById('countdownBox');
   const cdNum = document.getElementById('countdownNum');
-  const cb2 = document.getElementById('cheerBtn2');
+  const cb2 = document.getElementById('cheerBtn');
   btn.textContent = `✅ 提交答案 (${seconds}s)`;
   cdNum.textContent = seconds;
   cd.className = 'countdown-box show' + (seconds <= 5 ? ' urgent' : '');
@@ -714,7 +693,6 @@ function showWonOverlay(rank) {
   // 隐藏正常游戏UI
   document.getElementById('buzzerWrap').classList.remove('show');
   document.getElementById('questionCard').classList.remove('show');
-  document.getElementById('cheerBar').classList.remove('show');
   document.getElementById('buzzerResult').classList.remove('show');
   document.getElementById('submitAnsBtn').style.display = 'none';
   clearInterval(answerTimerInterval);
