@@ -90,11 +90,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .buzzer-result.too-late{background:linear-gradient(135deg,rgba(255,152,0,0.2),rgba(255,152,0,0.1));border:1px solid rgba(255,152,0,0.3);color:#FF9800;}
 
 /* 倒计时框（左上角固定） */
-.countdown-box{display:none;position:fixed;top:20px;left:20px;z-index:999;background:#1a1a2e;border:2px solid #FF9800;border-radius:14px;padding:14px 20px;text-align:center;min-width:110px;box-shadow:0 4px 24px rgba(255,152,0,0.3);}
+.countdown-box{display:none;position:fixed;top:20px;left:20px;z-index:999;background:#1a1a2e;border:2px solid #FF9800;border-radius:14px;padding:16px 24px;text-align:center;min-width:140px;box-shadow:0 4px 24px rgba(255,152,0,0.3);}
 .countdown-box.show{display:block;}
 .countdown-box.urgent{border-color:#f44336;box-shadow:0 4px 24px rgba(244,67,54,0.4);animation:countdownBeat .5s infinite;}
-.countdown-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
-.countdown-num{font-size:48px;font-weight:900;color:#FF9800;line-height:1;font-variant-numeric:tabular-nums;}
+.countdown-label{font-size:13px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
+.countdown-num{font-size:96px;font-weight:900;color:#FF9800;line-height:1;font-variant-numeric:tabular-nums;}
 .countdown-box.urgent .countdown-num{color:#f44336;}
 @keyframes countdownBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 
