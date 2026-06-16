@@ -478,13 +478,14 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
             pts = msg.get("points", 5)
             p = game.players[name]
             if not p.ranked:
-                p.score = max(0, p.score - pts)
+                p.score = p.score - pts  # 允许负数
             await broadcast_to_players({
                 "type": "score_update",
                 "name": name,
                 "score": p.score,
                 "msg": f"⚠️ [{name}] 违规 -{pts}分"
             })
+            await send_client_state(name)
             await send_admin_state()
     
     elif msg_type == "set_score":
@@ -501,6 +502,7 @@ async def handle_admin_msg(msg: dict, ws: WebSocket):
             # 检查是否达到获胜积分
             if game.game_started:
                 await check_winner(name)
+            await send_client_state(name)
             await send_admin_state()
     
     elif msg_type == "toggle_ban":

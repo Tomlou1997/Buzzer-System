@@ -434,7 +434,6 @@ function render() {
   // 信息栏
   const connected = Object.values(s.players).filter(p => p.connected).length;
   document.getElementById('playerCount').textContent = connected + ' 名选手';
-  document.getElementById('psCount').textContent = connected;
   document.getElementById('infoBank').textContent = s.active_bank_name || '--';
   document.getElementById('infoTotal').textContent = s.total_questions;
   document.getElementById('infoAnswered').textContent = s.used_count;

@@ -370,6 +370,13 @@ function handleMsg(msg) {
       document.getElementById('questionCard').classList.remove('show');
       break;
 
+    case 'score_update':
+      if (msg.name === myName) {
+        myScore = msg.score;
+        document.getElementById('myScore').textContent = myScore;
+      }
+      break;
+
     case 'extend_result':
       if (msg.success) {
         showBuzzerResult('success', msg.msg);
