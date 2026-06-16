@@ -706,6 +706,17 @@ function showWonOverlay(rank) {
 document.getElementById('nameInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
+
+// 空格/Enter 抢答
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (!hasBuzzed && document.getElementById('buzzerWrap').classList.contains('show')) {
+      buzz();
+    }
+  }
+});
 </script>
 </body>
 </html>
