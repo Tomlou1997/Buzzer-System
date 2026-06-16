@@ -481,6 +481,17 @@ function render() {
 
   // 横幅（如果显示了答题记录则保留，不覆盖）
   const banner = document.getElementById('banner');
+
+  // 比赛结束时，无论横幅是否锁定，都弹窗
+  if (s.game_over && !window._gameOverModalShown) {
+    window._gameOverModalShown = true;
+    banner.dataset.locked = '0';
+    banner.style.display = 'block';
+    banner.style.background = 'linear-gradient(135deg,#9C27B0,#7B1FA2)';
+    banner.textContent = '🏁 比赛已结束';
+    document.getElementById('gameOverModal').classList.add('show');
+  }
+
   if (banner.dataset.locked === '1') {
     // 题目变化时才解锁（切换到下一题了）
     if (typeof window._lastQuestionIdx === 'undefined') window._lastQuestionIdx = -1;
