@@ -663,9 +663,9 @@ async def check_winner(name: str):
     await send_admin_state()
 
 def get_rankings():
-    """获取排名列表（仅包含在线选手）"""
+    """获取排名列表（所有选手，含离线）"""
     ranked = [(r[0], r[1], r[2]) for r in game.ranked_players]
-    unranked = [(n, p.score) for n, p in game.players.items() if not p.ranked and p.connected]
+    unranked = [(n, p.score) for n, p in game.players.items() if not p.ranked]
     unranked.sort(key=lambda x: x[1], reverse=True)
     result = []
     for r in ranked:
@@ -707,9 +707,11 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
             game.players[player_name].ws = websocket
             game.players[player_name].connected = True
             player = game.players[player_name]
+            is_reconnect = True
         else:
             player = Player(player_name, websocket)
             game.players[player_name] = player
+            is_reconnect = False
         
         # 发送登录成功
         await send_to_player(player_name, {
@@ -721,7 +723,7 @@ async def client_websocket(websocket: WebSocket, name: str = ""):
         # 发送初始客户端状态
         await send_client_state(player_name)
         
-        await broadcast_to_admin({"type": "player_joined", "name": player_name})
+        await broadcast_to_admin({"type": "player_reconnect" if is_reconnect else "player_joined", "name": player_name})
         await send_admin_state()
         
         # 消息循环
@@ -779,7 +781,7 @@ async def send_client_state(name: str):
         "can_cheer": (game.current_answerer == name and p.extend_remaining > 0),
         "cheer_remaining": p.extend_remaining,
         "round_num": game.round_num,
-        "players": {n: {"name": n, "score": pl.score, "banned": pl.banned}
+        "players": {n: {"name": n, "score": pl.score, "banned": pl.banned, "connected": pl.connected}
                     for n, pl in game.players.items()},
         "ranked_players": [{"name": r[0], "score": r[1], "rank": r[2]} for r in game.ranked_players],
     }
