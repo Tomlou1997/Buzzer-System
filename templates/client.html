@@ -89,10 +89,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .buzzer-result.fail{background:linear-gradient(135deg,rgba(244,67,54,0.2),rgba(244,67,54,0.1));border:1px solid rgba(244,67,54,0.3);color:#f44336;}
 .buzzer-result.too-late{background:linear-gradient(135deg,rgba(255,152,0,0.2),rgba(255,152,0,0.1));border:1px solid rgba(255,152,0,0.3);color:#FF9800;}
 
-/* 倒计时大字 */
-.countdown-display{display:none;text-align:center;font-size:72px;font-weight:900;color:#FF9800;text-shadow:0 0 30px rgba(255,152,0,.5);margin:12px 0;letter-spacing:8px;font-variant-numeric:tabular-nums;}
-.countdown-display.urgent{color:#f44336;text-shadow:0 0 30px rgba(244,67,54,.6);animation:countdownBeat .5s infinite;}
-@keyframes countdownBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+/* 倒计时框（左上角固定） */
+.countdown-box{display:none;position:fixed;top:20px;left:20px;z-index:999;background:#1a1a2e;border:2px solid #FF9800;border-radius:14px;padding:14px 20px;text-align:center;min-width:110px;box-shadow:0 4px 24px rgba(255,152,0,0.3);}
+.countdown-box.show{display:block;}
+.countdown-box.urgent{border-color:#f44336;box-shadow:0 4px 24px rgba(244,67,54,0.4);animation:countdownBeat .5s infinite;}
+.countdown-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
+.countdown-num{font-size:48px;font-weight:900;color:#FF9800;line-height:1;font-variant-numeric:tabular-nums;}
+.countdown-box.urgent .countdown-num{color:#f44336;}
+@keyframes countdownBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 
 /* 答案输入 */
 .answer-box{display:none;flex-direction:column;gap:8px;}
@@ -214,8 +218,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     <!-- 抢答结果 -->
     <div class="buzzer-result" id="buzzerResult"></div>
 
-    <!-- 倒计时大字 -->
-    <div class="countdown-display" id="countdownDisplay">⏱ 15</div>
+    <!-- 倒计时框（左上角固定，答题时显示） -->
+    <div class="countdown-box" id="countdownBox">
+      <div class="countdown-label">答题倒计时</div>
+      <div class="countdown-num" id="countdownNum">15</div>
+    </div>
 
     <!-- 啦啦队 -->
     <div class="cheer-bar" id="cheerBar">
@@ -340,7 +347,7 @@ function handleMsg(msg) {
       isBuzzing = false;
       clearTimeout(answerTimeout);
       clearInterval(answerTimerInterval);
-      document.getElementById('countdownDisplay').className = 'countdown-display';
+      document.getElementById('countdownBox').className = 'countdown-box';
       document.getElementById('submitAnsBtn').style.display = 'none';
       if (msg.correct) {
         showBuzzerResult('success', '✅ 回答正确！+' + msg.points + '分');
@@ -361,7 +368,7 @@ function handleMsg(msg) {
       clearTimeout(answerTimeout);
       clearInterval(answerTimerInterval);
       document.getElementById('submitAnsBtn').style.display = 'none';
-      document.getElementById('countdownDisplay').className = 'countdown-display';
+      document.getElementById('countdownBox').className = 'countdown-box';
       document.getElementById('buzzerWrap').classList.remove('show');
       document.getElementById('questionCard').classList.remove('show');
       document.getElementById('cheerBar').classList.remove('show');
@@ -402,7 +409,7 @@ function handleMsg(msg) {
       document.getElementById('myScore').textContent = 0;
       document.getElementById('scoreCard').classList.remove('show');
       document.getElementById('submitAnsBtn').style.display = 'none';
-      document.getElementById('countdownDisplay').className = 'countdown-display';
+      document.getElementById('countdownBox').className = 'countdown-box';
       document.getElementById('buzzerResult').classList.remove('show');
       document.getElementById('buzzerWrap').classList.remove('show');
       document.getElementById('questionCard').classList.remove('show');
@@ -431,7 +438,7 @@ function renderClientState(s) {
     document.getElementById('questionCard').classList.remove('show');
     document.getElementById('cheerBar').classList.remove('show');
     document.getElementById('buzzerResult').classList.remove('show');
-    document.getElementById('countdownDisplay').className = 'countdown-display';
+    document.getElementById('countdownBox').className = 'countdown-box';
     document.getElementById('submitAnsBtn').style.display = 'none';
     clearInterval(answerTimerInterval);
     clearTimeout(answerTimeout);
@@ -476,7 +483,7 @@ function renderClientState(s) {
     // 新题目出现时清除上一题的答题结果
     if (currentQuestionId !== q.question) {
       document.getElementById('buzzerResult').classList.remove('show', 'success', 'fail', 'too_late');
-      document.getElementById('countdownDisplay').className = 'countdown-display';
+      document.getElementById('countdownBox').className = 'countdown-box';
     }
     currentQuestionId = q.question;
     document.getElementById('questionCard').classList.add('show');
@@ -505,7 +512,7 @@ function renderClientState(s) {
   // 抢答按钮
   if (s.can_buzz && !s.game_over) {
     document.getElementById('buzzerResult').classList.remove('show', 'success', 'fail', 'too_late');
-    document.getElementById('countdownDisplay').className = 'countdown-display';
+    document.getElementById('countdownBox').className = 'countdown-box';
     document.getElementById('buzzerWrap').classList.add('show');
     document.getElementById('buzzerBtn').disabled = false;
     document.getElementById('buzzerBtn').innerHTML = '🔔<span class="sub">抢答</span>';
@@ -605,16 +612,17 @@ function startAnswerTimer(seconds) {
   clearTimeout(answerTimeout);
   clearInterval(answerTimerInterval);
   const btn = document.getElementById('submitAnsBtn');
-  const cd = document.getElementById('countdownDisplay');
+  const cd = document.getElementById('countdownBox');
+  const cdNum = document.getElementById('countdownNum');
   btn.textContent = `✅ 提交答案 (${seconds}s)`;
-  cd.textContent = `⏱ ${seconds}`;
-  cd.className = 'countdown-display show' + (seconds <= 5 ? ' urgent' : '');
+  cdNum.textContent = seconds;
+  cd.className = 'countdown-box show' + (seconds <= 5 ? ' urgent' : '');
   answerTimeout = setTimeout(() => {
     if (isBuzzing) {
       isBuzzing = false;
       send({type: 'answer', answer: ''});
       btn.style.display = 'none';
-      cd.className = 'countdown-display';
+      cd.className = 'countdown-box';
       showBuzzerResult('fail', '⌛ 答题超时');
     }
   }, seconds * 1000);
@@ -625,12 +633,12 @@ function startAnswerTimer(seconds) {
     remaining--;
     if (remaining <= 0) {
       clearInterval(answerTimerInterval);
-      cd.className = 'countdown-display';
+      cd.className = 'countdown-box';
       return;
     }
     btn.textContent = `✅ 提交答案 (${remaining}s)`;
-    cd.textContent = `⏱ ${remaining}`;
-    cd.className = 'countdown-display show' + (remaining <= 5 ? ' urgent' : '');
+    cdNum.textContent = remaining;
+    cd.className = 'countdown-box show' + (remaining <= 5 ? ' urgent' : '');
   }, 1000);
 }
 
