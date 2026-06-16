@@ -137,9 +137,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 /* 全屏积分榜 */
 .scoreboard-full{background:#0f0f1a;width:100vw;max-width:100vw;height:100vh;border-radius:0;padding:40px 60px;overflow-y:auto;box-shadow:none;}
 .scoreboard-full h2{color:#FFD700;margin:0;font-size:36px;}
-.scoreboard-full .sbf-row{display:flex;align-items:center;padding:18px 16px;border-bottom:1px solid #1a1a2e;font-size:28px;}
+.scoreboard-full .sbf-row{display:flex;align-items:center;padding:18px 16px;border-bottom:1px solid #1a1a2e;font-size:28px;max-width:600px;margin:0 auto;}
 .scoreboard-full .sbf-rank{width:60px;text-align:center;font-size:34px;}
-.scoreboard-full .sbf-name{flex:1;font-weight:600;font-size:30px;}
+.scoreboard-full .sbf-name{flex:1;font-weight:600;font-size:30px;margin:0 20px;}
 .scoreboard-full .sbf-score{font-weight:700;font-size:32px;min-width:100px;text-align:right;}
 .scoreboard-full .sbf-gold{color:#FFD700;}
 .scoreboard-full .sbf-silver{color:#C0C0C0;}
@@ -291,9 +291,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 <!-- 全屏积分榜 -->
 <div class="modal-overlay" id="scoreboardOverlay" onclick="closeScoreboard()">
   <div class="scoreboard-full" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-      <h2 style="font-size:36px;">🏆 积分榜</h2>
-      <button class="btn btn-ghost btn-sm" onclick="closeScoreboard()" style="font-size:24px;padding:8px 20px;">✕ 关闭</button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="font-size:36px;margin:0;">🏆 积分榜</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeScoreboard()" style="font-size:24px;padding:8px 20px;margin-top:8px;">✕ 关闭</button>
     </div>
     <div id="scoreboardFullContent"></div>
   </div>
