@@ -113,11 +113,6 @@ app = FastAPI(title="抢答系统")
 # 静态文件
 os.makedirs("templates", exist_ok=True)
 
-@app.get("/ping")
-async def ping():
-    """极简测试端点"""
-    return HTMLResponse("pong")
-
 @app.get("/")
 async def root():
     """根路径重定向"""
@@ -1222,6 +1217,9 @@ def parse_xlsx(path: str) -> list[dict]:
 
 # ==================== 启动 ====================
 if __name__ == "__main__":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
     PORT = 8888
     print(f"🚀 抢答系统已启动")
     print(f"   管理端: http://localhost:{PORT}")
