@@ -27,27 +27,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .content{flex:1;display:flex;padding:20px;gap:20px;min-height:0;overflow:hidden;}
 
 /* 页面 */
-.page{display:none;flex:1;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;}
+.page{display:none;flex:1;flex-direction:column;gap:0;min-height:0;overflow-y:auto;}
 .page.active{display:flex;}
 .page-title{font-size:18px;font-weight:700;color:#0078d4;padding-bottom:10px;border-bottom:1px solid #2a2a3e;}
 
 /* 左侧选手面板 */
-.players-panel{width:320px;min-width:320px;background:#1a1a2e;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px;}
+.players-panel{width:340px;min-width:340px;background:#1a1a2e;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px;}
 .players-panel .panel-title{font-size:17px;font-weight:700;color:#0078d4;padding-bottom:8px;border-bottom:1px solid #2a2a3e;display:flex;justify-content:space-between;}
 .players-panel .panel-title .count{color:#888;font-weight:400;font-size:15px;}
-.player-card{background:#252538;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.2s;border:1px solid transparent;font-size:16px;}
+.player-card{background:#252538;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s;border:1px solid transparent;font-size:18px;}
 .player-card:hover{border-color:#0078d4;background:#2a2a3e;}
-.player-card .rb{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;}
+.player-card .rb{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;}
 .player-card .rb.gold{background:#FFD700;color:#1a1a2e;}
 .player-card .rb.silver{background:#C0C0C0;color:#1a1a2e;}
 .player-card .rb.bronze{background:#CD7F32;color:#fff;}
 .player-card .name{flex:1;font-weight:500;}
-.player-card .score{font-size:17px;font-weight:bold;}
+.player-card .score{font-size:20px;font-weight:bold;}
 .player-card .score.green{color:#4CAF50;}
 .player-card .score.gray{color:#888;}
-.player-card .rl{font-size:14px;color:#FFD700;}
-.player-card .banned-badge{font-size:13px;color:#f44336;background:#3a1a1a;padding:2px 8px;border-radius:5px;}
-.player-card .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.player-card .rl{font-size:16px;color:#FFD700;}
+.player-card .banned-badge{font-size:15px;color:#f44336;background:#3a1a1a;padding:2px 8px;border-radius:5px;}
+.player-card .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .player-card .status-dot.online{background:#4CAF50;box-shadow:0 0 8px rgba(76,175,80,0.5);}
 .player-card .status-dot.offline{background:#666;}
 .panel-actions{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid #2a2a3e;}
@@ -57,21 +57,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 .right-area{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .info-bar{display:flex;gap:10px;}
 .info-item{flex:1;background:#1a1a2e;border-radius:10px;padding:14px 16px;text-align:center;}
-.info-item .lbl{font-size:13px;color:#888;margin-bottom:4px;}
-.info-item .val{font-size:24px;font-weight:bold;}
+.info-item .val{font-size:22px;font-weight:bold;}
 .info-item .val.blue{color:#0078d4;}
 .info-item .val.green{color:#4CAF50;}
 .info-item .val.orange{color:#FF9800;}
+#infoBank{font-size:16px;}
 
-.banner{padding:14px 20px;border-radius:10px;text-align:center;font-size:18px;font-weight:700;display:none;}
+/* 倒计时跳动 */
+@keyframes timerBlink{0%,100%{transform:scale(1);}50%{transform:scale(1.25);}}
+
+.banner{padding:18px 20px;border-radius:10px;text-align:center;font-size:24px;font-weight:700;display:none;}
 
 .q-card{flex:1;background:#1a1a2e;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:0;}
 .q-card .qt{font-size:40px;color:#FF9800;font-weight:700;}
-.q-card .qtxt{flex:1;background:#1e1e2e;border-radius:8px;padding:16px 20px;font-size:40px;line-height:1.8;overflow-y:auto;min-height:80px;}
+.q-card .qtxt{flex:1;background:#1e1e2e;border-radius:8px;padding:16px 20px;font-size:30px;font-weight:600;line-height:1.8;overflow-y:auto;min-height:80px;}
 .q-card .qans{background:#252538;border-radius:8px;padding:10px 14px;font-size:14px;color:#4CAF50;font-weight:600;display:none;}
 .q-card .qans.show{display:block;}
 .q-card .qact{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.q-card .qact .timer-text{font-size:18px;font-weight:bold;color:#FF9800;padding:0 10px;}
+.q-card .qact .timer-text{font-size:30px;font-weight:bold;color:#FF9800;padding:0 10px;}
 
 /* 按钮 */
 .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;}
@@ -136,11 +139,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 
 /* 全屏积分榜 */
 .scoreboard-full{background:#0f0f1a;width:100vw;max-width:100vw;height:100vh;border-radius:0;padding:40px 60px;overflow-y:auto;box-shadow:none;}
-.scoreboard-full h2{color:#FFD700;margin:0;font-size:36px;}
-.scoreboard-full .sbf-row{display:flex;align-items:center;padding:18px 16px;border-bottom:1px solid #1a1a2e;font-size:28px;max-width:600px;margin:0 auto;}
-.scoreboard-full .sbf-rank{width:60px;text-align:center;font-size:34px;}
-.scoreboard-full .sbf-name{flex:1;font-weight:600;font-size:30px;margin:0 20px;}
-.scoreboard-full .sbf-score{font-weight:700;font-size:32px;min-width:100px;text-align:right;}
+.scoreboard-full h2{color:#FFD700;margin:0;font-size:56px;}
+.scoreboard-full .sbf-row{display:flex;align-items:center;padding:34px 16px;border-bottom:1px solid #1a1a2e;font-size:44px;max-width:500px;margin:0 auto;}
+.scoreboard-full .sbf-rank{width:80px;text-align:center;font-size:52px;}
+.scoreboard-full .sbf-name{flex:1;font-weight:600;font-size:46px;margin:0 16px;white-space:nowrap;}
+.scoreboard-full .sbf-score{font-weight:700;font-size:48px;min-width:120px;text-align:right;}
 .scoreboard-full .sbf-gold{color:#FFD700;}
 .scoreboard-full .sbf-silver{color:#C0C0C0;}
 .scoreboard-full .sbf-bronze{color:#CD7F32;}
@@ -178,7 +181,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
     <!-- 选手面板（仅比赛页面） -->
     <div class="players-panel" id="playersPanel">
       <div class="panel-title">👥 选手 <span class="count" id="psCount">0</span></div>
-      <div class="panel-hint" id="winHint" style="display:none;font-size:11px;color:#FF9800;text-align:center;padding:2px 0 6px;">🏆 获胜积分: <b>20</b></div>
+      <div class="panel-hint" id="winHint" style="display:none;font-size:18px;color:#FF9800;text-align:center;padding:2px 0 6px;">🏆 获胜积分: <b>20</b></div>
       <button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px;" onclick="openScoreboard()">🏆 积分榜</button>
       <div id="playerList"></div>
       <div class="panel-actions">
@@ -193,17 +196,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 
       <!-- 比赛页面 -->
       <div class="page active" id="pageGame">
-        <div class="info-bar">
-          <div class="info-item"><div class="lbl">📚 题库</div><div class="val blue" id="infoBank">--</div></div>
-          <div class="info-item"><div class="lbl">📊 共几题</div><div class="val green" id="infoTotal">0</div></div>
-          <div class="info-item"><div class="lbl">✅ 已答</div><div class="val blue" id="infoAnswered">0</div></div>
-          <div class="info-item"><div class="lbl">⏳ 未答</div><div class="val orange" id="infoUnanswered">0</div></div>
-          <div class="info-item"><div class="lbl">⏱ 倒计时</div><div class="val orange" id="infoTimer">--</div></div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;">
+            <div class="info-bar">
+              <div class="info-item"><div class="lbl">📚 题库</div><div class="val blue" id="infoBank">--</div></div>
+              <div class="info-item"><div class="lbl">📊 共几题</div><div class="val green" id="infoTotal">0</div></div>
+              <div class="info-item"><div class="lbl">✅ 已答</div><div class="val blue" id="infoAnswered">0</div></div>
+              <div class="info-item"><div class="lbl">⏳ 未答</div><div class="val orange" id="infoUnanswered">0</div></div>
+            </div>
+            <div class="banner" id="banner" style="margin:0;"></div>
+          </div>
+          <div class="info-item" id="timerBox" style="display:flex;flex-direction:column;justify-content:center;align-items:center;flex:0 0 300px;padding:0 12px;align-self:stretch;box-sizing:border-box;">
+            <div class="lbl">⏱ 倒计时</div>
+            <div class="val orange" id="infoTimer" style="font-size:100px;">--</div>
+          </div>
         </div>
 
-        <div class="banner" id="banner"></div>
-
-        <div class="q-card">
+        <div class="q-card" style="margin-top:14px;">
           <div class="qt" id="qType">📝 请先导入题库</div>
           <div class="qtxt" id="qText">点击左侧「📚 题库管理」上传 xlsx 题库文件</div>
           <div class="qans" id="qAnswer">✅ 参考答案: <span id="answerText"></span></div>
@@ -291,9 +300,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft Y
 <!-- 全屏积分榜 -->
 <div class="modal-overlay" id="scoreboardOverlay" onclick="closeScoreboard()">
   <div class="scoreboard-full" onclick="event.stopPropagation()">
-    <div style="text-align:center;margin-bottom:24px;">
+    <div style="text-align:center;margin-bottom:24px;position:relative;">
       <h2 style="font-size:36px;margin:0;">🏆 积分榜</h2>
-      <button class="btn btn-ghost btn-sm" onclick="closeScoreboard()" style="font-size:24px;padding:8px 20px;margin-top:8px;">✕ 关闭</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeScoreboard()" style="font-size:24px;padding:8px 20px;position:absolute;right:0;top:50%;transform:translateY(-50%);">✕ 关闭</button>
     </div>
     <div id="scoreboardFullContent"></div>
   </div>
@@ -441,8 +450,18 @@ function render() {
 
   if (s.timer_remaining > 0) {
     document.getElementById('infoTimer').textContent = s.timer_remaining + 's';
+    const timerEl = document.getElementById('infoTimer');
+    if (s.timer_remaining <= 5) {
+      timerEl.style.color = '#f44336';
+      timerEl.style.animation = 'timerBlink .5s infinite';
+    } else {
+      timerEl.style.color = '#FF9800';
+      timerEl.style.animation = 'none';
+    }
   } else {
     document.getElementById('infoTimer').textContent = '--';
+    document.getElementById('infoTimer').style.color = '#FF9800';
+    document.getElementById('infoTimer').style.animation = 'none';
   }
 
   // 题目

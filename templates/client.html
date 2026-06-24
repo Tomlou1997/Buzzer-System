@@ -511,9 +511,11 @@ function renderClientState(s) {
     const optsDiv = document.getElementById('optionsDiv');
     if (q.options && q.options.length) {
       optsDiv.style.display = 'flex';
-      optsDiv.innerHTML = q.options.map((opt, i) =>
-        `<button class="opt-btn" data-idx="${i}" onclick="selectOption(this, ${i})">${opt}</button>`
-      ).join('');
+      optsDiv.innerHTML = q.options.map((opt, i) => {
+        const iAmAnswering = isBuzzing || s.first_buzzer === myName;
+        const disabled = !iAmAnswering ? 'disabled' : '';
+        return `<button class="opt-btn" data-idx="${i}" onclick="selectOption(this, ${i})" ${disabled}>${opt}</button>`;
+      }).join('');
       // 自己抢到了才显示提交按钮
       const iAmAnswering = isBuzzing || s.first_buzzer === myName;
       document.getElementById('submitAnsBtn').style.display = iAmAnswering ? 'block' : 'none';
@@ -599,9 +601,22 @@ function submitWrong() {
 }
 
 function selectOption(el, idx) {
-  // 多选：点击切换选中状态
-  el.classList.toggle('selected');
-  // 不自动提交
+  const qType = document.getElementById('qType').textContent;
+  const isMulti = qType.includes('多选');
+  const isSingle = qType.includes('单选');
+  
+  if (isSingle) {
+    // 单选：清除其他选中，只选当前
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  } else if (isMulti) {
+    // 多选：切换当前选项
+    el.classList.toggle('selected');
+  } else {
+    // 判断或默认：单项选择
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
 }
 
 function submitSelectedOptions() {
